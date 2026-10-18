@@ -1,6 +1,6 @@
 //! A set of integers in the interval form that the schema uses.
 
-use std::ops::RangeInclusive;
+use std::ops::{RangeFrom, RangeInclusive, RangeToInclusive};
 
 /// A set of integers as sorted, disjoint, non-adjacent closed intervals, like
 /// OR-Tools' `Domain`.
@@ -150,6 +150,46 @@ impl Domain {
             .complement()
     }
 
+    /// `-x` for every `x` in this domain, like Python's `negation`. `i64::MIN`
+    /// drops out, because its negation does not fit in `i64`.
+    #[must_use]
+    pub fn negation(&self) -> Self {
+        Self::from_exact(
+            self.0
+                .iter()
+                .map(|&(lower, upper)| (-i128::from(upper), -i128::from(lower))),
+        )
+    }
+
+    /// `x + y` for every `x` in this domain and `y` in `other`, like Python's
+    /// `addition_with`. Sums outside `i64` drop out.
+    #[must_use]
+    pub fn addition_with(&self, other: &Self) -> Self {
+        Self::from_exact(self.0.iter().flat_map(|&(lower, upper)| {
+            other.0.iter().map(move |&(other_lower, other_upper)| {
+                (
+                    i128::from(lower) + i128::from(other_lower),
+                    i128::from(upper) + i128::from(other_upper),
+                )
+            })
+        }))
+    }
+
+    /// Exact intervals cut to the `i64` range, as OR-Tools' `Domain` cuts
+    /// its arithmetic.
+    fn from_exact(intervals: impl IntoIterator<Item = (i128, i128)>) -> Self {
+        let (min, max) = (i128::from(i64::MIN), i128::from(i64::MAX));
+        let cut = |bound: i128| {
+            i64::try_from(bound.clamp(min, max)).expect("the bound is clamped into i64")
+        };
+        Self::from_intervals(
+            intervals
+                .into_iter()
+                .filter(|&(lower, upper)| lower <= max && upper >= min)
+                .map(|(lower, upper)| (cut(lower), cut(upper))),
+        )
+    }
+
     /// The schema's flat `[min_0, max_0, ...]` form.
     #[must_use]
     pub fn flattened_intervals(&self) -> Vec<i64> {
@@ -177,5 +217,19 @@ impl From<RangeInclusive<i64>> for Domain {
     /// Rust.
     fn from(range: RangeInclusive<i64>) -> Self {
         Self::new(*range.start(), *range.end())
+    }
+}
+
+impl From<RangeFrom<i64>> for Domain {
+    /// Every value from `start` on, like Python's `greater_or_equal`.
+    fn from(range: RangeFrom<i64>) -> Self {
+        Self::new(range.start, i64::MAX)
+    }
+}
+
+impl From<RangeToInclusive<i64>> for Domain {
+    /// Every value up to `end`, like Python's `lower_or_equal`.
+    fn from(range: RangeToInclusive<i64>) -> Self {
+        Self::new(i64::MIN, range.end)
     }
 }

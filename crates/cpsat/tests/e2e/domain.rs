@@ -79,3 +79,43 @@ fn compares_sets() {
     assert!(small.is_included_in(&small));
     assert!(!small.is_included_in(&Domain::default()));
 }
+
+#[test]
+fn negates_and_adds_like_python() {
+    const MIN: i64 = i64::MIN;
+    const MAX: i64 = i64::MAX;
+    let flat = |domain: Domain| Vec::from(domain);
+    // The results of Python's OR-Tools 9.15 `Domain` for the same sets.
+    let holes = Domain::from_intervals([(1, 3), (7, 9)]);
+    assert_eq!(flat(holes.negation()), [-9, -7, -3, -1]);
+    assert_eq!(flat(Domain::all().negation()), [MIN + 1, MAX]);
+    assert_eq!(flat(Domain::new(MIN, MIN).negation()), [] as [i64; 0]);
+    assert_eq!(flat(Domain::new(MIN, 0).negation()), [0, MAX]);
+
+    let a = Domain::from_intervals([(0, 1), (10, 11)]);
+    let b = Domain::from_values([0, 5]);
+    assert_eq!(flat(a.addition_with(&b)), [0, 1, 5, 6, 10, 11, 15, 16]);
+    let five = Domain::new(5, 5);
+    assert_eq!(
+        flat(Domain::new(MAX - 1, MAX).addition_with(&five)),
+        [] as [i64; 0]
+    );
+    let minus_three = Domain::new(-3, -3);
+    assert_eq!(
+        flat(Domain::new(0, MAX).addition_with(&minus_three)),
+        [-3, MAX - 3]
+    );
+    let min = Domain::new(MIN, MIN);
+    assert_eq!(flat(Domain::new(MIN, 0).addition_with(&min)), [MIN, MIN]);
+    assert!(
+        Domain::new(0, 1)
+            .addition_with(&Domain::default())
+            .is_empty()
+    );
+}
+
+#[test]
+fn builds_half_lines_from_ranges() {
+    assert_eq!(Domain::from(2..), Domain::new(2, i64::MAX));
+    assert_eq!(Domain::from(..=8), Domain::new(i64::MIN, 8));
+}

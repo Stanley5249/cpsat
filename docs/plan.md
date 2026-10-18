@@ -32,7 +32,6 @@ idiomatic Rust modeling API that writes into the Protobuf model.
 - OR-Tools subsystems outside CP-SAT.
 - Custom propagation or search algorithms.
 - A CP-SAT-only source fork.
-- `Domain` arithmetic beyond set operations.
 
 ## Facts verified against v9.15
 

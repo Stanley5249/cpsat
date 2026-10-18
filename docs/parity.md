@@ -74,20 +74,18 @@ solves each global and scheduling family.
 
 ## Formats and parameters
 
-| Python                               | Rust                                                                                                                                                                           | Native                          | Test                                                                                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `export_to_file`, `text_format`      | `buffa::text` with the `text` feature, on by default, or `Message::encode_to_vec`, then `std::fs::write`. The caller picks text or binary, where Python picks by the file name | none                            | `formats.rs::reads_python_text_format`, `text_format_round_trips`, `solve.rs::clone_and_serialize_round_trip` |
-| `json_format`                        | `serde_json` with the `json` feature                                                                                                                                           | none                            | `formats.rs::reads_python_json`                                                                               |
-| reading `solver.parameters` defaults | `cpsat::default_parameters`                                                                                                                                                    | reflection over `SatParameters` | `diagnostics.rs::reads_parameter_defaults_from_or_tools`                                                      |
-| `Domain`                             | `cpsat::Domain`                                                                                                                                                                | none                            | `domain.rs`                                                                                                   |
+| Python                                         | Rust                                                                                                                                                                           | Native                          | Test                                                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `export_to_file`, `text_format`                | `buffa::text` with the `text` feature, on by default, or `Message::encode_to_vec`, then `std::fs::write`. The caller picks text or binary, where Python picks by the file name | none                            | `formats.rs::reads_python_text_format`, `text_format_round_trips`, `solve.rs::clone_and_serialize_round_trip` |
+| `json_format`                                  | `serde_json` with the `json` feature                                                                                                                                           | none                            | `formats.rs::reads_python_json`                                                                               |
+| reading `solver.parameters` defaults           | `cpsat::default_parameters`                                                                                                                                                    | reflection over `SatParameters` | `diagnostics.rs::reads_parameter_defaults_from_or_tools`                                                      |
+| `Domain`, `greater_or_equal`, `lower_or_equal` | `cpsat::Domain`, `From<RangeFrom>`, `From<RangeToInclusive>`                                                                                                                   | none                            | `domain.rs`                                                                                                   |
 
 ## Limitations
 
 - An unset `SatParameters` field reads as `None`, because Buffa generates no
   getters for proto2 `[default = X]` values. `cpsat::default_parameters` fills
   them, and `docs/buffa-proto2-defaults.md` drafts the upstream request.
-- `Domain` covers set operations only, not Python's arithmetic such as
-  `addition_with` or `negation`.
 - An OR-Tools `CHECK` failure aborts the process in both Python and Rust.
   `validate_model` catches invalid models first, and a subprocess isolates
   untrusted ones.
