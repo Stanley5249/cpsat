@@ -92,8 +92,6 @@ solves each global and scheduling family.
 - Python checks arguments while it builds a constraint, such as affine-only
   expressions or a non-empty arc list. Rust leaves these checks to the OR-Tools
   validator, so the error appears at `validate_model` or as `MODEL_INVALID`.
-- `Model::constant` and `bool_constant` add a variable on every call, where
-  Python reuses one variable per value.
 - A stopped `StopHandle` stays stopped, so it also stops later solves, where
   Python's `stop_search` stops only the running solve. A new handle per solve
   gives Python's behavior.

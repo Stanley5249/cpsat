@@ -1,9 +1,6 @@
 """Writes the models that `tests/e2e/equivalence.rs` rebuilds with the Rust API.
 
-Run it from the repository root with `just fixtures`. Each model uses only
-calls whose Protobuf output the Rust API reproduces exactly, so it avoids
-`new_constant` and Python's `True` and `False` literals, which reuse one
-variable per value.
+Run it from the repository root with `just fixtures`.
 """
 
 import pathlib
@@ -132,6 +129,16 @@ def maximize_float() -> cp_model.CpModel:
     return model
 
 
+def constants() -> cp_model.CpModel:
+    model = cp_model.CpModel()
+    x, _, b, _ = variables(model)
+    model.add(x == model.new_constant(5))
+    model.add(x <= model.new_constant(5) + model.new_constant(1))
+    model.add_bool_or([True, b])
+    model.add_bool_and([False]).only_enforce_if(b)
+    return model
+
+
 def main() -> None:
     for build in [
         linear,
@@ -143,6 +150,7 @@ def main() -> None:
         minimize_constant,
         minimize_float,
         maximize_float,
+        constants,
     ]:
         path = FIXTURES / f"{build.__name__}.txtpb"
         path.write_text(str(build().proto), encoding="utf-8", newline="\n")

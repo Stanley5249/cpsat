@@ -1,0 +1,62 @@
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 1
+}
+variables {
+  domain: 0
+  domain: 1
+}
+variables {
+  domain: 5
+  domain: 5
+}
+variables {
+  domain: 1
+  domain: 1
+}
+variables {
+  domain: 0
+  domain: 0
+}
+constraints {
+  linear {
+    vars: 0
+    vars: 4
+    coeffs: 1
+    coeffs: -1
+    domain: 0
+    domain: 0
+  }
+}
+constraints {
+  linear {
+    vars: 0
+    vars: 4
+    vars: 5
+    coeffs: 1
+    coeffs: -1
+    coeffs: -1
+    domain: -9223372036854775808
+    domain: 0
+  }
+}
+constraints {
+  bool_or {
+    literals: 5
+    literals: 2
+  }
+}
+constraints {
+  enforcement_literal: 2
+  bool_and {
+    literals: 6
+  }
+}

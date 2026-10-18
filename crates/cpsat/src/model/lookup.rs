@@ -3,7 +3,7 @@
 
 use std::ops::{Index, IndexMut};
 
-use super::Model;
+use super::{Model, slot};
 use crate::constraint::ConstraintRef;
 use crate::domain::Domain;
 use crate::expr::LinearExpr;
@@ -98,12 +98,6 @@ impl Model {
     fn variable(&self, index: i32) -> Option<&IntegerVariableProto> {
         self.0.variables.get(usize::try_from(index).ok()?)
     }
-}
-
-/// Converts a handle into a `Vec` index, which panics for a negative index
-/// like an index out of range does.
-fn slot(index: i32) -> usize {
-    usize::try_from(index).expect("a handle index is non-negative")
 }
 
 impl Index<IntVar> for Model {

@@ -2,6 +2,8 @@
 
 mod lookup;
 
+use std::collections::HashMap;
+
 use buffa::MessageField;
 
 use crate::constraint::{Constraint, ConstraintRef};
@@ -38,8 +40,25 @@ use crate::variable::{BoolVar, IntVar, IntervalVar};
 /// assert_eq!(response.value(x + y), Some(12));
 /// # Ok::<(), cpsat::Error>(())
 /// ```
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct Model(CpModelProto);
+#[derive(Clone, Debug, Default)]
+pub struct Model(CpModelProto, Constants);
+
+/// The variable of each value that [`Model::constant`] created, so a value
+/// reuses one variable like Python's constant map.
+type Constants = HashMap<i64, i32>;
+
+impl PartialEq for Model {
+    /// Compares the messages, because the constant map only saves variables.
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+/// Converts a handle into a `Vec` index, which panics for a negative index
+/// like an index out of range does.
+fn slot(index: i32) -> usize {
+    usize::try_from(index).expect("a handle index is non-negative")
+}
 
 /// Converts a length into the `i32` index the schema uses.
 fn next_index(len: usize, what: &str) -> i32 {
@@ -88,14 +107,21 @@ impl Model {
         BoolVar(self.int_var(0..=1).0)
     }
 
-    /// A variable fixed to `value`, like Python's `new_constant`. Each call
-    /// adds a variable, where Python reuses one per value.
+    /// A variable fixed to `value`, like Python's `new_constant`. Calls with
+    /// one value share one variable while its domain stays `[value, value]`.
     ///
     /// Use it where the schema needs a variable, such as in
     /// [`Constraint::inverse`]. An expression takes a plain `i64` or
     /// [`LinearExpr::constant`], which adds no variable.
     pub fn constant(&mut self, value: i64) -> IntVar {
-        self.int_var(value..=value)
+        if let Some(&index) = self.1.get(&value)
+            && self.0.variables[slot(index)].domain == [value, value]
+        {
+            return IntVar(index);
+        }
+        let var = self.int_var(value..=value);
+        self.1.insert(value, var.0);
+        var
     }
 
     /// A literal fixed to `value`, which Python writes as `True` or `False`.
@@ -315,9 +341,21 @@ impl Model {
 }
 
 impl From<CpModelProto> for Model {
-    /// Wraps an existing model, like Python's `CpModel(model_proto)`.
+    /// Wraps an existing model, like Python's `CpModel(model_proto)`. Like
+    /// Python, the first variable fixed to each value becomes that value's
+    /// constant.
     fn from(proto: CpModelProto) -> Self {
-        Self(proto)
+        let mut constants = Constants::new();
+        for (index, variable) in proto.variables.iter().enumerate() {
+            if let &[lower, upper] = variable.domain.as_slice()
+                && lower == upper
+            {
+                constants
+                    .entry(lower)
+                    .or_insert_with(|| next_index(index, "variables"));
+            }
+        }
+        Self(proto, constants)
     }
 }
 

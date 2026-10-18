@@ -197,3 +197,18 @@ fn maximize_float() {
     model.maximize_float(2.5 * x + y - 0.5);
     assert_matches_python(&model, "maximize_float");
 }
+
+#[test]
+fn constants() {
+    let mut model = Model::new();
+    let (x, _, b, _) = variables(&mut model);
+    let five = model.constant(5);
+    model.add(x.eq(five));
+    let (five, one) = (model.constant(5), model.constant(1));
+    model.add(x.le(five + one));
+    let yes = model.bool_constant(true);
+    model.add(Constraint::bool_or([yes, b]));
+    let no = model.bool_constant(false);
+    model.add(Constraint::bool_and([no]).only_if(b));
+    assert_matches_python(&model, "constants");
+}
