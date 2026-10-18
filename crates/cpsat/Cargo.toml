@@ -3,7 +3,7 @@ name = "cpsat"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-description = "Rust binding for the OR-Tools CP-SAT solver on raw Protobuf models"
+description = "Rust binding for the OR-Tools CP-SAT solver"
 repository.workspace = true
 license.workspace = true
 
