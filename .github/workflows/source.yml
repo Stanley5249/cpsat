@@ -1,0 +1,28 @@
+name: source
+
+# A full OR-Tools build takes about an hour, so it runs only on demand.
+on:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  CPSAT_ORTOOLS: source
+  CPSAT_CACHE_DIR: ${{ github.workspace }}/.cpsat-cache
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
+        with:
+          path: .cpsat-cache
+          key:
+            ortools-source-${{ runner.os }}-${{
+            hashFiles('crates/cpsat-sys/build/**') }}
+      - run: cargo test --locked --workspace
