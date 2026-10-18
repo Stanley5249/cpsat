@@ -161,3 +161,17 @@ fn fills_additional_solutions_when_asked() {
     values.sort_unstable();
     assert_eq!(values, [0, 1, 2]);
 }
+
+#[test]
+fn solves_a_float_objective_like_python() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=10);
+    let y = model.int_var(0..=10);
+    model.add((x + y).le(7));
+    model.minimize_float(0.5 * x - 1.25 * y);
+    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    // Python's OR-Tools 9.15 reports -8.75 at x = 0, y = 7.
+    assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
+    assert!((response.objective_value + 8.75).abs() < 1e-9);
+    assert_eq!(response.float_value(0.5 * x + y), Some(7.0));
+}

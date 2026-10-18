@@ -118,6 +118,20 @@ def minimize_constant() -> cp_model.CpModel:
     return model
 
 
+def minimize_float() -> cp_model.CpModel:
+    model = cp_model.CpModel()
+    x, y, b, _ = variables(model)
+    model.minimize(0.5 * x - 1.25 * y + 0.1 + x + 0.5 * ~b)
+    return model
+
+
+def maximize_float() -> cp_model.CpModel:
+    model = cp_model.CpModel()
+    x, y, _, _ = variables(model)
+    model.maximize(2.5 * x + y - 0.5)
+    return model
+
+
 def main() -> None:
     for build in [
         linear,
@@ -127,6 +141,8 @@ def main() -> None:
         scheduling,
         search,
         minimize_constant,
+        minimize_float,
+        maximize_float,
     ]:
         path = FIXTURES / f"{build.__name__}.txtpb"
         path.write_text(str(build().proto), encoding="utf-8", newline="\n")

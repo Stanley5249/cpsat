@@ -6,6 +6,7 @@ use std::fmt;
 use buffa::Enumeration;
 
 use crate::expr::LinearExpr;
+use crate::float_expr::FloatExpr;
 use crate::proto::view::CpSolverResponseView;
 use crate::proto::{CpSolverResponse, CpSolverStatus};
 use crate::variable::BoolVar;
@@ -56,6 +57,13 @@ impl CpSolverResponse {
         value(&self.solution, expr)
     }
 
+    /// The value of a floating-point expression in the solution, like
+    /// Python's `CpSolver.float_value`, or `None` if a variable has no value.
+    #[must_use]
+    pub fn float_value(&self, expr: impl Into<FloatExpr>) -> Option<f64> {
+        expr.into().evaluate(&self.solution)
+    }
+
     /// The value of a literal in the solution, like Python's
     /// `CpSolver.boolean_value`, or `None` without a solution.
     #[must_use]
@@ -80,6 +88,13 @@ impl CpSolverResponseView<'_> {
     #[must_use]
     pub fn value(&self, expr: impl Into<LinearExpr>) -> Option<i64> {
         value(&self.solution, expr)
+    }
+
+    /// The value of a floating-point expression in the solution, like
+    /// Python's `CpSolverSolutionCallback.float_value`.
+    #[must_use]
+    pub fn float_value(&self, expr: impl Into<FloatExpr>) -> Option<f64> {
+        expr.into().evaluate(&self.solution)
     }
 
     /// The value of a literal in the solution, like Python's

@@ -1,0 +1,25 @@
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 1
+}
+variables {
+  domain: 0
+  domain: 1
+}
+floating_point_objective {
+  vars: 0
+  vars: 1
+  vars: 2
+  coeffs: 1.5
+  coeffs: -1.25
+  coeffs: -0.5
+  offset: 0.6
+}

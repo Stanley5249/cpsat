@@ -280,3 +280,37 @@ fn interval_parts_panic_on_a_replaced_interval() {
     model[interval] = x.le(5).into_proto();
     let _ = model.interval_start(interval);
 }
+
+#[test]
+fn integer_and_float_objectives_replace_each_other() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=5);
+    model.maximize(x);
+    model.minimize_float(0.5 * x + 1.0 - x * 2.0);
+    assert!(!model.proto().objective.is_set());
+    let objective = model.proto().floating_point_objective.as_option().unwrap();
+    assert_eq!(
+        (objective.coeffs.as_slice(), objective.offset),
+        (&[-1.5][..], 1.0)
+    );
+    model.minimize(x);
+    assert!(!model.proto().floating_point_objective.is_set());
+    assert!(model.proto().objective.is_set());
+    model.clear_objective();
+    assert!(!model.has_objective());
+}
+
+#[test]
+fn float_operators_mix_constants_and_expressions() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=5);
+    let mut expr = 0.5 - x + (x + 0.25);
+    expr += 2 * x;
+    expr *= 2.0;
+    let response = CpSolverResponse {
+        solution: vec![3],
+        ..Default::default()
+    };
+    assert_eq!(response.float_value(&expr), Some(13.5));
+    assert_eq!(response.float_value(x - 0.5), Some(2.5));
+}

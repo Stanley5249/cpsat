@@ -7,10 +7,11 @@ use buffa::MessageField;
 use crate::constraint::{Constraint, ConstraintRef};
 use crate::domain::Domain;
 use crate::expr::LinearExpr;
+use crate::float_expr::FloatExpr;
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use crate::proto::{
-    ConstraintProto, CpModelProto, CpObjectiveProto, DecisionStrategyProto, IntegerVariableProto,
-    IntervalConstraintProto,
+    ConstraintProto, CpModelProto, CpObjectiveProto, DecisionStrategyProto, FloatObjectiveProto,
+    IntegerVariableProto, IntervalConstraintProto,
 };
 use crate::variable::{BoolVar, IntVar, IntervalVar};
 
@@ -209,6 +210,30 @@ impl Model {
             coeffs,
             offset: offset as f64,
             scaling_factor: scaling.into(),
+            ..Default::default()
+        });
+    }
+
+    /// Minimizes a floating-point `expr`, replacing any objective, like
+    /// Python's `minimize` with float coefficients.
+    pub fn minimize_float(&mut self, expr: impl Into<FloatExpr>) {
+        self.set_float_objective(expr.into(), false);
+    }
+
+    /// Maximizes a floating-point `expr`, replacing any objective, like
+    /// Python's `maximize` with float coefficients.
+    pub fn maximize_float(&mut self, expr: impl Into<FloatExpr>) {
+        self.set_float_objective(expr.into(), true);
+    }
+
+    fn set_float_objective(&mut self, expr: FloatExpr, maximize: bool) {
+        self.clear_objective();
+        let (vars, coeffs, offset) = expr.into_terms();
+        self.0.floating_point_objective = MessageField::some(FloatObjectiveProto {
+            vars,
+            coeffs,
+            offset,
+            maximize,
             ..Default::default()
         });
     }

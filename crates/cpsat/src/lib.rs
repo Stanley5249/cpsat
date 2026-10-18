@@ -36,6 +36,7 @@ mod diagnostics;
 mod domain;
 mod error;
 mod expr;
+mod float_expr;
 mod model;
 mod native;
 pub mod prelude;
@@ -58,6 +59,7 @@ pub use diagnostics::{default_parameters, model_stats, response_stats, validate_
 pub use domain::Domain;
 pub use error::{Error, Result};
 pub use expr::LinearExpr;
+pub use float_expr::FloatExpr;
 pub use model::Model;
 pub use solver::{Event, EventSet, NoEvents, Solver, StopHandle, solve};
 pub use variable::{BoolVar, IntVar, IntervalVar};

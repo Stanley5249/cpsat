@@ -181,3 +181,19 @@ fn minimize_constant() {
     model.minimize(5);
     assert_matches_python(&model, "minimize_constant");
 }
+
+#[test]
+fn minimize_float() {
+    let mut model = Model::new();
+    let (x, y, b, _) = variables(&mut model);
+    model.minimize_float(0.5 * x - 1.25 * y + 0.1 + x + 0.5 * !b);
+    assert_matches_python(&model, "minimize_float");
+}
+
+#[test]
+fn maximize_float() {
+    let mut model = Model::new();
+    let (x, y, _, _) = variables(&mut model);
+    model.maximize_float(2.5 * x + y - 0.5);
+    assert_matches_python(&model, "maximize_float");
+}
