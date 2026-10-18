@@ -115,7 +115,7 @@ fn stop_handle_works_inside_callback() {
             stop.stop();
             ControlFlow::Continue(())
         })
-        .stop(&stop)
+        .with_stop_handle(&stop)
         .solve(&hard_model())
         .unwrap();
     assert_eq!(response.status(), CpSolverStatus::FEASIBLE);
@@ -131,7 +131,7 @@ fn stops_from_another_thread() {
             stop.stop();
         });
         Solver::new(long_params())
-            .stop(&stop)
+            .with_stop_handle(&stop)
             .solve(&hard_model())
             .unwrap()
     });
@@ -148,7 +148,7 @@ fn one_handle_stops_concurrent_solves() {
             .map(|_| {
                 scope.spawn(|| {
                     Solver::new(long_params())
-                        .stop(&stop)
+                        .with_stop_handle(&stop)
                         .solve(&hard_model())
                         .unwrap()
                         .status()
@@ -178,7 +178,7 @@ fn stopped_handle_stops_every_later_solve() {
                 solutions += 1;
                 ControlFlow::Continue(())
             })
-            .stop(&stop)
+            .with_stop_handle(&stop)
             .solve(&hard_model())
             .unwrap();
         assert!(start.elapsed() < STOPPED_WITHIN, "{:?}", start.elapsed());
@@ -189,7 +189,7 @@ fn stopped_handle_stops_every_later_solve() {
 #[test]
 fn stop_after_solve_is_harmless() {
     let stop = StopHandle::new();
-    let mut solver = Solver::default().stop(&stop);
+    let mut solver = Solver::default().with_stop_handle(&stop);
     solver.solve(&tiny_model()).unwrap();
     stop.stop();
     assert!(stop.is_stopped());

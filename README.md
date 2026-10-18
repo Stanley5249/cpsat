@@ -48,7 +48,7 @@ let response = Solver::new(SatParameters::default().with_num_workers(8))
         }
         ControlFlow::Continue(())
     })
-    .stop(&stop)
+    .with_stop_handle(&stop)
     .solve(model.proto())?;
 ```
 

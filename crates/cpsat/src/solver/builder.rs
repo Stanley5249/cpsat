@@ -96,9 +96,10 @@ impl<'a, F> Solver<'a, F> {
         }
     }
 
-    /// Lets `stop` stop the solve from any thread.
+    /// Lets `stop` stop the solve from any thread, like Python's
+    /// `CpSolver.stop_search`.
     #[must_use]
-    pub fn stop(self, stop: &'a StopHandle) -> Self {
+    pub fn with_stop_handle(self, stop: &'a StopHandle) -> Self {
         Self {
             stop: Some(stop),
             ..self
