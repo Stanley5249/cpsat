@@ -1,20 +1,17 @@
 //! Native model and response diagnostics, the same functions Python's
 //! `CpSatHelper` exposes.
 
-use anyhow::{Result, bail};
 use buffa::Message;
+use cpsat_sys::CpsatBuffer;
 
+use crate::error::{Error, Result};
 use crate::native::Buffer;
 use crate::proto::{CpModelProto, CpSolverResponse};
 
-type Helper = unsafe extern "C" fn(
-    *const u8,
-    usize,
-    *mut cpsat_sys::CpsatBuffer,
-    *mut cpsat_sys::CpsatBuffer,
-) -> i32;
-
-fn call(helper: Helper, bytes: &[u8]) -> Result<String> {
+fn call(
+    helper: unsafe extern "C" fn(*const u8, usize, *mut CpsatBuffer, *mut CpsatBuffer) -> i32,
+    bytes: &[u8],
+) -> Result<String> {
     let mut output = Buffer::new();
     let mut error = Buffer::new();
     // SAFETY: bytes is valid for its length, and both buffers are empty
@@ -28,21 +25,23 @@ fn call(helper: Helper, bytes: &[u8]) -> Result<String> {
         )
     };
     crate::native::check(code, &error)?;
-    Ok(output.text())
+    Ok(output.text().into_owned())
 }
 
-/// Checks the model with OR-Tools' own validation, which `solve` also runs
-/// before reporting `MODEL_INVALID`.
+/// Checks the model with OR-Tools' own validation, which a solve also runs
+/// before it reports `MODEL_INVALID`.
 ///
 /// # Errors
 ///
-/// Returns the validation message when the model is invalid.
-pub fn validate(model: &CpModelProto) -> Result<()> {
+/// Returns [`Error::InvalidModel`] with OR-Tools' message when the model is
+/// invalid.
+pub fn validate_model(model: &CpModelProto) -> Result<()> {
     let message = call(cpsat_sys::cpsat_validate_model, &model.encode_to_vec())?;
-    if !message.is_empty() {
-        bail!("invalid model: {message}");
+    if message.is_empty() {
+        Ok(())
+    } else {
+        Err(Error::InvalidModel(message))
     }
-    Ok(())
 }
 
 /// Returns OR-Tools' human-readable statistics for a model.

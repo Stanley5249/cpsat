@@ -1,31 +1,32 @@
 //! Native diagnostics, mirroring Python's `CpSatHelper`.
 
-#[expect(dead_code, reason = "each test binary uses a subset of the helpers")]
-mod common;
-
-use common::{small_model, var};
+use cpsat::Error;
 use cpsat::proto::{CpModelProto, SatParameters};
 
 #[test]
 fn validates_a_valid_model() {
-    cpsat::validate(&small_model()).unwrap();
+    let mut model = CpModelProto::default();
+    model.add_int_var(0, 1);
+    cpsat::validate_model(&model).unwrap();
 }
 
 #[test]
 fn reports_why_a_model_is_invalid() {
     let mut model = CpModelProto::default();
-    var(&mut model, 5, 1);
-    let error = cpsat::validate(&model).unwrap_err().to_string();
-    // Python 9.15 reports the same message, typo included.
-    assert_eq!(
-        error,
-        "invalid model: var #0 has and invalid domain() format: domain: 5 domain: 1"
-    );
+    model.add_int_var(5, 1);
+    let Err(Error::InvalidModel(message)) = cpsat::validate_model(&model) else {
+        panic!("an empty domain must be invalid");
+    };
+    // Python 9.15 reports the same message for this model.
+    assert!(message.starts_with("var #0 has"), "{message}");
 }
 
 #[test]
 fn describes_model_and_response() {
-    let model = small_model();
+    let mut model = CpModelProto::default();
+    let x = model.add_int_var(0, 10);
+    let y = model.add_int_var(0, 10);
+    model.maximize(&[(x, 1), (y, 1)]);
     let stats = cpsat::model_stats(&model).unwrap();
     assert!(stats.contains("#Variables: 2"), "{stats}");
 

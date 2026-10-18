@@ -1,7 +1,10 @@
 //! Ownership wrappers for bridge resources.
 
-use anyhow::{Result, bail, ensure};
+use std::borrow::Cow;
+
 use cpsat_sys::{CPSAT_OK, CpsatBuffer, CpsatSession};
+
+use crate::error::{Error, Result};
 
 /// Owns a bridge-allocated buffer and frees it on drop.
 pub struct Buffer(CpsatBuffer);
@@ -23,8 +26,8 @@ impl Buffer {
         unsafe { core::slice::from_raw_parts(self.0.data, self.0.len) }
     }
 
-    pub fn text(&self) -> String {
-        String::from_utf8_lossy(self.bytes()).into_owned()
+    pub fn text(&self) -> Cow<'_, str> {
+        String::from_utf8_lossy(self.bytes())
     }
 }
 
@@ -40,10 +43,11 @@ pub fn check(code: i32, error: &Buffer) -> Result<()> {
     if code == CPSAT_OK {
         return Ok(());
     }
-    if error.bytes().is_empty() {
-        bail!("OR-Tools failed without a message");
-    }
-    bail!("OR-Tools failed: {}", error.text());
+    let message = match error.text() {
+        text if text.is_empty() => "no message".into(),
+        text => text.into_owned(),
+    };
+    Err(Error::Native(message))
 }
 
 /// Owns one native session, which serves one solve.
@@ -53,7 +57,9 @@ impl Session {
     pub fn new() -> Result<Self> {
         // SAFETY: no preconditions.
         let session = unsafe { cpsat_sys::cpsat_session_new() };
-        ensure!(!session.is_null(), "failed to allocate a CP-SAT session");
+        if session.is_null() {
+            return Err(Error::Native("failed to allocate a session".into()));
+        }
         Ok(Self(session))
     }
 

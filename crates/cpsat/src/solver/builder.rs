@@ -1,0 +1,172 @@
+use core::ffi::c_void;
+use std::ops::ControlFlow;
+use std::panic::resume_unwind;
+
+use buffa::Message;
+
+use crate::error::Result;
+use crate::native::{Buffer, Session};
+use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
+use crate::solver::callback::{State, trampoline};
+use crate::solver::event::{Event, EventSet};
+use crate::solver::stop::StopHandle;
+
+/// The callback type of a [`Solver`] without events.
+pub type NoEvents = fn(Event<'_>) -> ControlFlow<()>;
+
+/// Solves the model and returns the final response.
+///
+/// # Errors
+///
+/// Returns an error if the native bridge fails. An invalid model is not an
+/// error; the response status is `MODEL_INVALID`.
+pub fn solve(model: &CpModelProto, params: &SatParameters) -> Result<CpSolverResponse> {
+    run(model, params, EventSet::NONE, None, |_| {
+        ControlFlow::Continue(())
+    })
+}
+
+/// Configures a solve with events and cancellation, like Python's `CpSolver`.
+///
+/// ```no_run
+/// use std::ops::ControlFlow;
+///
+/// use cpsat::proto::{CpModelProto, SatParameters};
+/// use cpsat::{Event, EventSet, Solver};
+///
+/// let model = CpModelProto::default();
+/// let params = SatParameters::default().with_num_workers(8);
+/// let response = Solver::new(params)
+///     .on_event(EventSet::SOLUTION, |event| {
+///         if let Event::Solution(view) = event {
+///             println!("objective {}", view.objective_value);
+///         }
+///         ControlFlow::Continue(())
+///     })
+///     .solve(&model)?;
+/// # Ok::<(), cpsat::Error>(())
+/// ```
+#[derive(Debug)]
+pub struct Solver<'a, F = NoEvents> {
+    params: SatParameters,
+    events: EventSet,
+    stop: Option<&'a StopHandle>,
+    on_event: F,
+}
+
+impl Solver<'_> {
+    #[must_use]
+    pub fn new(params: SatParameters) -> Self {
+        Self {
+            params,
+            events: EventSet::NONE,
+            stop: None,
+            on_event: |_| ControlFlow::Continue(()),
+        }
+    }
+}
+
+impl Default for Solver<'_> {
+    fn default() -> Self {
+        Self::new(SatParameters::default())
+    }
+}
+
+impl<'a, F> Solver<'a, F> {
+    /// The parameters, which may change between solves, like Python's
+    /// `solver.parameters`.
+    pub fn params_mut(&mut self) -> &mut SatParameters {
+        &mut self.params
+    }
+
+    /// Reports `events` to `on_event`, which runs on a solver thread, one
+    /// event at a time. Returning [`ControlFlow::Break`] stops the search. A
+    /// panic in `on_event` stops the search and resumes after the solve
+    /// returns.
+    #[must_use]
+    pub fn on_event<G>(self, events: EventSet, on_event: G) -> Solver<'a, G>
+    where
+        G: FnMut(Event<'_>) -> ControlFlow<()> + Send,
+    {
+        Solver {
+            params: self.params,
+            events,
+            stop: self.stop,
+            on_event,
+        }
+    }
+
+    /// Lets `stop` stop the solve from any thread.
+    #[must_use]
+    pub fn stop(self, stop: &'a StopHandle) -> Self {
+        Self {
+            stop: Some(stop),
+            ..self
+        }
+    }
+
+    /// Solves the model and returns the final response. The solver can solve
+    /// again, for example after the model changes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the native bridge fails. An invalid model is not an
+    /// error; the response status is `MODEL_INVALID`.
+    pub fn solve(&mut self, model: &CpModelProto) -> Result<CpSolverResponse>
+    where
+        F: FnMut(Event<'_>) -> ControlFlow<()> + Send,
+    {
+        run(
+            model,
+            &self.params,
+            self.events,
+            self.stop,
+            &mut self.on_event,
+        )
+    }
+}
+
+fn run<F>(
+    model: &CpModelProto,
+    params: &SatParameters,
+    events: EventSet,
+    stop: Option<&StopHandle>,
+    on_event: F,
+) -> Result<CpSolverResponse>
+where
+    F: FnMut(Event<'_>) -> ControlFlow<()> + Send,
+{
+    let model = model.encode_to_vec();
+    let params = params.encode_to_vec();
+    let session = Session::new()?;
+    // SAFETY: the guard drops at the end of this scope, before the session.
+    let _attached = stop.map(|stop| unsafe { crate::solver::stop::attach(stop, session.as_ptr()) });
+
+    let mut state = State {
+        on_event,
+        panic: None,
+    };
+    let mut response = Buffer::new();
+    let mut error = Buffer::new();
+    // SAFETY: the byte slices and state outlive the call, the buffers are
+    // empty bridge buffers, and the trampoline matches the state type.
+    let code = unsafe {
+        cpsat_sys::cpsat_session_solve(
+            session.as_ptr(),
+            model.as_ptr(),
+            model.len(),
+            params.as_ptr(),
+            params.len(),
+            events.bits(),
+            Some(trampoline::<F>),
+            (&raw mut state).cast::<c_void>(),
+            response.as_mut_ptr(),
+            error.as_mut_ptr(),
+        )
+    };
+    if let Some(payload) = state.panic {
+        resume_unwind(payload);
+    }
+    crate::native::check(code, &error)?;
+    Ok(CpSolverResponse::decode_from_slice(response.bytes())?)
+}
