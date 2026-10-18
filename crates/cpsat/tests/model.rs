@@ -229,3 +229,15 @@ fn evaluation_overflow_panics() {
     };
     let _ = response.value(x * 4);
 }
+
+#[test]
+fn adds_and_clears_assumptions() {
+    let mut model = Model::new();
+    let a = model.bool_var();
+    let b = model.bool_var();
+    model.add_assumption(a);
+    model.add_assumptions([!b]);
+    assert_eq!(model.proto().assumptions, [0, -2]);
+    model.clear_assumptions();
+    assert_eq!(model.proto().assumptions, Vec::<i32>::new());
+}
