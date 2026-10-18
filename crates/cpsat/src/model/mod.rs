@@ -230,6 +230,7 @@ impl Model {
         self.add_hint(literal.variable(), (value != literal.is_negated()).into());
     }
 
+    /// Removes every hint, like Python's `clear_hints`.
     pub fn clear_hints(&mut self) {
         self.0.solution_hint = MessageField::none();
     }
@@ -241,12 +242,14 @@ impl Model {
         self.0.assumptions.push(literal.0);
     }
 
+    /// Adds each literal as an assumption, like Python's `add_assumptions`.
     pub fn add_assumptions(&mut self, literals: impl IntoIterator<Item = BoolVar>) {
         self.0
             .assumptions
             .extend(literals.into_iter().map(BoolVar::index));
     }
 
+    /// Removes every assumption, like Python's `clear_assumptions`.
     pub fn clear_assumptions(&mut self) {
         self.0.assumptions.clear();
     }

@@ -30,11 +30,13 @@ impl Constraint {
         bool_argument(Kind::BoolAnd, literals)
     }
 
+    /// At most one literal is true, like Python's `add_at_most_one`.
     #[must_use]
     pub fn at_most_one(literals: impl IntoIterator<Item = BoolVar>) -> Self {
         bool_argument(Kind::AtMostOne, literals)
     }
 
+    /// Exactly one literal is true, like Python's `add_exactly_one`.
     #[must_use]
     pub fn exactly_one(literals: impl IntoIterator<Item = BoolVar>) -> Self {
         bool_argument(Kind::ExactlyOne, literals)

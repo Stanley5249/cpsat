@@ -71,7 +71,8 @@ impl CpSolverResponseView<'_> {
         self.status.as_known().unwrap_or(CpSolverStatus::UNKNOWN)
     }
 
-    /// The value of a variable or expression in the solution.
+    /// The value of a variable or expression in the solution, like Python's
+    /// `CpSolverSolutionCallback.value`.
     ///
     /// # Panics
     ///
@@ -81,7 +82,8 @@ impl CpSolverResponseView<'_> {
         value(&self.solution, expr)
     }
 
-    /// The value of a literal in the solution.
+    /// The value of a literal in the solution, like Python's
+    /// `CpSolverSolutionCallback.boolean_value`.
     #[must_use]
     pub fn boolean_value(&self, literal: BoolVar) -> Option<bool> {
         boolean_value(&self.solution, literal)

@@ -19,4 +19,5 @@ pub enum Error {
     Decode(#[from] buffa::DecodeError),
 }
 
+/// A result with this crate's [`Error`].
 pub type Result<T, E = Error> = core::result::Result<T, E>;

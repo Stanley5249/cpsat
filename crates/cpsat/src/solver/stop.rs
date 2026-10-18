@@ -31,6 +31,8 @@ impl StopHandle {
         Self::default()
     }
 
+    /// Stops every attached solve and every later one, like Python's
+    /// `CpSolver.stop_search`.
     pub fn stop(&self) {
         // Set the flag before locking, so attach either sees it or registers
         // its session before this thread looks.
