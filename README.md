@@ -1,11 +1,13 @@
 # cpsat
 
-Rust binding for the Google OR-Tools CP-SAT solver, on raw Protobuf models.
+Rust binding for the Google OR-Tools CP-SAT solver.
 
-Models, parameters, and responses are
-[Buffa](https://github.com/anthropics/buffa)-generated types of the OR-Tools
-schemas, so every field is available. `cargo build` downloads the official
-OR-Tools release and compiles a small C++ bridge.
+`Model` builds a model with typed variables, linear expressions, and
+constraints, like Python's `CpModel`. It stores the model as a
+[Buffa](https://github.com/anthropics/buffa)-generated `CpModelProto`, and
+parameters and responses are Buffa types too, so every schema field is
+available. `cargo build` downloads the official OR-Tools release and compiles a
+small C++ bridge.
 
 ## Installation
 
@@ -24,16 +26,18 @@ compiler (MSVC 2022 or GCC 11 or newer), `curl`, and `tar`, plus CMake for
 ```rust
 use std::ops::ControlFlow;
 
-use cpsat::proto::{CpModelProto, SatParameters};
-use cpsat::{Event, EventSet, Solver, StopHandle};
+use cpsat::prelude::*;
 
-let mut model = CpModelProto::default();
-let x = model.add_int_var(0, 10);
-let y = model.add_int_var(0, 10);
-model.add_linear(&[(x, 1), (y, 1)], i64::MIN, 4);
-model.maximize(&[(x, 2), (y, 3)]);
+let mut model = Model::new();
+let x = model.int_var(0..=10);
+let y = model.int_var(0..=10);
+let enabled = model.bool_var();
+model.add((x + 2 * y).le(14));
+model.add(x.ne(y).only_if(enabled));
+model.add(Constraint::all_different([x, y]));
+model.maximize(x + y);
 
-let response = cpsat::solve(&model, &SatParameters::default())?;
+let response = solve(model.proto(), &SatParameters::default())?;
 println!("{}: x = {:?}", response.status(), response.value(x));
 
 let stop = StopHandle::new();
@@ -45,10 +49,13 @@ let response = Solver::new(SatParameters::default().with_num_workers(8))
         ControlFlow::Continue(())
     })
     .stop(&stop)
-    .solve(&model)?;
+    .solve(model.proto())?;
 ```
 
-`crates/cpsat/tests/samples.rs` ports the official OR-Tools samples.
+`crates/cpsat/tests/samples.rs` ports the official OR-Tools samples, and
+`docs/parity.md` maps each Python method to its Rust counterpart.
+`Model::proto_mut` reaches any schema field that the modeling API does not
+cover.
 
 ## Configuration
 
@@ -75,6 +82,8 @@ For development, also install:
 - [Bun](https://bun.sh/) for `bunx oxfmt`
 - [Buf](https://buf.build/docs/cli/installation/), only for `just proto-gen` and
   `just proto-check`
+- [uv](https://docs.astral.sh/uv/), only for `just fixtures`, which regenerates
+  the Python models in `crates/cpsat/tests/fixtures`
 
 ## Commands
 

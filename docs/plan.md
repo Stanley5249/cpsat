@@ -6,8 +6,8 @@ FFI exposes only capabilities that Rust cannot implement directly.
 ## Objectives
 
 Build a Rust-native binding for Google OR-Tools CP-SAT with at least the
-functional capabilities of the official Python CP-SAT binding, without
-reproducing its high-level API.
+functional capabilities of the official Python CP-SAT binding, through an
+idiomatic Rust modeling API that writes into the Protobuf model.
 
 ### Hard requirements
 
@@ -26,8 +26,8 @@ reproducing its high-level API.
 
 ### Non-goals
 
-- Python's modeling DSL, `CpModelBuilder`, or the C++ class hierarchy. Small
-  helpers on the generated types cover the common cases instead.
+- A literal copy of Python's API, such as the Pandas series constructors.
+  Iterators and collections cover the same needs.
 - A persistent incremental solver.
 - OR-Tools subsystems outside CP-SAT.
 - Custom propagation or search algorithms.
@@ -60,7 +60,7 @@ These facts shape the design. Recheck them when the pinned version changes.
 ```text
 user code
    |
-crates/cpsat          Buffa types, helpers, Solver, StopHandle, diagnostics
+crates/cpsat          Model, Buffa types, Solver, StopHandle, diagnostics
    |  (safe Rust, owns the model)
 crates/cpsat-sys      build.rs, raw extern "C" declarations, links = "ortools"
    |  (serialized bytes, fn pointer + context, opaque session)
@@ -96,20 +96,49 @@ of the model.
 | Defaults          | `default_parameters` fills `SatParameters` through C++ reflection                                    | Buffa generates no proto2 default getters                                                                                  |
 | Generated lints   | `#[expect(clippy::all, clippy::pedantic, ...)]` on `mod proto`                                       | Buffa follows its own lint policy                                                                                          |
 
+## Modeling API
+
+`Model` owns a `CpModelProto` and is its only persistent representation. Each
+model operation appends to that message, and `Model::proto_mut` reaches every
+field the API does not cover.
+
+```text
+model.int_var(0..=10) -----------------------> IntVar(i32)
+model.bool_var() ----------------------------> BoolVar(i32), !b = -i - 1
+x + 2 * y - 3 -------------------------------> LinearExpr(LinearExpressionProto)
+(x + 2 * y).le(10).only_if(b) ---------------> Constraint(ConstraintProto)
+Circuit::new().arc(0, 1, a) --- From -------> Constraint
+model.add(constraint) --- move into model ---> ConstraintRef(i32)
+```
+
+| Topic          | Decision                                                                                                                            | Reason                                                                                                        |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Handles        | `IntVar`, `BoolVar`, `IntervalVar`, and `ConstraintRef` are typed `i32` indices without a model identity                            | Like `petgraph` and `slotmap`, the types keep categories apart at no cost, and the model only appends         |
+| Literals       | `BoolVar` is a literal, and `!` negates it                                                                                          | The schema's `-i - 1` convention, and `!b` counts as `1 - b` in an expression                                 |
+| Expressions    | `LinearExpr` wraps `LinearExpressionProto`, and writing it sorts, merges, and drops zero terms                                      | Matches Python's output, and the arithmetic panics on `i64` overflow where Python raises                      |
+| Comparisons    | Inherent `eq`, `ne`, `le`, `lt`, `ge`, `gt`, and `in_domain` on `IntVar`, `BoolVar`, and `LinearExpr`                               | Rust's comparison traits must return `bool`, and handles derive no `PartialOrd` to keep the names unambiguous |
+| Constraints    | `Constraint` owns a `ConstraintProto`, with `only_if` and `with_name`. One-shot families are constructors on it                     | One common type, and every family in v9.15 accepts enforcement literals                                       |
+| Builders       | `Circuit`, `MultipleCircuit`, `Table`, `Automaton`, `Cumulative`, and `Reservoir` grow entry by entry and convert into `Constraint` | Families with many entries read best as chains or `collect`                                                   |
+| Insertion      | `Model::add` is the only path for constraints, and intervals come from `Model` methods                                              | An interval is a constraint that other constraints reference by index                                         |
+| Validation     | The OR-Tools validator through `validate_model` and the solve status                                                                | Python's eager argument checks would duplicate it                                                             |
+| Responses      | `value` takes any expression and `boolean_value` takes a literal, on the owned response and the solution view                       | Mirrors `CpSolver.value` and the solution callback                                                            |
+| Proto identity | `tests/equivalence.rs` compares each family with the output of `tests/fixtures/generate.py`                                         | Proves the encoding equals Python's, except for the constant cache                                            |
+
 ## Milestones
 
-| Phase | Deliverable                                                       | Status                                                   |
-| ----- | ----------------------------------------------------------------- | -------------------------------------------------------- |
-| M0    | Scaffolding, lints, formatters, `justfile`                        | Done                                                     |
-| M1    | Buffa types and round-trip tests in `tests/protobuf.rs`           | Done                                                     |
-| M2    | Bridge over `SolveWrapper` and `CpSatHelper`                      | Done                                                     |
-| M3a   | Prebuilt and `dir:` modes, shared cache, runtime copy             | Done on Windows, Linux in CI                             |
-| M4    | `solve`, `Solver`, `StopHandle`, helpers, diagnostics             | Done                                                     |
-| M5    | Parity matrix in `docs/parity.md`, cross-checked with Python 9.15 | Done                                                     |
-| M6    | CI on Windows, Debian 12, and Ubuntu 22.04, 24.04, and 26.04      | Done                                                     |
-| M3b   | Source backend                                                    | Implemented, configure step verified, full build pending |
-| M7    | Benchmarks                                                        | Open                                                     |
-| M8    | Static linking and CP-SAT-only exploration                        | Optional                                                 |
+| Phase | Deliverable                                                       | Status                                                 |
+| ----- | ----------------------------------------------------------------- | ------------------------------------------------------ |
+| M0    | Scaffolding, lints, formatters, `justfile`                        | Done                                                   |
+| M1    | Buffa types and round-trip tests in `tests/protobuf.rs`           | Done                                                   |
+| M2    | Bridge over `SolveWrapper` and `CpSatHelper`                      | Done                                                   |
+| M3a   | Prebuilt and `dir:` modes, shared cache, runtime copy             | Done on Windows, Linux in CI                           |
+| M4    | `solve`, `Solver`, `StopHandle`, helpers, diagnostics             | Done                                                   |
+| M5    | Parity matrix in `docs/parity.md`, cross-checked with Python 9.15 | Done                                                   |
+| M6    | CI on Windows, Debian 12, and Ubuntu 22.04, 24.04, and 26.04      | Done                                                   |
+| M3b   | Source backend                                                    | Done on Windows, Linux `source` workflow not run yet   |
+| M7    | Benchmarks                                                        | Open                                                   |
+| M8    | Static linking and CP-SAT-only exploration                        | Optional                                               |
+| M9    | Modeling API: `Model`, handles, expressions, every family         | Done, with the Python fixtures and 18 official samples |
 
 ### M3b source backend
 
@@ -117,9 +146,9 @@ of the model.
 need. Configuring with them succeeds on Windows with SCIP, HiGHS, and Coin-OR
 off. MathOpt must stay on, and Gurobi and Xpress stay on because OR-Tools loads
 them at runtime without build dependencies. Inspect the configured targets
-instead of trusting that these options produce a CP-SAT-only build. The source
-backend must pass the same tests as the prebuilt one, through the on-demand
-`source` workflow.
+instead of trusting that these options produce a CP-SAT-only build. A full
+Windows build takes about 40 minutes and passes the same tests as the prebuilt
+archive. The on-demand `source` workflow runs the same tests on Linux.
 
 ### M7 performance
 
@@ -142,7 +171,9 @@ before maintaining any of them.
 - Native libraries are acquired, linked, and found at runtime automatically.
 - Buffa types are the only model representation, and models stay mutable between
   solves.
-- Every targeted Python capability passes its parity test.
+- Every Python v9.15 modeling capability has a Rust API or a documented Protobuf
+  equivalent, and passes its parity test.
+- Typical modeling code needs only `use cpsat::prelude::*`.
 - Callbacks and cancellation are safe.
 - `just ci` passes, and normal builds regenerate neither Protobuf code nor
   OR-Tools.
