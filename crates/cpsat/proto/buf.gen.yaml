@@ -5,3 +5,6 @@ plugins:
     out: ../src/proto
     opt:
       - file_per_package=true
+      - text=true
+      - json=true
+      - gate_impls=true

@@ -49,6 +49,97 @@ impl ::core::default::Default for CpSolverStatus {
         Self::UNKNOWN
     }
 }
+#[cfg(feature = "json")]
+const _: () = {
+    impl ::serde::Serialize for CpSolverStatus {
+        fn serialize<S: ::serde::Serializer>(
+            &self,
+            s: S,
+        ) -> ::core::result::Result<S::Ok, S::Error> {
+            s.serialize_str(::buffa::Enumeration::proto_name(self))
+        }
+    }
+    impl<'de> ::serde::Deserialize<'de> for CpSolverStatus {
+        fn deserialize<D: ::serde::Deserializer<'de>>(
+            d: D,
+        ) -> ::core::result::Result<Self, D::Error> {
+            struct _V;
+            impl ::serde::de::Visitor<'_> for _V {
+                type Value = CpSolverStatus;
+                fn expecting(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.write_str(
+                        concat!(
+                            "a string, integer, or null for ", stringify!(CpSolverStatus)
+                        ),
+                    )
+                }
+                fn visit_str<E: ::serde::de::Error>(
+                    self,
+                    v: &str,
+                ) -> ::core::result::Result<CpSolverStatus, E> {
+                    <CpSolverStatus as ::buffa::Enumeration>::from_proto_name(v)
+                        .ok_or_else(|| { ::serde::de::Error::unknown_variant(v, &[]) })
+                }
+                fn visit_i64<E: ::serde::de::Error>(
+                    self,
+                    v: i64,
+                ) -> ::core::result::Result<CpSolverStatus, E> {
+                    let v32 = i32::try_from(v)
+                        .map_err(|_| {
+                            ::serde::de::Error::custom(
+                                ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                            )
+                        })?;
+                    <CpSolverStatus as ::buffa::Enumeration>::from_i32(v32)
+                        .ok_or_else(|| {
+                            ::serde::de::Error::custom(
+                                ::buffa::alloc::format!("unknown enum value {v32}"),
+                            )
+                        })
+                }
+                fn visit_u64<E: ::serde::de::Error>(
+                    self,
+                    v: u64,
+                ) -> ::core::result::Result<CpSolverStatus, E> {
+                    let v32 = i32::try_from(v)
+                        .map_err(|_| {
+                            ::serde::de::Error::custom(
+                                ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                            )
+                        })?;
+                    <CpSolverStatus as ::buffa::Enumeration>::from_i32(v32)
+                        .ok_or_else(|| {
+                            ::serde::de::Error::custom(
+                                ::buffa::alloc::format!("unknown enum value {v32}"),
+                            )
+                        })
+                }
+                fn visit_unit<E: ::serde::de::Error>(
+                    self,
+                ) -> ::core::result::Result<CpSolverStatus, E> {
+                    ::core::result::Result::Ok(::core::default::Default::default())
+                }
+            }
+            d.deserialize_any(_V)
+        }
+    }
+    impl ::buffa::json_helpers::ProtoElemJson for CpSolverStatus {
+        fn serialize_proto_json<S: ::serde::Serializer>(
+            v: &Self,
+            s: S,
+        ) -> ::core::result::Result<S::Ok, S::Error> {
+            ::serde::Serialize::serialize(v, s)
+        }
+        fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+            d: D,
+        ) -> ::core::result::Result<Self, D::Error> {
+            <Self as ::serde::Deserialize>::deserialize(d)
+        }
+    }
+};
 impl ::buffa::Enumeration for CpSolverStatus {
     fn from_i32(value: i32) -> ::core::option::Option<Self> {
         match value {
@@ -112,10 +203,20 @@ impl ::buffa::Enumeration for CpSolverStatus {
 /// index 4 will refer to the logical fact that model.variable(4) == 1 and a
 /// literal index of -5 will refer to the logical fact model.variable(4) == 0.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct IntegerVariableProto {
     /// For debug/logging only. Can be empty.
     ///
     /// Field 1: `name`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "name",
+            with = "::buffa::json_helpers::proto_string",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_str"
+        )
+    )]
     pub name: ::buffa::alloc::string::String,
     /// The variable domain given as a sorted list of n disjoint intervals
     /// \[min, max\] and encoded as \[min_0, max_0,  ..., min_{n-1}, max_{n-1}\].
@@ -136,7 +237,16 @@ pub struct IntegerVariableProto {
     /// try to specify tighter domains.
     ///
     /// Field 2: `domain`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "domain",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub domain: ::buffa::alloc::vec::Vec<i64>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -292,11 +402,88 @@ impl ::buffa::ExtensionSet for IntegerVariableProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for IntegerVariableProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if !self.name.is_empty() {
+            enc.write_field_name("name")?;
+            enc.write_string(&self.name)?;
+        }
+        for __v in &self.domain {
+            enc.write_field_name("domain")?;
+            enc.write_i64(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "name" => self.name = dec.read_string()?.into_owned(),
+                "domain" => {
+                    dec.read_repeated_into(&mut self.domain, |__d| __d.read_i64())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for IntegerVariableProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __INTEGER_VARIABLE_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.IntegerVariableProto",
+    to_json: ::buffa::type_registry::any_to_json::<IntegerVariableProto>,
+    from_json: ::buffa::type_registry::any_from_json::<IntegerVariableProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __INTEGER_VARIABLE_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.IntegerVariableProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<IntegerVariableProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<IntegerVariableProto>,
+};
 /// Argument of the constraints of the form OP(literals).
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct BoolArgumentProto {
     /// Field 1: `literals`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "literals",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub literals: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -435,17 +622,105 @@ impl ::buffa::ExtensionSet for BoolArgumentProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for BoolArgumentProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.literals {
+            enc.write_field_name("literals")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "literals" => {
+                    dec.read_repeated_into(&mut self.literals, |__d| __d.read_i32())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for BoolArgumentProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __BOOL_ARGUMENT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.BoolArgumentProto",
+    to_json: ::buffa::type_registry::any_to_json::<BoolArgumentProto>,
+    from_json: ::buffa::type_registry::any_from_json::<BoolArgumentProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __BOOL_ARGUMENT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.BoolArgumentProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<BoolArgumentProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<BoolArgumentProto>,
+};
 /// Some constraints supports linear expression instead of just using a reference
 /// to a variable. This is especially useful during presolve to reduce the model
 /// size.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct LinearExpressionProto {
     /// Field 1: `vars`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "vars",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub vars: ::buffa::alloc::vec::Vec<i32>,
     /// Field 2: `coeffs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "coeffs",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub coeffs: ::buffa::alloc::vec::Vec<i64>,
     /// Field 3: `offset`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "offset",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub offset: i64,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -662,15 +937,104 @@ impl ::buffa::ExtensionSet for LinearExpressionProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for LinearExpressionProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.offset != 0i64 {
+            enc.write_field_name("offset")?;
+            enc.write_i64(self.offset)?;
+        }
+        for __v in &self.vars {
+            enc.write_field_name("vars")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.coeffs {
+            enc.write_field_name("coeffs")?;
+            enc.write_i64(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "offset" => self.offset = dec.read_i64()?,
+                "vars" => dec.read_repeated_into(&mut self.vars, |__d| __d.read_i32())?,
+                "coeffs" => {
+                    dec.read_repeated_into(&mut self.coeffs, |__d| __d.read_i64())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for LinearExpressionProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __LINEAR_EXPRESSION_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.LinearExpressionProto",
+    to_json: ::buffa::type_registry::any_to_json::<LinearExpressionProto>,
+    from_json: ::buffa::type_registry::any_from_json::<LinearExpressionProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __LINEAR_EXPRESSION_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.LinearExpressionProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<LinearExpressionProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<LinearExpressionProto>,
+};
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct LinearArgumentProto {
     /// Field 1: `target`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "target",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub target: ::buffa::MessageField<
         LinearExpressionProto,
         ::buffa::Inline<LinearExpressionProto>,
     >,
     /// Field 2: `exprs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exprs",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub exprs: ::buffa::alloc::vec::Vec<LinearExpressionProto>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -809,11 +1173,95 @@ impl ::buffa::ExtensionSet for LinearArgumentProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for LinearArgumentProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.target.is_set() {
+            enc.write_field_name("target")?;
+            enc.write_message(&*self.target)?;
+        }
+        for __v in &self.exprs {
+            enc.write_field_name("exprs")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "target" => dec.merge_message(self.target.get_or_insert_default())?,
+                "exprs" => {
+                    dec.read_repeated_into(
+                        &mut self.exprs,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for LinearArgumentProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __LINEAR_ARGUMENT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.LinearArgumentProto",
+    to_json: ::buffa::type_registry::any_to_json::<LinearArgumentProto>,
+    from_json: ::buffa::type_registry::any_from_json::<LinearArgumentProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __LINEAR_ARGUMENT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.LinearArgumentProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<LinearArgumentProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<LinearArgumentProto>,
+};
 /// All expressions must take different values.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct AllDifferentConstraintProto {
     /// Field 1: `exprs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exprs",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub exprs: ::buffa::alloc::vec::Vec<LinearExpressionProto>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -923,6 +1371,74 @@ impl ::buffa::ExtensionSet for AllDifferentConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for AllDifferentConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.exprs {
+            enc.write_field_name("exprs")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "exprs" => {
+                    dec.read_repeated_into(
+                        &mut self.exprs,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for AllDifferentConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __ALL_DIFFERENT_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.AllDifferentConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<AllDifferentConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<AllDifferentConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __ALL_DIFFERENT_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.AllDifferentConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<AllDifferentConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<AllDifferentConstraintProto>,
+};
 /// The linear sum vars\[i\] * coeffs\[i\] must fall in the given domain. The domain
 /// has the same format as the one in IntegerVariableProto.
 ///
@@ -930,15 +1446,42 @@ impl ::buffa::ExtensionSet for AllDifferentConstraintProto {
 /// involved variables that the sum can always be computed without integer
 /// overflow and throws an error otherwise.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct LinearConstraintProto {
     /// Field 1: `vars`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "vars",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub vars: ::buffa::alloc::vec::Vec<i32>,
     /// Same size as vars.
     ///
     /// Field 2: `coeffs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "coeffs",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub coeffs: ::buffa::alloc::vec::Vec<i64>,
     /// Field 3: `domain`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "domain",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub domain: ::buffa::alloc::vec::Vec<i64>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -1201,34 +1744,158 @@ impl ::buffa::ExtensionSet for LinearConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for LinearConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.vars {
+            enc.write_field_name("vars")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.coeffs {
+            enc.write_field_name("coeffs")?;
+            enc.write_i64(*__v)?;
+        }
+        for __v in &self.domain {
+            enc.write_field_name("domain")?;
+            enc.write_i64(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "vars" => dec.read_repeated_into(&mut self.vars, |__d| __d.read_i32())?,
+                "coeffs" => {
+                    dec.read_repeated_into(&mut self.coeffs, |__d| __d.read_i64())?
+                }
+                "domain" => {
+                    dec.read_repeated_into(&mut self.domain, |__d| __d.read_i64())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for LinearConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __LINEAR_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.LinearConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<LinearConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<LinearConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __LINEAR_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.LinearConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<LinearConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<LinearConstraintProto>,
+};
 /// The constraint linear_target = exprs\[linear_index\].
 /// This enforces that index takes one of the value in \[0, vars_size()).
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct ElementConstraintProto {
     /// Legacy field.
     ///
     /// Field 1: `index`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "index",
+            with = "::buffa::json_helpers::int32",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i32"
+        )
+    )]
     pub index: i32,
     /// Legacy field.
     ///
     /// Field 2: `target`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "target",
+            with = "::buffa::json_helpers::int32",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i32"
+        )
+    )]
     pub target: i32,
     /// Legacy field.
     ///
     /// Field 3: `vars`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "vars",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub vars: ::buffa::alloc::vec::Vec<i32>,
     /// Field 4: `linear_index`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "linearIndex",
+            alias = "linear_index",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub linear_index: ::buffa::MessageField<
         LinearExpressionProto,
         ::buffa::Inline<LinearExpressionProto>,
     >,
     /// Field 5: `linear_target`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "linearTarget",
+            alias = "linear_target",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub linear_target: ::buffa::MessageField<
         LinearExpressionProto,
         ::buffa::Inline<LinearExpressionProto>,
     >,
     /// Field 6: `exprs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exprs",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub exprs: ::buffa::alloc::vec::Vec<LinearExpressionProto>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -1487,6 +2154,103 @@ impl ::buffa::ExtensionSet for ElementConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for ElementConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.index != 0i32 {
+            enc.write_field_name("index")?;
+            enc.write_i32(self.index)?;
+        }
+        if self.target != 0i32 {
+            enc.write_field_name("target")?;
+            enc.write_i32(self.target)?;
+        }
+        if self.linear_index.is_set() {
+            enc.write_field_name("linear_index")?;
+            enc.write_message(&*self.linear_index)?;
+        }
+        if self.linear_target.is_set() {
+            enc.write_field_name("linear_target")?;
+            enc.write_message(&*self.linear_target)?;
+        }
+        for __v in &self.vars {
+            enc.write_field_name("vars")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.exprs {
+            enc.write_field_name("exprs")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "index" => self.index = dec.read_i32()?,
+                "target" => self.target = dec.read_i32()?,
+                "linear_index" => {
+                    dec.merge_message(self.linear_index.get_or_insert_default())?
+                }
+                "linear_target" => {
+                    dec.merge_message(self.linear_target.get_or_insert_default())?
+                }
+                "vars" => dec.read_repeated_into(&mut self.vars, |__d| __d.read_i32())?,
+                "exprs" => {
+                    dec.read_repeated_into(
+                        &mut self.exprs,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for ElementConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __ELEMENT_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.ElementConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<ElementConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<ElementConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __ELEMENT_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.ElementConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<ElementConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<ElementConstraintProto>,
+};
 /// This is not really a constraint. It is there so it can be referred by other
 /// constraints using this "interval" concept.
 ///
@@ -1495,22 +2259,46 @@ impl ::buffa::ExtensionSet for ElementConstraintProto {
 /// - enforcement =\> start + size == end.
 /// - enforcement =\> size \>= 0  // Only needed if size is not already \>= 0.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct IntervalConstraintProto {
     /// Field 4: `start`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "start",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub start: ::buffa::MessageField<
         LinearExpressionProto,
         ::buffa::Inline<LinearExpressionProto>,
     >,
     /// Field 5: `end`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "end",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub end: ::buffa::MessageField<
         LinearExpressionProto,
         ::buffa::Inline<LinearExpressionProto>,
     >,
     /// Field 6: `size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "size",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub size: ::buffa::MessageField<
         LinearExpressionProto,
         ::buffa::Inline<LinearExpressionProto>,
     >,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -1677,15 +2465,95 @@ impl ::buffa::ExtensionSet for IntervalConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for IntervalConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.start.is_set() {
+            enc.write_field_name("start")?;
+            enc.write_message(&*self.start)?;
+        }
+        if self.end.is_set() {
+            enc.write_field_name("end")?;
+            enc.write_message(&*self.end)?;
+        }
+        if self.size.is_set() {
+            enc.write_field_name("size")?;
+            enc.write_message(&*self.size)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "start" => dec.merge_message(self.start.get_or_insert_default())?,
+                "end" => dec.merge_message(self.end.get_or_insert_default())?,
+                "size" => dec.merge_message(self.size.get_or_insert_default())?,
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for IntervalConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __INTERVAL_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.IntervalConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<IntervalConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<IntervalConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __INTERVAL_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.IntervalConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<IntervalConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<IntervalConstraintProto>,
+};
 /// All the intervals (index of IntervalConstraintProto) must be disjoint. More
 /// formally, there must exist a sequence so that for each consecutive intervals,
 /// we have end_i \<= start_{i+1}. In particular, intervals of size zero do matter
 /// for this constraint. This is also known as a disjunctive constraint in
 /// scheduling.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct NoOverlapConstraintProto {
     /// Field 1: `intervals`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "intervals",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub intervals: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -1826,6 +2694,67 @@ impl ::buffa::ExtensionSet for NoOverlapConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for NoOverlapConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.intervals {
+            enc.write_field_name("intervals")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "intervals" => {
+                    dec.read_repeated_into(&mut self.intervals, |__d| __d.read_i32())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for NoOverlapConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __NO_OVERLAP_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.NoOverlapConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<NoOverlapConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<NoOverlapConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __NO_OVERLAP_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.NoOverlapConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<NoOverlapConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<NoOverlapConstraintProto>,
+};
 /// The boxes defined by \[start_x, end_x) * \[start_y, end_y) cannot overlap.
 /// Furthermore, one box is optional if at least one of the x or y interval is
 /// optional.
@@ -1836,13 +2765,34 @@ impl ::buffa::ExtensionSet for NoOverlapConstraintProto {
 ///   - a line box overlapping a box with a non zero area
 ///   - one vertical line box crossing an horizontal line box.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct NoOverlap2DConstraintProto {
     /// Field 1: `x_intervals`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "xIntervals",
+            alias = "x_intervals",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub x_intervals: ::buffa::alloc::vec::Vec<i32>,
     /// Same size as x_intervals.
     ///
     /// Field 2: `y_intervals`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "yIntervals",
+            alias = "y_intervals",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub y_intervals: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -2044,6 +2994,74 @@ impl ::buffa::ExtensionSet for NoOverlap2DConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for NoOverlap2DConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.x_intervals {
+            enc.write_field_name("x_intervals")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.y_intervals {
+            enc.write_field_name("y_intervals")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "x_intervals" => {
+                    dec.read_repeated_into(&mut self.x_intervals, |__d| __d.read_i32())?
+                }
+                "y_intervals" => {
+                    dec.read_repeated_into(&mut self.y_intervals, |__d| __d.read_i32())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for NoOverlap2DConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __NO_OVERLAP2D_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.NoOverlap2DConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<NoOverlap2DConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<NoOverlap2DConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __NO_OVERLAP2D_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.NoOverlap2DConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<NoOverlap2DConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<NoOverlap2DConstraintProto>,
+};
 /// The sum of the demands of the intervals at each interval point cannot exceed
 /// a capacity. Note that intervals are interpreted as \[start, end) and as
 /// such intervals like \[2,3) and \[3,4) do not overlap for the point of view of
@@ -2054,18 +3072,44 @@ impl ::buffa::ExtensionSet for NoOverlap2DConstraintProto {
 /// implicit enforces capacity \>= 0. In other words, a negative capacity is
 /// considered valid but always infeasible.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct CumulativeConstraintProto {
     /// Field 1: `capacity`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "capacity",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub capacity: ::buffa::MessageField<
         LinearExpressionProto,
         ::buffa::Inline<LinearExpressionProto>,
     >,
     /// Field 2: `intervals`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "intervals",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub intervals: ::buffa::alloc::vec::Vec<i32>,
     /// Same size as intervals.
     ///
     /// Field 3: `demands`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "demands",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub demands: ::buffa::alloc::vec::Vec<LinearExpressionProto>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -2265,6 +3309,86 @@ impl ::buffa::ExtensionSet for CumulativeConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for CumulativeConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.capacity.is_set() {
+            enc.write_field_name("capacity")?;
+            enc.write_message(&*self.capacity)?;
+        }
+        for __v in &self.intervals {
+            enc.write_field_name("intervals")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.demands {
+            enc.write_field_name("demands")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "capacity" => dec.merge_message(self.capacity.get_or_insert_default())?,
+                "intervals" => {
+                    dec.read_repeated_into(&mut self.intervals, |__d| __d.read_i32())?
+                }
+                "demands" => {
+                    dec.read_repeated_into(
+                        &mut self.demands,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for CumulativeConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __CUMULATIVE_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CumulativeConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<CumulativeConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<CumulativeConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __CUMULATIVE_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CumulativeConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<CumulativeConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<CumulativeConstraintProto>,
+};
 /// Maintain a reservoir level within bounds. The water level starts at 0, and at
 /// any time, it must be within \[min_level, max_level\].
 ///
@@ -2282,17 +3406,65 @@ impl ::buffa::ExtensionSet for CumulativeConstraintProto {
 /// are actually performed. If this array is not defined, then it is assumed that
 /// all actions will be performed.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct ReservoirConstraintProto {
     /// Field 1: `min_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "minLevel",
+            alias = "min_level",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub min_level: i64,
     /// Field 2: `max_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxLevel",
+            alias = "max_level",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub max_level: i64,
     /// Field 3: `time_exprs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "timeExprs",
+            alias = "time_exprs",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub time_exprs: ::buffa::alloc::vec::Vec<LinearExpressionProto>,
     /// Field 6: `level_changes`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "levelChanges",
+            alias = "level_changes",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub level_changes: ::buffa::alloc::vec::Vec<LinearExpressionProto>,
     /// Field 5: `active_literals`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "activeLiterals",
+            alias = "active_literals",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub active_literals: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -2523,6 +3695,108 @@ impl ::buffa::ExtensionSet for ReservoirConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for ReservoirConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.min_level != 0i64 {
+            enc.write_field_name("min_level")?;
+            enc.write_i64(self.min_level)?;
+        }
+        if self.max_level != 0i64 {
+            enc.write_field_name("max_level")?;
+            enc.write_i64(self.max_level)?;
+        }
+        for __v in &self.time_exprs {
+            enc.write_field_name("time_exprs")?;
+            enc.write_message(__v)?;
+        }
+        for __v in &self.level_changes {
+            enc.write_field_name("level_changes")?;
+            enc.write_message(__v)?;
+        }
+        for __v in &self.active_literals {
+            enc.write_field_name("active_literals")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "min_level" => self.min_level = dec.read_i64()?,
+                "max_level" => self.max_level = dec.read_i64()?,
+                "time_exprs" => {
+                    dec.read_repeated_into(
+                        &mut self.time_exprs,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                "level_changes" => {
+                    dec.read_repeated_into(
+                        &mut self.level_changes,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                "active_literals" => {
+                    dec.read_repeated_into(
+                        &mut self.active_literals,
+                        |__d| __d.read_i32(),
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for ReservoirConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __RESERVOIR_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.ReservoirConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<ReservoirConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<ReservoirConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __RESERVOIR_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.ReservoirConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<ReservoirConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<ReservoirConstraintProto>,
+};
 /// The circuit constraint is defined on a graph where the arc presence are
 /// controlled by literals. Each arc is given by an index in the
 /// tails/heads/literals lists that must have the same size.
@@ -2533,13 +3807,40 @@ impl ::buffa::ExtensionSet for ReservoirConstraintProto {
 /// circuit. Note that multi-arcs are allowed, but only one of them will be true
 /// at the same time. Multi-self loop are disallowed though.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct CircuitConstraintProto {
     /// Field 3: `tails`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "tails",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub tails: ::buffa::alloc::vec::Vec<i32>,
     /// Field 4: `heads`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "heads",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub heads: ::buffa::alloc::vec::Vec<i32>,
     /// Field 5: `literals`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "literals",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub literals: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -2802,6 +4103,77 @@ impl ::buffa::ExtensionSet for CircuitConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for CircuitConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.tails {
+            enc.write_field_name("tails")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.heads {
+            enc.write_field_name("heads")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.literals {
+            enc.write_field_name("literals")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "tails" => dec.read_repeated_into(&mut self.tails, |__d| __d.read_i32())?,
+                "heads" => dec.read_repeated_into(&mut self.heads, |__d| __d.read_i32())?,
+                "literals" => {
+                    dec.read_repeated_into(&mut self.literals, |__d| __d.read_i32())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for CircuitConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __CIRCUIT_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CircuitConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<CircuitConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<CircuitConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __CIRCUIT_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CircuitConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<CircuitConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<CircuitConstraintProto>,
+};
 /// The "VRP" (Vehicle Routing Problem) constraint.
 ///
 /// The direct graph where arc #i (from tails\[i\] to head\[i\]) is present iff
@@ -2823,18 +4195,60 @@ impl ::buffa::ExtensionSet for CircuitConstraintProto {
 /// outgoing \<= 1 (more efficient implementation). On the other hand, having this
 /// specific constraint allow us to add specific "cuts" to a VRP problem.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct RoutesConstraintProto {
     /// Field 1: `tails`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "tails",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub tails: ::buffa::alloc::vec::Vec<i32>,
     /// Field 2: `heads`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "heads",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub heads: ::buffa::alloc::vec::Vec<i32>,
     /// Field 3: `literals`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "literals",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub literals: ::buffa::alloc::vec::Vec<i32>,
     /// DEPRECATED. These fields are no longer used. The solver ignores them.
     ///
     /// Field 4: `demands`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "demands",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub demands: ::buffa::alloc::vec::Vec<i32>,
     /// Field 5: `capacity`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "capacity",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub capacity: i64,
     /// Expressions associated with the nodes of the graph, such as the load of the
     /// vehicle arriving at a node, or the time at which a vehicle arrives at a
@@ -2847,7 +4261,16 @@ pub struct RoutesConstraintProto {
     /// can fail in complex cases).
     ///
     /// Field 6: `dimensions`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "dimensions",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub dimensions: ::buffa::alloc::vec::Vec<routes_constraint_proto::NodeExpressions>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -3216,16 +4639,124 @@ impl ::buffa::ExtensionSet for RoutesConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for RoutesConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.capacity != 0i64 {
+            enc.write_field_name("capacity")?;
+            enc.write_i64(self.capacity)?;
+        }
+        for __v in &self.tails {
+            enc.write_field_name("tails")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.heads {
+            enc.write_field_name("heads")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.literals {
+            enc.write_field_name("literals")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.demands {
+            enc.write_field_name("demands")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.dimensions {
+            enc.write_field_name("dimensions")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "capacity" => self.capacity = dec.read_i64()?,
+                "tails" => dec.read_repeated_into(&mut self.tails, |__d| __d.read_i32())?,
+                "heads" => dec.read_repeated_into(&mut self.heads, |__d| __d.read_i32())?,
+                "literals" => {
+                    dec.read_repeated_into(&mut self.literals, |__d| __d.read_i32())?
+                }
+                "demands" => {
+                    dec.read_repeated_into(&mut self.demands, |__d| __d.read_i32())?
+                }
+                "dimensions" => {
+                    dec.read_repeated_into(
+                        &mut self.dimensions,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for RoutesConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __ROUTES_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.RoutesConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<RoutesConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<RoutesConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __ROUTES_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.RoutesConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<RoutesConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<RoutesConstraintProto>,
+};
 pub mod routes_constraint_proto {
     #[allow(unused_imports)]
     use super::*;
     /// A set of linear expressions associated with the nodes.
     #[derive(Clone, PartialEq, Default)]
+    #[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "json", serde(default))]
     pub struct NodeExpressions {
         /// The i-th element is the linear expression associated with the i-th node.
         ///
         /// Field 1: `exprs`
+        #[cfg_attr(
+            feature = "json",
+            serde(
+                rename = "exprs",
+                skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+                deserialize_with = "::buffa::json_helpers::null_as_default"
+            )
+        )]
         pub exprs: ::buffa::alloc::vec::Vec<super::LinearExpressionProto>,
+        #[cfg_attr(feature = "json", serde(skip))]
         #[doc(hidden)]
         pub __buffa_unknown_fields: ::buffa::UnknownFields,
     }
@@ -3333,8 +4864,78 @@ pub mod routes_constraint_proto {
             &mut self.__buffa_unknown_fields
         }
     }
+    #[cfg(feature = "text")]
+    impl ::buffa::text::TextFormat for NodeExpressions {
+        fn encode_text(
+            &self,
+            enc: &mut ::buffa::text::TextEncoder<'_>,
+        ) -> ::core::fmt::Result {
+            #[allow(unused_imports)]
+            use ::buffa::Enumeration as _;
+            for __v in &self.exprs {
+                enc.write_field_name("exprs")?;
+                enc.write_message(__v)?;
+            }
+            enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+            ::core::result::Result::Ok(())
+        }
+        fn merge_text(
+            &mut self,
+            dec: &mut ::buffa::text::TextDecoder<'_>,
+        ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+            #[allow(unused_imports)]
+            use ::buffa::Enumeration as _;
+            while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+                match __name {
+                    "exprs" => {
+                        dec.read_repeated_into(
+                            &mut self.exprs,
+                            |__d| {
+                                let mut __m = ::core::default::Default::default();
+                                __d.merge_message(&mut __m)?;
+                                ::core::result::Result::Ok(__m)
+                            },
+                        )?
+                    }
+                    _ => dec.skip_value()?,
+                }
+            }
+            ::core::result::Result::Ok(())
+        }
+    }
+    #[cfg(feature = "json")]
+    impl ::buffa::json_helpers::ProtoElemJson for NodeExpressions {
+        fn serialize_proto_json<S: ::serde::Serializer>(
+            v: &Self,
+            s: S,
+        ) -> ::core::result::Result<S::Ok, S::Error> {
+            ::serde::Serialize::serialize(v, s)
+        }
+        fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+            d: D,
+        ) -> ::core::result::Result<Self, D::Error> {
+            <Self as ::serde::Deserialize>::deserialize(d)
+        }
+    }
+    #[cfg(feature = "json")]
+    #[doc(hidden)]
+    pub const __NODE_EXPRESSIONS_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+        type_url: "type.googleapis.com/operations_research.sat.RoutesConstraintProto.NodeExpressions",
+        to_json: ::buffa::type_registry::any_to_json::<NodeExpressions>,
+        from_json: ::buffa::type_registry::any_from_json::<NodeExpressions>,
+        is_wkt: false,
+    };
+    #[cfg(feature = "text")]
+    #[doc(hidden)]
+    pub const __NODE_EXPRESSIONS_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+        type_url: "type.googleapis.com/operations_research.sat.RoutesConstraintProto.NodeExpressions",
+        text_encode: ::buffa::type_registry::any_encode_text::<NodeExpressions>,
+        text_merge: ::buffa::type_registry::any_merge_text::<NodeExpressions>,
+    };
+    #[cfg(feature = "views")]
     #[doc(inline)]
     pub use super::__buffa::view::routes_constraint_proto::NodeExpressionsView;
+    #[cfg(feature = "views")]
     #[doc(inline)]
     pub use super::__buffa::view::routes_constraint_proto::NodeExpressionsOwnedView;
 }
@@ -3355,20 +4956,55 @@ pub mod routes_constraint_proto {
 /// ```
 ///  - If `vars` and `exprs` are empty but `values` is not, the model is invalid.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct TableConstraintProto {
     /// Legacy field.
     ///
     /// Field 1: `vars`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "vars",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub vars: ::buffa::alloc::vec::Vec<i32>,
     /// Field 2: `values`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "values",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub values: ::buffa::alloc::vec::Vec<i64>,
     /// Field 4: `exprs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exprs",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub exprs: ::buffa::alloc::vec::Vec<LinearExpressionProto>,
     /// If true, the meaning is "negated", that is we forbid any of the given
     /// tuple from a feasible assignment.
     ///
     /// Field 3: `negated`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "negated",
+            with = "::buffa::json_helpers::proto_bool",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_false"
+        )
+    )]
     pub negated: bool,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -3615,14 +5251,120 @@ impl ::buffa::ExtensionSet for TableConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for TableConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.negated {
+            enc.write_field_name("negated")?;
+            enc.write_bool(self.negated)?;
+        }
+        for __v in &self.vars {
+            enc.write_field_name("vars")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.values {
+            enc.write_field_name("values")?;
+            enc.write_i64(*__v)?;
+        }
+        for __v in &self.exprs {
+            enc.write_field_name("exprs")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "negated" => self.negated = dec.read_bool()?,
+                "vars" => dec.read_repeated_into(&mut self.vars, |__d| __d.read_i32())?,
+                "values" => {
+                    dec.read_repeated_into(&mut self.values, |__d| __d.read_i64())?
+                }
+                "exprs" => {
+                    dec.read_repeated_into(
+                        &mut self.exprs,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for TableConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __TABLE_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.TableConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<TableConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<TableConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __TABLE_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.TableConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<TableConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<TableConstraintProto>,
+};
 /// The two arrays of variable each represent a function, the second is the
 /// inverse of the first: f_direct\[i\] == j \<=\> f_inverse\[j\] == i.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct InverseConstraintProto {
     /// Field 1: `f_direct`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "fDirect",
+            alias = "f_direct",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub f_direct: ::buffa::alloc::vec::Vec<i32>,
     /// Field 2: `f_inverse`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "fInverse",
+            alias = "f_inverse",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub f_inverse: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -3824,37 +5566,169 @@ impl ::buffa::ExtensionSet for InverseConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for InverseConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.f_direct {
+            enc.write_field_name("f_direct")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.f_inverse {
+            enc.write_field_name("f_inverse")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "f_direct" => {
+                    dec.read_repeated_into(&mut self.f_direct, |__d| __d.read_i32())?
+                }
+                "f_inverse" => {
+                    dec.read_repeated_into(&mut self.f_inverse, |__d| __d.read_i32())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for InverseConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __INVERSE_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.InverseConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<InverseConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<InverseConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __INVERSE_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.InverseConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<InverseConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<InverseConstraintProto>,
+};
 /// This constraint forces a sequence of expressions to be accepted by an
 /// automaton.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct AutomatonConstraintProto {
     /// A state is identified by a non-negative number. It is preferable to keep
     /// all the states dense in says \[0, num_states). The automaton starts at
     /// starting_state and must finish in any of the final states.
     ///
     /// Field 2: `starting_state`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "startingState",
+            alias = "starting_state",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub starting_state: i64,
     /// Field 3: `final_states`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "finalStates",
+            alias = "final_states",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub final_states: ::buffa::alloc::vec::Vec<i64>,
     /// List of transitions (all 3 vectors have the same size). Both tail and head
     /// are states, label is any variable value. No two outgoing transitions from
     /// the same state can have the same label.
     ///
     /// Field 4: `transition_tail`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "transitionTail",
+            alias = "transition_tail",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub transition_tail: ::buffa::alloc::vec::Vec<i64>,
     /// Field 5: `transition_head`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "transitionHead",
+            alias = "transition_head",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub transition_head: ::buffa::alloc::vec::Vec<i64>,
     /// Field 6: `transition_label`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "transitionLabel",
+            alias = "transition_label",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub transition_label: ::buffa::alloc::vec::Vec<i64>,
     /// Legacy field.
     ///
     /// Field 7: `vars`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "vars",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub vars: ::buffa::alloc::vec::Vec<i32>,
     /// The sequence of expressions. The automaton is ran for exprs_size() "steps"
     /// and the value of exprs\[i\] corresponds to the transition label at step i.
     ///
     /// Field 8: `exprs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exprs",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub exprs: ::buffa::alloc::vec::Vec<LinearExpressionProto>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -4284,11 +6158,137 @@ impl ::buffa::ExtensionSet for AutomatonConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for AutomatonConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.starting_state != 0i64 {
+            enc.write_field_name("starting_state")?;
+            enc.write_i64(self.starting_state)?;
+        }
+        for __v in &self.final_states {
+            enc.write_field_name("final_states")?;
+            enc.write_i64(*__v)?;
+        }
+        for __v in &self.transition_tail {
+            enc.write_field_name("transition_tail")?;
+            enc.write_i64(*__v)?;
+        }
+        for __v in &self.transition_head {
+            enc.write_field_name("transition_head")?;
+            enc.write_i64(*__v)?;
+        }
+        for __v in &self.transition_label {
+            enc.write_field_name("transition_label")?;
+            enc.write_i64(*__v)?;
+        }
+        for __v in &self.vars {
+            enc.write_field_name("vars")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.exprs {
+            enc.write_field_name("exprs")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "starting_state" => self.starting_state = dec.read_i64()?,
+                "final_states" => {
+                    dec.read_repeated_into(&mut self.final_states, |__d| __d.read_i64())?
+                }
+                "transition_tail" => {
+                    dec.read_repeated_into(
+                        &mut self.transition_tail,
+                        |__d| __d.read_i64(),
+                    )?
+                }
+                "transition_head" => {
+                    dec.read_repeated_into(
+                        &mut self.transition_head,
+                        |__d| __d.read_i64(),
+                    )?
+                }
+                "transition_label" => {
+                    dec.read_repeated_into(
+                        &mut self.transition_label,
+                        |__d| __d.read_i64(),
+                    )?
+                }
+                "vars" => dec.read_repeated_into(&mut self.vars, |__d| __d.read_i32())?,
+                "exprs" => {
+                    dec.read_repeated_into(
+                        &mut self.exprs,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for AutomatonConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __AUTOMATON_CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.AutomatonConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<AutomatonConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<AutomatonConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __AUTOMATON_CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.AutomatonConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<AutomatonConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<AutomatonConstraintProto>,
+};
 /// A list of variables, without any semantics.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct ListOfVariablesProto {
     /// Field 1: `vars`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "vars",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub vars: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -4427,12 +6427,81 @@ impl ::buffa::ExtensionSet for ListOfVariablesProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for ListOfVariablesProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.vars {
+            enc.write_field_name("vars")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "vars" => dec.read_repeated_into(&mut self.vars, |__d| __d.read_i32())?,
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for ListOfVariablesProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __LIST_OF_VARIABLES_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.ListOfVariablesProto",
+    to_json: ::buffa::type_registry::any_to_json::<ListOfVariablesProto>,
+    from_json: ::buffa::type_registry::any_from_json::<ListOfVariablesProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __LIST_OF_VARIABLES_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.ListOfVariablesProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<ListOfVariablesProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<ListOfVariablesProto>,
+};
 /// Next id: 31
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct ConstraintProto {
     /// For debug/logging only. Can be empty.
     ///
     /// Field 1: `name`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "name",
+            with = "::buffa::json_helpers::proto_string",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_str"
+        )
+    )]
     pub name: ::buffa::alloc::string::String,
     /// The constraint will be enforced iff all literals listed here are true. If
     /// this is empty, then the constraint will always be enforced. An enforced
@@ -4450,8 +6519,19 @@ pub struct ConstraintProto {
     /// these constraints enforced.
     ///
     /// Field 2: `enforcement_literal`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "enforcementLiteral",
+            alias = "enforcement_literal",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub enforcement_literal: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(flatten))]
     pub constraint: ::core::option::Option<__buffa::oneof::constraint_proto::Constraint>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -5489,24 +7569,1259 @@ impl ::buffa::ExtensionSet for ConstraintProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for ConstraintProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if !self.name.is_empty() {
+            enc.write_field_name("name")?;
+            enc.write_string(&self.name)?;
+        }
+        for __v in &self.enforcement_literal {
+            enc.write_field_name("enforcement_literal")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.constraint {
+            match __v {
+                __buffa::oneof::constraint_proto::Constraint::BoolOr(__v) => {
+                    enc.write_field_name("bool_or")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::BoolAnd(__v) => {
+                    enc.write_field_name("bool_and")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::AtMostOne(__v) => {
+                    enc.write_field_name("at_most_one")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::ExactlyOne(__v) => {
+                    enc.write_field_name("exactly_one")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::BoolXor(__v) => {
+                    enc.write_field_name("bool_xor")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::IntDiv(__v) => {
+                    enc.write_field_name("int_div")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::IntMod(__v) => {
+                    enc.write_field_name("int_mod")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::IntProd(__v) => {
+                    enc.write_field_name("int_prod")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::LinMax(__v) => {
+                    enc.write_field_name("lin_max")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Linear(__v) => {
+                    enc.write_field_name("linear")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::AllDiff(__v) => {
+                    enc.write_field_name("all_diff")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Element(__v) => {
+                    enc.write_field_name("element")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Circuit(__v) => {
+                    enc.write_field_name("circuit")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Routes(__v) => {
+                    enc.write_field_name("routes")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Table(__v) => {
+                    enc.write_field_name("table")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Automaton(__v) => {
+                    enc.write_field_name("automaton")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Inverse(__v) => {
+                    enc.write_field_name("inverse")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Reservoir(__v) => {
+                    enc.write_field_name("reservoir")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Interval(__v) => {
+                    enc.write_field_name("interval")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::NoOverlap(__v) => {
+                    enc.write_field_name("no_overlap")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::NoOverlap2d(__v) => {
+                    enc.write_field_name("no_overlap_2d")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::Cumulative(__v) => {
+                    enc.write_field_name("cumulative")?;
+                    enc.write_message(&**__v)?;
+                }
+                __buffa::oneof::constraint_proto::Constraint::DummyConstraint(__v) => {
+                    enc.write_field_name("dummy_constraint")?;
+                    enc.write_message(&**__v)?;
+                }
+            }
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "name" => self.name = dec.read_string()?.into_owned(),
+                "enforcement_literal" => {
+                    dec.read_repeated_into(
+                        &mut self.enforcement_literal,
+                        |__d| __d.read_i32(),
+                    )?
+                }
+                "bool_or" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::BoolOr(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::BoolOr(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "bool_and" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::BoolAnd(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::BoolAnd(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "at_most_one" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::AtMostOne(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::AtMostOne(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "exactly_one" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::ExactlyOne(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::ExactlyOne(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "bool_xor" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::BoolXor(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::BoolXor(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "int_div" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::IntDiv(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::IntDiv(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "int_mod" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::IntMod(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::IntMod(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "int_prod" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::IntProd(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::IntProd(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "lin_max" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::LinMax(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::LinMax(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "linear" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Linear(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Linear(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "all_diff" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::AllDiff(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::AllDiff(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "element" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Element(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Element(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "circuit" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Circuit(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Circuit(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "routes" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Routes(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Routes(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "table" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Table(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Table(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "automaton" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Automaton(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Automaton(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "inverse" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Inverse(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Inverse(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "reservoir" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Reservoir(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Reservoir(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "interval" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Interval(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Interval(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "no_overlap" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::NoOverlap(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::NoOverlap(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "no_overlap_2d" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::NoOverlap2d(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::NoOverlap2d(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "cumulative" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::Cumulative(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::Cumulative(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                "dummy_constraint" => {
+                    if let ::core::option::Option::Some(
+                        __buffa::oneof::constraint_proto::Constraint::DummyConstraint(
+                            ref mut __existing,
+                        ),
+                    ) = self.constraint
+                    {
+                        dec.merge_message(&mut **__existing)?;
+                    } else {
+                        let mut __m = ::core::default::Default::default();
+                        dec.merge_message(&mut __m)?;
+                        self.constraint = ::core::option::Option::Some(
+                            __buffa::oneof::constraint_proto::Constraint::DummyConstraint(
+                                ::buffa::alloc::boxed::Box::new(__m),
+                            ),
+                        );
+                    }
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl<'de> ::serde::Deserialize<'de> for ConstraintProto {
+    fn deserialize<D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        struct _V;
+        impl<'de> ::serde::de::Visitor<'de> for _V {
+            type Value = ConstraintProto;
+            fn expecting(
+                &self,
+                f: &mut ::core::fmt::Formatter<'_>,
+            ) -> ::core::fmt::Result {
+                f.write_str("struct ConstraintProto")
+            }
+            #[allow(clippy::field_reassign_with_default)]
+            fn visit_map<A: ::serde::de::MapAccess<'de>>(
+                self,
+                mut map: A,
+            ) -> ::core::result::Result<ConstraintProto, A::Error> {
+                let mut __f_name: ::core::option::Option<
+                    ::buffa::alloc::string::String,
+                > = None;
+                let mut __f_enforcement_literal: ::core::option::Option<
+                    ::buffa::alloc::vec::Vec<i32>,
+                > = None;
+                let mut __oneof_constraint: ::core::option::Option<
+                    __buffa::oneof::constraint_proto::Constraint,
+                > = None;
+                while let Some(key) = map.next_key::<::buffa::alloc::string::String>()? {
+                    match key.as_str() {
+                        "name" => {
+                            __f_name = Some({
+                                struct _S;
+                                impl<'de> ::serde::de::DeserializeSeed<'de> for _S {
+                                    type Value = ::buffa::alloc::string::String;
+                                    fn deserialize<D: ::serde::Deserializer<'de>>(
+                                        self,
+                                        d: D,
+                                    ) -> ::core::result::Result<
+                                        ::buffa::alloc::string::String,
+                                        D::Error,
+                                    > {
+                                        ::buffa::json_helpers::proto_string::deserialize(d)
+                                    }
+                                }
+                                map.next_value_seed(_S)?
+                            });
+                        }
+                        "enforcementLiteral" | "enforcement_literal" => {
+                            __f_enforcement_literal = Some({
+                                struct _S;
+                                impl<'de> ::serde::de::DeserializeSeed<'de> for _S {
+                                    type Value = ::buffa::alloc::vec::Vec<i32>;
+                                    fn deserialize<D: ::serde::Deserializer<'de>>(
+                                        self,
+                                        d: D,
+                                    ) -> ::core::result::Result<
+                                        ::buffa::alloc::vec::Vec<i32>,
+                                        D::Error,
+                                    > {
+                                        ::buffa::json_helpers::null_as_default(d)
+                                    }
+                                }
+                                map.next_value_seed(_S)?
+                            });
+                        }
+                        "boolOr" | "bool_or" => {
+                            let v: ::core::option::Option<BoolArgumentProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            BoolArgumentProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::BoolOr(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "boolAnd" | "bool_and" => {
+                            let v: ::core::option::Option<BoolArgumentProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            BoolArgumentProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::BoolAnd(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "atMostOne" | "at_most_one" => {
+                            let v: ::core::option::Option<BoolArgumentProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            BoolArgumentProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::AtMostOne(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "exactlyOne" | "exactly_one" => {
+                            let v: ::core::option::Option<BoolArgumentProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            BoolArgumentProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::ExactlyOne(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "boolXor" | "bool_xor" => {
+                            let v: ::core::option::Option<BoolArgumentProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            BoolArgumentProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::BoolXor(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "intDiv" | "int_div" => {
+                            let v: ::core::option::Option<LinearArgumentProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            LinearArgumentProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::IntDiv(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "intMod" | "int_mod" => {
+                            let v: ::core::option::Option<LinearArgumentProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            LinearArgumentProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::IntMod(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "intProd" | "int_prod" => {
+                            let v: ::core::option::Option<LinearArgumentProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            LinearArgumentProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::IntProd(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "linMax" | "lin_max" => {
+                            let v: ::core::option::Option<LinearArgumentProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            LinearArgumentProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::LinMax(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "linear" => {
+                            let v: ::core::option::Option<LinearConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            LinearConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Linear(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "allDiff" | "all_diff" => {
+                            let v: ::core::option::Option<AllDifferentConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            AllDifferentConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::AllDiff(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "element" => {
+                            let v: ::core::option::Option<ElementConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            ElementConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Element(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "circuit" => {
+                            let v: ::core::option::Option<CircuitConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            CircuitConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Circuit(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "routes" => {
+                            let v: ::core::option::Option<RoutesConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            RoutesConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Routes(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "table" => {
+                            let v: ::core::option::Option<TableConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            TableConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Table(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "automaton" => {
+                            let v: ::core::option::Option<AutomatonConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            AutomatonConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Automaton(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "inverse" => {
+                            let v: ::core::option::Option<InverseConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            InverseConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Inverse(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "reservoir" => {
+                            let v: ::core::option::Option<ReservoirConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            ReservoirConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Reservoir(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "interval" => {
+                            let v: ::core::option::Option<IntervalConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            IntervalConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Interval(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "noOverlap" | "no_overlap" => {
+                            let v: ::core::option::Option<NoOverlapConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            NoOverlapConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::NoOverlap(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "noOverlap2d" | "no_overlap_2d" => {
+                            let v: ::core::option::Option<NoOverlap2DConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            NoOverlap2DConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::NoOverlap2d(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "cumulative" => {
+                            let v: ::core::option::Option<CumulativeConstraintProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            CumulativeConstraintProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::Cumulative(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        "dummyConstraint" | "dummy_constraint" => {
+                            let v: ::core::option::Option<ListOfVariablesProto> = map
+                                .next_value_seed(
+                                    ::buffa::json_helpers::NullableDeserializeSeed(
+                                        ::buffa::json_helpers::DefaultDeserializeSeed::<
+                                            ListOfVariablesProto,
+                                        >::new(),
+                                    ),
+                                )?;
+                            if let Some(v) = v {
+                                if __oneof_constraint.is_some() {
+                                    return Err(
+                                        ::serde::de::Error::custom(
+                                            "multiple oneof fields set for 'constraint'",
+                                        ),
+                                    );
+                                }
+                                __oneof_constraint = Some(
+                                    __buffa::oneof::constraint_proto::Constraint::DummyConstraint(
+                                        ::buffa::alloc::boxed::Box::new(v),
+                                    ),
+                                );
+                            }
+                        }
+                        _ => {
+                            map.next_value::<::serde::de::IgnoredAny>()?;
+                        }
+                    }
+                }
+                let mut __r = <ConstraintProto as ::core::default::Default>::default();
+                if let ::core::option::Option::Some(v) = __f_name {
+                    __r.name = v;
+                }
+                if let ::core::option::Option::Some(v) = __f_enforcement_literal {
+                    __r.enforcement_literal = v;
+                }
+                __r.constraint = __oneof_constraint;
+                Ok(__r)
+            }
+        }
+        d.deserialize_map(_V)
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for ConstraintProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __CONSTRAINT_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.ConstraintProto",
+    to_json: ::buffa::type_registry::any_to_json::<ConstraintProto>,
+    from_json: ::buffa::type_registry::any_from_json::<ConstraintProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __CONSTRAINT_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.ConstraintProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<ConstraintProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<ConstraintProto>,
+};
 pub mod constraint_proto {
     #[allow(unused_imports)]
     use super::*;
     #[doc(inline)]
     pub use super::__buffa::oneof::constraint_proto::Constraint;
+    #[cfg(feature = "views")]
     #[doc(inline)]
     pub use super::__buffa::view::oneof::constraint_proto::Constraint as ConstraintView;
 }
 /// Optimization objective.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct CpObjectiveProto {
     /// The linear terms of the objective to minimize.
     /// For a maximization problem, one can negate all coefficients in the
     /// objective and set scaling_factor to -1.
     ///
     /// Field 1: `vars`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "vars",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub vars: ::buffa::alloc::vec::Vec<i32>,
     /// Field 4: `coeffs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "coeffs",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub coeffs: ::buffa::alloc::vec::Vec<i64>,
     /// The displayed objective is always:
     ///   scaling_factor * (sum(coefficients\[i\] * objective_vars\[i\]) + offset).
@@ -5517,14 +8832,39 @@ pub struct CpObjectiveProto {
     /// default these fields have no effect.
     ///
     /// Field 2: `offset`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "offset",
+            with = "::buffa::json_helpers::double",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_f64"
+        )
+    )]
     pub offset: f64,
     /// Field 3: `scaling_factor`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "scalingFactor",
+            alias = "scaling_factor",
+            with = "::buffa::json_helpers::double",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_f64"
+        )
+    )]
     pub scaling_factor: f64,
     /// If non-empty, only look for an objective value in the given domain.
     /// Note that this does not depend on the offset or scaling factor, it is a
     /// domain on the sum of the objective terms only.
     ///
     /// Field 5: `domain`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "domain",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub domain: ::buffa::alloc::vec::Vec<i64>,
     /// Internal field. Do not set. When we scale a FloatObjectiveProto to a
     /// integer version, we set this to true if the scaling was exact (i.e. all
@@ -5533,6 +8873,15 @@ pub struct CpObjectiveProto {
     /// TODO(user): Put the error bounds we computed instead?
     ///
     /// Field 6: `scaling_was_exact`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "scalingWasExact",
+            alias = "scaling_was_exact",
+            with = "::buffa::json_helpers::proto_bool",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_false"
+        )
+    )]
     pub scaling_was_exact: bool,
     /// Internal fields to recover a bound on the original integer objective from
     /// the presolved one. Basically, initially the integer objective fit on an
@@ -5548,11 +8897,39 @@ pub struct CpObjectiveProto {
     /// be in (-integer_scaling_factor, integer_scaling_factor).
     ///
     /// Field 7: `integer_before_offset`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "integerBeforeOffset",
+            alias = "integer_before_offset",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub integer_before_offset: i64,
     /// Field 9: `integer_after_offset`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "integerAfterOffset",
+            alias = "integer_after_offset",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub integer_after_offset: i64,
     /// Field 8: `integer_scaling_factor`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "integerScalingFactor",
+            alias = "integer_scaling_factor",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub integer_scaling_factor: i64,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -5914,20 +9291,158 @@ impl ::buffa::ExtensionSet for CpObjectiveProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for CpObjectiveProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.offset.to_bits() != 0u64 {
+            enc.write_field_name("offset")?;
+            enc.write_f64(self.offset)?;
+        }
+        if self.scaling_factor.to_bits() != 0u64 {
+            enc.write_field_name("scaling_factor")?;
+            enc.write_f64(self.scaling_factor)?;
+        }
+        if self.scaling_was_exact {
+            enc.write_field_name("scaling_was_exact")?;
+            enc.write_bool(self.scaling_was_exact)?;
+        }
+        if self.integer_before_offset != 0i64 {
+            enc.write_field_name("integer_before_offset")?;
+            enc.write_i64(self.integer_before_offset)?;
+        }
+        if self.integer_after_offset != 0i64 {
+            enc.write_field_name("integer_after_offset")?;
+            enc.write_i64(self.integer_after_offset)?;
+        }
+        if self.integer_scaling_factor != 0i64 {
+            enc.write_field_name("integer_scaling_factor")?;
+            enc.write_i64(self.integer_scaling_factor)?;
+        }
+        for __v in &self.vars {
+            enc.write_field_name("vars")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.coeffs {
+            enc.write_field_name("coeffs")?;
+            enc.write_i64(*__v)?;
+        }
+        for __v in &self.domain {
+            enc.write_field_name("domain")?;
+            enc.write_i64(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "offset" => self.offset = dec.read_f64()?,
+                "scaling_factor" => self.scaling_factor = dec.read_f64()?,
+                "scaling_was_exact" => self.scaling_was_exact = dec.read_bool()?,
+                "integer_before_offset" => self.integer_before_offset = dec.read_i64()?,
+                "integer_after_offset" => self.integer_after_offset = dec.read_i64()?,
+                "integer_scaling_factor" => self.integer_scaling_factor = dec.read_i64()?,
+                "vars" => dec.read_repeated_into(&mut self.vars, |__d| __d.read_i32())?,
+                "coeffs" => {
+                    dec.read_repeated_into(&mut self.coeffs, |__d| __d.read_i64())?
+                }
+                "domain" => {
+                    dec.read_repeated_into(&mut self.domain, |__d| __d.read_i64())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for CpObjectiveProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __CP_OBJECTIVE_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CpObjectiveProto",
+    to_json: ::buffa::type_registry::any_to_json::<CpObjectiveProto>,
+    from_json: ::buffa::type_registry::any_from_json::<CpObjectiveProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __CP_OBJECTIVE_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CpObjectiveProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<CpObjectiveProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<CpObjectiveProto>,
+};
 /// A linear floating point objective: sum coeffs\[i\] * vars\[i\] + offset.
 /// Note that the variable can only still take integer value.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct FloatObjectiveProto {
     /// Field 1: `vars`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "vars",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub vars: ::buffa::alloc::vec::Vec<i32>,
     /// Field 2: `coeffs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "coeffs",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub coeffs: ::buffa::alloc::vec::Vec<f64>,
     /// Field 3: `offset`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "offset",
+            with = "::buffa::json_helpers::double",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_f64"
+        )
+    )]
     pub offset: f64,
     /// The optimization direction. The default is to minimize
     ///
     /// Field 4: `maximize`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maximize",
+            with = "::buffa::json_helpers::proto_bool",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_false"
+        )
+    )]
     pub maximize: bool,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -6152,15 +9667,101 @@ impl ::buffa::ExtensionSet for FloatObjectiveProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for FloatObjectiveProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.offset.to_bits() != 0u64 {
+            enc.write_field_name("offset")?;
+            enc.write_f64(self.offset)?;
+        }
+        if self.maximize {
+            enc.write_field_name("maximize")?;
+            enc.write_bool(self.maximize)?;
+        }
+        for __v in &self.vars {
+            enc.write_field_name("vars")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.coeffs {
+            enc.write_field_name("coeffs")?;
+            enc.write_f64(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "offset" => self.offset = dec.read_f64()?,
+                "maximize" => self.maximize = dec.read_bool()?,
+                "vars" => dec.read_repeated_into(&mut self.vars, |__d| __d.read_i32())?,
+                "coeffs" => {
+                    dec.read_repeated_into(&mut self.coeffs, |__d| __d.read_f64())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for FloatObjectiveProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __FLOAT_OBJECTIVE_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.FloatObjectiveProto",
+    to_json: ::buffa::type_registry::any_to_json::<FloatObjectiveProto>,
+    from_json: ::buffa::type_registry::any_from_json::<FloatObjectiveProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __FLOAT_OBJECTIVE_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.FloatObjectiveProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<FloatObjectiveProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<FloatObjectiveProto>,
+};
 /// Define the strategy to follow when the solver needs to take a new decision.
 /// Note that this strategy is only defined on a subset of variables.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct DecisionStrategyProto {
     /// The variables to be considered for the next decision. The order matter and
     /// is always used as a tie-breaker after the variable selection strategy
     /// criteria defined below.
     ///
     /// Field 1: `variables`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "variables",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub variables: ::buffa::alloc::vec::Vec<i32>,
     /// If this is set, then the variables field must be empty.
     /// We currently only support affine expression.
@@ -6170,15 +9771,42 @@ pub struct DecisionStrategyProto {
     /// presolve.
     ///
     /// Field 5: `exprs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exprs",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub exprs: ::buffa::alloc::vec::Vec<LinearExpressionProto>,
     /// Field 2: `variable_selection_strategy`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "variableSelectionStrategy",
+            alias = "variable_selection_strategy",
+            with = "::buffa::json_helpers::proto_enum",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_default_enum_value"
+        )
+    )]
     pub variable_selection_strategy: ::buffa::EnumValue<
         decision_strategy_proto::VariableSelectionStrategy,
     >,
     /// Field 3: `domain_reduction_strategy`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "domainReductionStrategy",
+            alias = "domain_reduction_strategy",
+            with = "::buffa::json_helpers::proto_enum",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_default_enum_value"
+        )
+    )]
     pub domain_reduction_strategy: ::buffa::EnumValue<
         decision_strategy_proto::DomainReductionStrategy,
     >,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -6395,6 +10023,109 @@ impl ::buffa::ExtensionSet for DecisionStrategyProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for DecisionStrategyProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.variable_selection_strategy.to_i32() != 0 {
+            enc.write_field_name("variable_selection_strategy")?;
+            match &self.variable_selection_strategy {
+                ::buffa::EnumValue::Known(__e) => enc.write_enum_name(__e.proto_name())?,
+                ::buffa::EnumValue::Unknown(__n) => enc.write_enum_number(*__n)?,
+            }
+        }
+        if self.domain_reduction_strategy.to_i32() != 0 {
+            enc.write_field_name("domain_reduction_strategy")?;
+            match &self.domain_reduction_strategy {
+                ::buffa::EnumValue::Known(__e) => enc.write_enum_name(__e.proto_name())?,
+                ::buffa::EnumValue::Unknown(__n) => enc.write_enum_number(*__n)?,
+            }
+        }
+        for __v in &self.variables {
+            enc.write_field_name("variables")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.exprs {
+            enc.write_field_name("exprs")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "variable_selection_strategy" => {
+                    self.variable_selection_strategy = dec
+                        .read_enum_by_name::<
+                            decision_strategy_proto::VariableSelectionStrategy,
+                        >()
+                        .map(::buffa::EnumValue::from)?;
+                }
+                "domain_reduction_strategy" => {
+                    self.domain_reduction_strategy = dec
+                        .read_enum_by_name::<
+                            decision_strategy_proto::DomainReductionStrategy,
+                        >()
+                        .map(::buffa::EnumValue::from)?;
+                }
+                "variables" => {
+                    dec.read_repeated_into(&mut self.variables, |__d| __d.read_i32())?
+                }
+                "exprs" => {
+                    dec.read_repeated_into(
+                        &mut self.exprs,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for DecisionStrategyProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __DECISION_STRATEGY_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.DecisionStrategyProto",
+    to_json: ::buffa::type_registry::any_to_json::<DecisionStrategyProto>,
+    from_json: ::buffa::type_registry::any_from_json::<DecisionStrategyProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __DECISION_STRATEGY_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.DecisionStrategyProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<DecisionStrategyProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<DecisionStrategyProto>,
+};
 pub mod decision_strategy_proto {
     #[allow(unused_imports)]
     use super::*;
@@ -6435,6 +10166,106 @@ pub mod decision_strategy_proto {
             Self::CHOOSE_FIRST
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for VariableSelectionStrategy {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for VariableSelectionStrategy {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = VariableSelectionStrategy;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(VariableSelectionStrategy)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<VariableSelectionStrategy, E> {
+                        <VariableSelectionStrategy as ::buffa::Enumeration>::from_proto_name(
+                                v,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<VariableSelectionStrategy, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <VariableSelectionStrategy as ::buffa::Enumeration>::from_i32(
+                                v32,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<VariableSelectionStrategy, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <VariableSelectionStrategy as ::buffa::Enumeration>::from_i32(
+                                v32,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<VariableSelectionStrategy, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for VariableSelectionStrategy {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for VariableSelectionStrategy {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -6526,6 +10357,102 @@ pub mod decision_strategy_proto {
             Self::SELECT_MIN_VALUE
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for DomainReductionStrategy {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for DomainReductionStrategy {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = DomainReductionStrategy;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(DomainReductionStrategy)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<DomainReductionStrategy, E> {
+                        <DomainReductionStrategy as ::buffa::Enumeration>::from_proto_name(
+                                v,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<DomainReductionStrategy, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <DomainReductionStrategy as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<DomainReductionStrategy, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <DomainReductionStrategy as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<DomainReductionStrategy, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for DomainReductionStrategy {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for DomainReductionStrategy {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -6590,11 +10517,30 @@ pub mod decision_strategy_proto {
 /// CpModelProto. The variable indices should be unique and valid variable
 /// indices.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct PartialVariableAssignment {
     /// Field 1: `vars`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "vars",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub vars: ::buffa::alloc::vec::Vec<i32>,
     /// Field 2: `values`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "values",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub values: ::buffa::alloc::vec::Vec<i64>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -6796,17 +10742,103 @@ impl ::buffa::ExtensionSet for PartialVariableAssignment {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for PartialVariableAssignment {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.vars {
+            enc.write_field_name("vars")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.values {
+            enc.write_field_name("values")?;
+            enc.write_i64(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "vars" => dec.read_repeated_into(&mut self.vars, |__d| __d.read_i32())?,
+                "values" => {
+                    dec.read_repeated_into(&mut self.values, |__d| __d.read_i64())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for PartialVariableAssignment {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __PARTIAL_VARIABLE_ASSIGNMENT_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.PartialVariableAssignment",
+    to_json: ::buffa::type_registry::any_to_json::<PartialVariableAssignment>,
+    from_json: ::buffa::type_registry::any_from_json::<PartialVariableAssignment>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __PARTIAL_VARIABLE_ASSIGNMENT_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.PartialVariableAssignment",
+    text_encode: ::buffa::type_registry::any_encode_text::<PartialVariableAssignment>,
+    text_merge: ::buffa::type_registry::any_merge_text::<PartialVariableAssignment>,
+};
 /// A permutation of integers encoded as a list of cycles, hence the "sparse"
 /// format. The image of an element cycle\[i\] is cycle\[(i + 1) % cycle_length\].
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct SparsePermutationProto {
     /// Each cycle is listed one after the other in the support field.
     /// The size of each cycle is given (in order) in the cycle_sizes field.
     ///
     /// Field 1: `support`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "support",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub support: ::buffa::alloc::vec::Vec<i32>,
     /// Field 2: `cycle_sizes`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "cycleSizes",
+            alias = "cycle_sizes",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub cycle_sizes: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -7008,16 +11040,113 @@ impl ::buffa::ExtensionSet for SparsePermutationProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for SparsePermutationProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.support {
+            enc.write_field_name("support")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.cycle_sizes {
+            enc.write_field_name("cycle_sizes")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "support" => {
+                    dec.read_repeated_into(&mut self.support, |__d| __d.read_i32())?
+                }
+                "cycle_sizes" => {
+                    dec.read_repeated_into(&mut self.cycle_sizes, |__d| __d.read_i32())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for SparsePermutationProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __SPARSE_PERMUTATION_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.SparsePermutationProto",
+    to_json: ::buffa::type_registry::any_to_json::<SparsePermutationProto>,
+    from_json: ::buffa::type_registry::any_from_json::<SparsePermutationProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __SPARSE_PERMUTATION_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.SparsePermutationProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<SparsePermutationProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<SparsePermutationProto>,
+};
 /// A dense matrix of numbers encoded in a flat way, row by row.
 /// That is matrix\[i\]\[j\] = entries\[i * num_cols + j\];
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct DenseMatrixProto {
     /// Field 1: `num_rows`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numRows",
+            alias = "num_rows",
+            with = "::buffa::json_helpers::int32",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i32"
+        )
+    )]
     pub num_rows: i32,
     /// Field 2: `num_cols`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numCols",
+            alias = "num_cols",
+            with = "::buffa::json_helpers::int32",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i32"
+        )
+    )]
     pub num_cols: i32,
     /// Field 3: `entries`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "entries",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub entries: ::buffa::alloc::vec::Vec<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -7188,6 +11317,77 @@ impl ::buffa::ExtensionSet for DenseMatrixProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for DenseMatrixProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.num_rows != 0i32 {
+            enc.write_field_name("num_rows")?;
+            enc.write_i32(self.num_rows)?;
+        }
+        if self.num_cols != 0i32 {
+            enc.write_field_name("num_cols")?;
+            enc.write_i32(self.num_cols)?;
+        }
+        for __v in &self.entries {
+            enc.write_field_name("entries")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "num_rows" => self.num_rows = dec.read_i32()?,
+                "num_cols" => self.num_cols = dec.read_i32()?,
+                "entries" => {
+                    dec.read_repeated_into(&mut self.entries, |__d| __d.read_i32())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for DenseMatrixProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __DENSE_MATRIX_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.DenseMatrixProto",
+    to_json: ::buffa::type_registry::any_to_json::<DenseMatrixProto>,
+    from_json: ::buffa::type_registry::any_from_json::<DenseMatrixProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __DENSE_MATRIX_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.DenseMatrixProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<DenseMatrixProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<DenseMatrixProto>,
+};
 /// EXPERIMENTAL. For now, this is meant to be used by the solver and not filled
 /// by clients.
 ///
@@ -7201,12 +11401,22 @@ impl ::buffa::ExtensionSet for DenseMatrixProto {
 /// of the model, so it is not meant to be a complete representation of the
 /// feasible solution symmetries, just a valid subgroup.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct SymmetryProto {
     /// A list of variable indices permutations that leave the feasible space of
     /// solution invariant. Usually, we only encode a set of generators of the
     /// group.
     ///
     /// Field 1: `permutations`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "permutations",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub permutations: ::buffa::alloc::vec::Vec<SparsePermutationProto>,
     /// An orbitope is a special symmetry structure of the solution space. If the
     /// variable indices are arranged in a matrix (with no duplicates), then any
@@ -7219,7 +11429,16 @@ pub struct SymmetryProto {
     /// permutations leave the problem invariant.
     ///
     /// Field 2: `orbitopes`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "orbitopes",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub orbitopes: ::buffa::alloc::vec::Vec<DenseMatrixProto>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -7359,22 +11578,137 @@ impl ::buffa::ExtensionSet for SymmetryProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for SymmetryProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.permutations {
+            enc.write_field_name("permutations")?;
+            enc.write_message(__v)?;
+        }
+        for __v in &self.orbitopes {
+            enc.write_field_name("orbitopes")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "permutations" => {
+                    dec.read_repeated_into(
+                        &mut self.permutations,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                "orbitopes" => {
+                    dec.read_repeated_into(
+                        &mut self.orbitopes,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for SymmetryProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __SYMMETRY_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.SymmetryProto",
+    to_json: ::buffa::type_registry::any_to_json::<SymmetryProto>,
+    from_json: ::buffa::type_registry::any_from_json::<SymmetryProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __SYMMETRY_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.SymmetryProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<SymmetryProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<SymmetryProto>,
+};
 /// A constraint programming problem.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct CpModelProto {
     /// For debug/logging only. Can be empty.
     ///
     /// Field 1: `name`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "name",
+            with = "::buffa::json_helpers::proto_string",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_str"
+        )
+    )]
     pub name: ::buffa::alloc::string::String,
     /// The associated Protos should be referred by their index in these fields.
     ///
     /// Field 2: `variables`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "variables",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub variables: ::buffa::alloc::vec::Vec<IntegerVariableProto>,
     /// Field 3: `constraints`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "constraints",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub constraints: ::buffa::alloc::vec::Vec<ConstraintProto>,
     /// The objective to minimize. Can be empty for pure decision problems.
     ///
     /// Field 4: `objective`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "objective",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub objective: ::buffa::MessageField<
         CpObjectiveProto,
         ::buffa::Inline<CpObjectiveProto>,
@@ -7394,6 +11728,14 @@ pub struct CpModelProto {
     /// you can check the gap if you only want precise optimal.
     ///
     /// Field 9: `floating_point_objective`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "floatingPointObjective",
+            alias = "floating_point_objective",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub floating_point_objective: ::buffa::MessageField<
         FloatObjectiveProto,
         ::buffa::Inline<FloatObjectiveProto>,
@@ -7409,6 +11751,15 @@ pub struct CpModelProto {
     /// their lower bound in the solution.
     ///
     /// Field 5: `search_strategy`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "searchStrategy",
+            alias = "search_strategy",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub search_strategy: ::buffa::alloc::vec::Vec<DecisionStrategyProto>,
     /// Solution hint.
     ///
@@ -7423,6 +11774,14 @@ pub struct CpModelProto {
     /// optimal solutions.
     ///
     /// Field 6: `solution_hint`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "solutionHint",
+            alias = "solution_hint",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub solution_hint: ::buffa::MessageField<
         PartialVariableAssignment,
         ::buffa::Inline<PartialVariableAssignment>,
@@ -7442,6 +11801,14 @@ pub struct CpModelProto {
     /// sufficient_assumptions_for_infeasibility response field.
     ///
     /// Field 7: `assumptions`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "assumptions",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub assumptions: ::buffa::alloc::vec::Vec<i32>,
     /// For now, this is not meant to be filled by a client writing a model, but
     /// by our preprocessing step.
@@ -7450,7 +11817,15 @@ pub struct CpModelProto {
     /// These usually leaves the objective invariant.
     ///
     /// Field 8: `symmetry`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "symmetry",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub symmetry: ::buffa::MessageField<SymmetryProto, ::buffa::Inline<SymmetryProto>>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -7812,12 +12187,157 @@ impl ::buffa::ExtensionSet for CpModelProto {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for CpModelProto {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if !self.name.is_empty() {
+            enc.write_field_name("name")?;
+            enc.write_string(&self.name)?;
+        }
+        if self.objective.is_set() {
+            enc.write_field_name("objective")?;
+            enc.write_message(&*self.objective)?;
+        }
+        if self.floating_point_objective.is_set() {
+            enc.write_field_name("floating_point_objective")?;
+            enc.write_message(&*self.floating_point_objective)?;
+        }
+        if self.solution_hint.is_set() {
+            enc.write_field_name("solution_hint")?;
+            enc.write_message(&*self.solution_hint)?;
+        }
+        if self.symmetry.is_set() {
+            enc.write_field_name("symmetry")?;
+            enc.write_message(&*self.symmetry)?;
+        }
+        for __v in &self.variables {
+            enc.write_field_name("variables")?;
+            enc.write_message(__v)?;
+        }
+        for __v in &self.constraints {
+            enc.write_field_name("constraints")?;
+            enc.write_message(__v)?;
+        }
+        for __v in &self.search_strategy {
+            enc.write_field_name("search_strategy")?;
+            enc.write_message(__v)?;
+        }
+        for __v in &self.assumptions {
+            enc.write_field_name("assumptions")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "name" => self.name = dec.read_string()?.into_owned(),
+                "objective" => dec.merge_message(self.objective.get_or_insert_default())?,
+                "floating_point_objective" => {
+                    dec.merge_message(
+                        self.floating_point_objective.get_or_insert_default(),
+                    )?
+                }
+                "solution_hint" => {
+                    dec.merge_message(self.solution_hint.get_or_insert_default())?
+                }
+                "symmetry" => dec.merge_message(self.symmetry.get_or_insert_default())?,
+                "variables" => {
+                    dec.read_repeated_into(
+                        &mut self.variables,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                "constraints" => {
+                    dec.read_repeated_into(
+                        &mut self.constraints,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                "search_strategy" => {
+                    dec.read_repeated_into(
+                        &mut self.search_strategy,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                "assumptions" => {
+                    dec.read_repeated_into(&mut self.assumptions, |__d| __d.read_i32())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for CpModelProto {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __CP_MODEL_PROTO_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CpModelProto",
+    to_json: ::buffa::type_registry::any_to_json::<CpModelProto>,
+    from_json: ::buffa::type_registry::any_from_json::<CpModelProto>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __CP_MODEL_PROTO_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CpModelProto",
+    text_encode: ::buffa::type_registry::any_encode_text::<CpModelProto>,
+    text_merge: ::buffa::type_registry::any_merge_text::<CpModelProto>,
+};
 /// Just a message used to store dense solution.
 /// This is used by the additional_solutions field.
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct CpSolverSolution {
     /// Field 1: `values`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "values",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub values: ::buffa::alloc::vec::Vec<i64>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -7956,14 +12476,85 @@ impl ::buffa::ExtensionSet for CpSolverSolution {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for CpSolverSolution {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        for __v in &self.values {
+            enc.write_field_name("values")?;
+            enc.write_i64(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "values" => {
+                    dec.read_repeated_into(&mut self.values, |__d| __d.read_i64())?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for CpSolverSolution {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __CP_SOLVER_SOLUTION_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CpSolverSolution",
+    to_json: ::buffa::type_registry::any_to_json::<CpSolverSolution>,
+    from_json: ::buffa::type_registry::any_from_json::<CpSolverSolution>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __CP_SOLVER_SOLUTION_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CpSolverSolution",
+    text_encode: ::buffa::type_registry::any_encode_text::<CpSolverSolution>,
+    text_merge: ::buffa::type_registry::any_merge_text::<CpSolverSolution>,
+};
 /// The response returned by a solver trying to solve a CpModelProto.
 ///
 /// Next id: 32
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct CpSolverResponse {
     /// The status of the solve.
     ///
     /// Field 1: `status`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "status",
+            with = "::buffa::json_helpers::proto_enum",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_default_enum_value"
+        )
+    )]
     pub status: ::buffa::EnumValue<CpSolverStatus>,
     /// A feasible solution to the given problem. Depending on the returned status
     /// it may be optimal or just feasible. This is in one-to-one correspondence
@@ -7971,6 +12562,14 @@ pub struct CpSolverResponse {
     /// the variables.
     ///
     /// Field 2: `solution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "solution",
+            with = "::buffa::json_helpers::proto_seq",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub solution: ::buffa::alloc::vec::Vec<i64>,
     /// Only make sense for an optimization problem. The objective value of the
     /// returned solution if it is non-empty. If there is no solution, then for a
@@ -7978,12 +12577,30 @@ pub struct CpSolverResponse {
     /// feasible solution, and a lower-bound for a maximization problem.
     ///
     /// Field 3: `objective_value`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "objectiveValue",
+            alias = "objective_value",
+            with = "::buffa::json_helpers::double",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_f64"
+        )
+    )]
     pub objective_value: f64,
     /// Only make sense for an optimization problem. A proven lower-bound on the
     /// objective for a minimization problem, or a proven upper-bound for a
     /// maximization problem.
     ///
     /// Field 4: `best_objective_bound`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "bestObjectiveBound",
+            alias = "best_objective_bound",
+            with = "::buffa::json_helpers::double",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_f64"
+        )
+    )]
     pub best_objective_bound: f64,
     /// If the parameter fill_additional_solutions_in_response is set, then we
     /// copy all the solutions from our internal solution pool here.
@@ -7993,6 +12610,15 @@ pub struct CpSolverResponse {
     /// representation (after postsolve).
     ///
     /// Field 27: `additional_solutions`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "additionalSolutions",
+            alias = "additional_solutions",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub additional_solutions: ::buffa::alloc::vec::Vec<CpSolverSolution>,
     /// Advanced usage.
     ///
@@ -8012,6 +12638,15 @@ pub struct CpSolverResponse {
     /// explore the feasible region.
     ///
     /// Field 21: `tightened_variables`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "tightenedVariables",
+            alias = "tightened_variables",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub tightened_variables: ::buffa::alloc::vec::Vec<IntegerVariableProto>,
     /// A subset of the model "assumptions" field. This will only be filled if the
     /// status is INFEASIBLE. This subset of assumption will be enough to still get
@@ -8034,12 +12669,29 @@ pub struct CpSolverResponse {
     /// TODO(user): Allows for returning multiple core at once.
     ///
     /// Field 23: `sufficient_assumptions_for_infeasibility`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sufficientAssumptionsForInfeasibility",
+            alias = "sufficient_assumptions_for_infeasibility",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub sufficient_assumptions_for_infeasibility: ::buffa::alloc::vec::Vec<i32>,
     /// Contains the integer objective optimized internally. This is only filled if
     /// the problem had a floating point objective, and on the final response, not
     /// the ones given to callbacks.
     ///
     /// Field 28: `integer_objective`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "integerObjective",
+            alias = "integer_objective",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_unset_message_field"
+        )
+    )]
     pub integer_objective: ::buffa::MessageField<
         CpObjectiveProto,
         ::buffa::Inline<CpObjectiveProto>,
@@ -8054,6 +12706,15 @@ pub struct CpSolverResponse {
     /// TODO(user): This should be renamed integer_objective_lower_bound.
     ///
     /// Field 29: `inner_objective_lower_bound`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "innerObjectiveLowerBound",
+            alias = "inner_objective_lower_bound",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub inner_objective_lower_bound: i64,
     /// Some statistics about the solve.
     ///
@@ -8062,45 +12723,181 @@ pub struct CpSolverResponse {
     /// the default-search if none are specified.
     ///
     /// Field 30: `num_integers`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numIntegers",
+            alias = "num_integers",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub num_integers: i64,
     /// Field 10: `num_booleans`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numBooleans",
+            alias = "num_booleans",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub num_booleans: i64,
     /// Field 31: `num_fixed_booleans`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numFixedBooleans",
+            alias = "num_fixed_booleans",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub num_fixed_booleans: i64,
     /// Field 11: `num_conflicts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numConflicts",
+            alias = "num_conflicts",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub num_conflicts: i64,
     /// Field 12: `num_branches`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numBranches",
+            alias = "num_branches",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub num_branches: i64,
     /// Field 13: `num_binary_propagations`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numBinaryPropagations",
+            alias = "num_binary_propagations",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub num_binary_propagations: i64,
     /// Field 14: `num_integer_propagations`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numIntegerPropagations",
+            alias = "num_integer_propagations",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub num_integer_propagations: i64,
     /// Field 24: `num_restarts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numRestarts",
+            alias = "num_restarts",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub num_restarts: i64,
     /// Field 25: `num_lp_iterations`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numLpIterations",
+            alias = "num_lp_iterations",
+            with = "::buffa::json_helpers::int64",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_i64"
+        )
+    )]
     pub num_lp_iterations: i64,
     /// The time counted from the beginning of the Solve() call.
     ///
     /// Field 15: `wall_time`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "wallTime",
+            alias = "wall_time",
+            with = "::buffa::json_helpers::double",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_f64"
+        )
+    )]
     pub wall_time: f64,
     /// Field 16: `user_time`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "userTime",
+            alias = "user_time",
+            with = "::buffa::json_helpers::double",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_f64"
+        )
+    )]
     pub user_time: f64,
     /// Field 17: `deterministic_time`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "deterministicTime",
+            alias = "deterministic_time",
+            with = "::buffa::json_helpers::double",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_f64"
+        )
+    )]
     pub deterministic_time: f64,
     /// The integral of log(1 + absolute_objective_gap) over time.
     ///
     /// Field 22: `gap_integral`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "gapIntegral",
+            alias = "gap_integral",
+            with = "::buffa::json_helpers::double",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_zero_f64"
+        )
+    )]
     pub gap_integral: f64,
     /// Additional information about how the solution was found. It also stores
     /// model or parameters errors that caused the model to be invalid.
     ///
     /// Field 20: `solution_info`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "solutionInfo",
+            alias = "solution_info",
+            with = "::buffa::json_helpers::proto_string",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_str"
+        )
+    )]
     pub solution_info: ::buffa::alloc::string::String,
     /// The solve log will be filled if the parameter log_to_response is set to
     /// true.
     ///
     /// Field 26: `solve_log`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "solveLog",
+            alias = "solve_log",
+            with = "::buffa::json_helpers::proto_string",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_str"
+        )
+    )]
     pub solve_log: ::buffa::alloc::string::String,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -8706,20 +13503,258 @@ impl ::buffa::ExtensionSet for CpSolverResponse {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for CpSolverResponse {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if self.status.to_i32() != 0 {
+            enc.write_field_name("status")?;
+            match &self.status {
+                ::buffa::EnumValue::Known(__e) => enc.write_enum_name(__e.proto_name())?,
+                ::buffa::EnumValue::Unknown(__n) => enc.write_enum_number(*__n)?,
+            }
+        }
+        if self.objective_value.to_bits() != 0u64 {
+            enc.write_field_name("objective_value")?;
+            enc.write_f64(self.objective_value)?;
+        }
+        if self.best_objective_bound.to_bits() != 0u64 {
+            enc.write_field_name("best_objective_bound")?;
+            enc.write_f64(self.best_objective_bound)?;
+        }
+        if self.integer_objective.is_set() {
+            enc.write_field_name("integer_objective")?;
+            enc.write_message(&*self.integer_objective)?;
+        }
+        if self.inner_objective_lower_bound != 0i64 {
+            enc.write_field_name("inner_objective_lower_bound")?;
+            enc.write_i64(self.inner_objective_lower_bound)?;
+        }
+        if self.num_integers != 0i64 {
+            enc.write_field_name("num_integers")?;
+            enc.write_i64(self.num_integers)?;
+        }
+        if self.num_booleans != 0i64 {
+            enc.write_field_name("num_booleans")?;
+            enc.write_i64(self.num_booleans)?;
+        }
+        if self.num_fixed_booleans != 0i64 {
+            enc.write_field_name("num_fixed_booleans")?;
+            enc.write_i64(self.num_fixed_booleans)?;
+        }
+        if self.num_conflicts != 0i64 {
+            enc.write_field_name("num_conflicts")?;
+            enc.write_i64(self.num_conflicts)?;
+        }
+        if self.num_branches != 0i64 {
+            enc.write_field_name("num_branches")?;
+            enc.write_i64(self.num_branches)?;
+        }
+        if self.num_binary_propagations != 0i64 {
+            enc.write_field_name("num_binary_propagations")?;
+            enc.write_i64(self.num_binary_propagations)?;
+        }
+        if self.num_integer_propagations != 0i64 {
+            enc.write_field_name("num_integer_propagations")?;
+            enc.write_i64(self.num_integer_propagations)?;
+        }
+        if self.num_restarts != 0i64 {
+            enc.write_field_name("num_restarts")?;
+            enc.write_i64(self.num_restarts)?;
+        }
+        if self.num_lp_iterations != 0i64 {
+            enc.write_field_name("num_lp_iterations")?;
+            enc.write_i64(self.num_lp_iterations)?;
+        }
+        if self.wall_time.to_bits() != 0u64 {
+            enc.write_field_name("wall_time")?;
+            enc.write_f64(self.wall_time)?;
+        }
+        if self.user_time.to_bits() != 0u64 {
+            enc.write_field_name("user_time")?;
+            enc.write_f64(self.user_time)?;
+        }
+        if self.deterministic_time.to_bits() != 0u64 {
+            enc.write_field_name("deterministic_time")?;
+            enc.write_f64(self.deterministic_time)?;
+        }
+        if self.gap_integral.to_bits() != 0u64 {
+            enc.write_field_name("gap_integral")?;
+            enc.write_f64(self.gap_integral)?;
+        }
+        if !self.solution_info.is_empty() {
+            enc.write_field_name("solution_info")?;
+            enc.write_string(&self.solution_info)?;
+        }
+        if !self.solve_log.is_empty() {
+            enc.write_field_name("solve_log")?;
+            enc.write_string(&self.solve_log)?;
+        }
+        for __v in &self.solution {
+            enc.write_field_name("solution")?;
+            enc.write_i64(*__v)?;
+        }
+        for __v in &self.additional_solutions {
+            enc.write_field_name("additional_solutions")?;
+            enc.write_message(__v)?;
+        }
+        for __v in &self.tightened_variables {
+            enc.write_field_name("tightened_variables")?;
+            enc.write_message(__v)?;
+        }
+        for __v in &self.sufficient_assumptions_for_infeasibility {
+            enc.write_field_name("sufficient_assumptions_for_infeasibility")?;
+            enc.write_i32(*__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "status" => {
+                    self.status = dec
+                        .read_enum_by_name::<CpSolverStatus>()
+                        .map(::buffa::EnumValue::from)?;
+                }
+                "objective_value" => self.objective_value = dec.read_f64()?,
+                "best_objective_bound" => self.best_objective_bound = dec.read_f64()?,
+                "integer_objective" => {
+                    dec.merge_message(self.integer_objective.get_or_insert_default())?
+                }
+                "inner_objective_lower_bound" => {
+                    self.inner_objective_lower_bound = dec.read_i64()?;
+                }
+                "num_integers" => self.num_integers = dec.read_i64()?,
+                "num_booleans" => self.num_booleans = dec.read_i64()?,
+                "num_fixed_booleans" => self.num_fixed_booleans = dec.read_i64()?,
+                "num_conflicts" => self.num_conflicts = dec.read_i64()?,
+                "num_branches" => self.num_branches = dec.read_i64()?,
+                "num_binary_propagations" => {
+                    self.num_binary_propagations = dec.read_i64()?;
+                }
+                "num_integer_propagations" => {
+                    self.num_integer_propagations = dec.read_i64()?;
+                }
+                "num_restarts" => self.num_restarts = dec.read_i64()?,
+                "num_lp_iterations" => self.num_lp_iterations = dec.read_i64()?,
+                "wall_time" => self.wall_time = dec.read_f64()?,
+                "user_time" => self.user_time = dec.read_f64()?,
+                "deterministic_time" => self.deterministic_time = dec.read_f64()?,
+                "gap_integral" => self.gap_integral = dec.read_f64()?,
+                "solution_info" => self.solution_info = dec.read_string()?.into_owned(),
+                "solve_log" => self.solve_log = dec.read_string()?.into_owned(),
+                "solution" => {
+                    dec.read_repeated_into(&mut self.solution, |__d| __d.read_i64())?
+                }
+                "additional_solutions" => {
+                    dec.read_repeated_into(
+                        &mut self.additional_solutions,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                "tightened_variables" => {
+                    dec.read_repeated_into(
+                        &mut self.tightened_variables,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                "sufficient_assumptions_for_infeasibility" => {
+                    dec.read_repeated_into(
+                        &mut self.sufficient_assumptions_for_infeasibility,
+                        |__d| __d.read_i32(),
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for CpSolverResponse {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __CP_SOLVER_RESPONSE_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CpSolverResponse",
+    to_json: ::buffa::type_registry::any_to_json::<CpSolverResponse>,
+    from_json: ::buffa::type_registry::any_from_json::<CpSolverResponse>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __CP_SOLVER_RESPONSE_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.CpSolverResponse",
+    text_encode: ::buffa::type_registry::any_encode_text::<CpSolverResponse>,
+    text_merge: ::buffa::type_registry::any_merge_text::<CpSolverResponse>,
+};
 /// Contains the definitions for all the sat algorithm parameters and their
 /// default values.
 ///
 /// NEXT TAG: 356
 #[derive(Clone, PartialEq, Default)]
+#[cfg_attr(feature = "json", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "json", serde(default))]
 pub struct SatParameters {
     /// In some context, like in a portfolio of search, it makes sense to name a
     /// given parameters set for logging purpose.
     ///
     /// Field 171: `name`
+    #[cfg_attr(
+        feature = "json",
+        serde(rename = "name", skip_serializing_if = "::core::option::Option::is_none")
+    )]
     pub name: ::core::option::Option<::buffa::alloc::string::String>,
     /// Field 1: `preferred_variable_order`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "preferredVariableOrder",
+            alias = "preferred_variable_order",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub preferred_variable_order: ::core::option::Option<sat_parameters::VariableOrder>,
     /// Field 2: `initial_polarity`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "initialPolarity",
+            alias = "initial_polarity",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub initial_polarity: ::core::option::Option<sat_parameters::Polarity>,
     /// If this is true, then the polarity of a variable will be the last value it
     /// was assigned to, or its default polarity if it was never assigned since the
@@ -8734,17 +13769,42 @@ pub struct SatParameters {
     /// Satisfiability Testing, 2007.
     ///
     /// Field 44: `use_phase_saving`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "usePhaseSaving",
+            alias = "use_phase_saving",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_phase_saving: ::core::option::Option<bool>,
     /// If non-zero, then we change the polarity heuristic after that many number
     /// of conflicts in an arithmetically increasing fashion. So x the first time,
     /// 2 * x the second time, etc...
     ///
     /// Field 168: `polarity_rephase_increment`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "polarityRephaseIncrement",
+            alias = "polarity_rephase_increment",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub polarity_rephase_increment: ::core::option::Option<i32>,
     /// If true and we have first solution LS workers, tries in some phase to
     /// follow a LS solutions that violates has litle constraints as possible.
     ///
     /// Field 309: `polarity_exploit_ls_hints`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "polarityExploitLsHints",
+            alias = "polarity_exploit_ls_hints",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub polarity_exploit_ls_hints: ::core::option::Option<bool>,
     /// The proportion of polarity chosen at random. Note that this take
     /// precedence over the phase saving heuristic. This is different from
@@ -8753,18 +13813,44 @@ pub struct SatParameters {
     /// initially and then always taking this choice.
     ///
     /// Field 45: `random_polarity_ratio`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "randomPolarityRatio",
+            alias = "random_polarity_ratio",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub random_polarity_ratio: ::core::option::Option<f64>,
     /// A number between 0 and 1 that indicates the proportion of branching
     /// variables that are selected randomly instead of choosing the first variable
     /// from the given variable_ordering strategy.
     ///
     /// Field 32: `random_branches_ratio`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "randomBranchesRatio",
+            alias = "random_branches_ratio",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub random_branches_ratio: ::core::option::Option<f64>,
     /// Whether we use the ERWA (Exponential Recency Weighted Average) heuristic as
     /// described in "Learning Rate Based Branching Heuristic for SAT solvers",
     /// J.H.Liang, V. Ganesh, P. Poupart, K.Czarnecki, SAT 2016.
     ///
     /// Field 75: `use_erwa_heuristic`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useErwaHeuristic",
+            alias = "use_erwa_heuristic",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_erwa_heuristic: ::core::option::Option<bool>,
     /// The initial value of the variables activity. A non-zero value only make
     /// sense when use_erwa_heuristic is true. Experiments with a value of 1e-2
@@ -8774,6 +13860,15 @@ pub struct SatParameters {
     /// variables. This is not in the ERWA paper.
     ///
     /// Field 76: `initial_variables_activity`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "initialVariablesActivity",
+            alias = "initial_variables_activity",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub initial_variables_activity: ::core::option::Option<f64>,
     /// When this is true, then the variables that appear in any of the reason of
     /// the variables in a conflict have their activity bumped. This is addition to
@@ -8781,12 +13876,38 @@ pub struct SatParameters {
     /// resolution.
     ///
     /// Field 77: `also_bump_variables_in_conflict_reasons`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "alsoBumpVariablesInConflictReasons",
+            alias = "also_bump_variables_in_conflict_reasons",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub also_bump_variables_in_conflict_reasons: ::core::option::Option<bool>,
     /// Field 4: `minimization_algorithm`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "minimizationAlgorithm",
+            alias = "minimization_algorithm",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub minimization_algorithm: ::core::option::Option<
         sat_parameters::ConflictMinimizationAlgorithm,
     >,
     /// Field 34: `binary_minimization_algorithm`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "binaryMinimizationAlgorithm",
+            alias = "binary_minimization_algorithm",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub binary_minimization_algorithm: ::core::option::Option<
         sat_parameters::BinaryMinizationAlgorithm,
     >,
@@ -8796,26 +13917,67 @@ pub struct SatParameters {
     /// from the problem.
     ///
     /// Field 56: `subsumption_during_conflict_analysis`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "subsumptionDuringConflictAnalysis",
+            alias = "subsumption_during_conflict_analysis",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub subsumption_during_conflict_analysis: ::core::option::Option<bool>,
     /// It is possible that "intermediate" clauses during conflict resolution
     /// subsumes some of the clauses that propagated. This is quite cheap to detect
     /// and result in more subsumption/strengthening of clauses.
     ///
     /// Field 351: `extra_subsumption_during_conflict_analysis`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "extraSubsumptionDuringConflictAnalysis",
+            alias = "extra_subsumption_during_conflict_analysis",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub extra_subsumption_during_conflict_analysis: ::core::option::Option<bool>,
     /// Try even more subsumption options during conflict analysis.
     ///
     /// Field 353: `decision_subsumption_during_conflict_analysis`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "decisionSubsumptionDuringConflictAnalysis",
+            alias = "decision_subsumption_during_conflict_analysis",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub decision_subsumption_during_conflict_analysis: ::core::option::Option<bool>,
     /// If \>=0, each time we have a conflict, we try to subsume the last n learned
     /// clause with it.
     ///
     /// Field 343: `eagerly_subsume_last_n_conflicts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "eagerlySubsumeLastNConflicts",
+            alias = "eagerly_subsume_last_n_conflicts",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub eagerly_subsume_last_n_conflicts: ::core::option::Option<i32>,
     /// If we remove clause that we now are "implied" by others. Note that this
     /// might not always be good as we might loose some propagation power.
     ///
     /// Field 355: `subsume_during_vivification`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "subsumeDuringVivification",
+            alias = "subsume_during_vivification",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub subsume_during_vivification: ::core::option::Option<bool>,
     /// If true, try to backtrack as little as possible on conflict and re-imply
     /// the clauses later.
@@ -8824,16 +13986,42 @@ pub struct SatParameters {
     /// See: <https://doi.org/10.1007/978-3-319-94144-8_7>
     ///
     /// Field 330: `use_chronological_backtracking`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useChronologicalBacktracking",
+            alias = "use_chronological_backtracking",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_chronological_backtracking: ::core::option::Option<bool>,
     /// If chronological backtracking is enabled, this is the maximum number of
     /// levels we will backjump over, otherwise we will backtrack.
     ///
     /// Field 331: `max_backjump_levels`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxBackjumpLevels",
+            alias = "max_backjump_levels",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_backjump_levels: ::core::option::Option<i32>,
     /// If chronological backtracking is enabled, this is the minimum number of
     /// conflicts before we will consider backjumping.
     ///
     /// Field 332: `chronological_backtrack_min_conflicts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "chronologicalBacktrackMinConflicts",
+            alias = "chronological_backtrack_min_conflicts",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub chronological_backtrack_min_conflicts: ::core::option::Option<i32>,
     /// ==========================================================================
     /// Clause database management
@@ -8842,21 +14030,57 @@ pub struct SatParameters {
     /// Trigger a cleanup when this number of "deletable" clauses is learned.
     ///
     /// Field 11: `clause_cleanup_period`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "clauseCleanupPeriod",
+            alias = "clause_cleanup_period",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub clause_cleanup_period: ::core::option::Option<i32>,
     /// Increase clause_cleanup_period by this amount after each cleanup.
     ///
     /// Field 337: `clause_cleanup_period_increment`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "clauseCleanupPeriodIncrement",
+            alias = "clause_cleanup_period_increment",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub clause_cleanup_period_increment: ::core::option::Option<i32>,
     /// During a cleanup, we will always keep that number of "deletable" clauses.
     /// Note that this doesn't include the "protected" clauses.
     ///
     /// Field 13: `clause_cleanup_target`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "clauseCleanupTarget",
+            alias = "clause_cleanup_target",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub clause_cleanup_target: ::core::option::Option<i32>,
     /// During a cleanup, if clause_cleanup_target is 0, we will delete the
     /// clause_cleanup_ratio of "deletable" clauses instead of aiming for a fixed
     /// target of clauses to keep.
     ///
     /// Field 190: `clause_cleanup_ratio`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "clauseCleanupRatio",
+            alias = "clause_cleanup_ratio",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub clause_cleanup_ratio: ::core::option::Option<f64>,
     /// All the clauses with a LBD (literal blocks distance) lower or equal to this
     /// parameters will always be kept.
@@ -8867,12 +14091,30 @@ pub struct SatParameters {
     /// it.
     ///
     /// Field 59: `clause_cleanup_lbd_bound`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "clauseCleanupLbdBound",
+            alias = "clause_cleanup_lbd_bound",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub clause_cleanup_lbd_bound: ::core::option::Option<i32>,
     /// All the clause with a LBD lower or equal to this will be kept except if
     /// its activity hasn't been bumped in the last 32 cleanup phase. Note that
     /// this has no effect if it is \<= clause_cleanup_lbd_bound.
     ///
     /// Field 349: `clause_cleanup_lbd_tier1`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "clauseCleanupLbdTier1",
+            alias = "clause_cleanup_lbd_tier1",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub clause_cleanup_lbd_tier1: ::core::option::Option<i32>,
     /// All the clause with a LBD lower or equal to this will be kept except if its
     /// activity hasn't been bumped since the previous cleanup phase. Note that
@@ -8880,14 +14122,50 @@ pub struct SatParameters {
     /// clause_cleanup_lbd_tier1.
     ///
     /// Field 350: `clause_cleanup_lbd_tier2`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "clauseCleanupLbdTier2",
+            alias = "clause_cleanup_lbd_tier2",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub clause_cleanup_lbd_tier2: ::core::option::Option<i32>,
     /// Field 60: `clause_cleanup_ordering`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "clauseCleanupOrdering",
+            alias = "clause_cleanup_ordering",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub clause_cleanup_ordering: ::core::option::Option<sat_parameters::ClauseOrdering>,
     /// Same as for the clauses, but for the learned pseudo-Boolean constraints.
     ///
     /// Field 46: `pb_cleanup_increment`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "pbCleanupIncrement",
+            alias = "pb_cleanup_increment",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub pb_cleanup_increment: ::core::option::Option<i32>,
     /// Field 47: `pb_cleanup_ratio`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "pbCleanupRatio",
+            alias = "pb_cleanup_ratio",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub pb_cleanup_ratio: ::core::option::Option<f64>,
     /// ==========================================================================
     /// Variable and clause activities
@@ -8903,8 +14181,26 @@ pub struct SatParameters {
     /// activity are multiplied by 1 / max_variable_activity_value.
     ///
     /// Field 15: `variable_activity_decay`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "variableActivityDecay",
+            alias = "variable_activity_decay",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub variable_activity_decay: ::core::option::Option<f64>,
     /// Field 16: `max_variable_activity_value`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxVariableActivityValue",
+            alias = "max_variable_activity_value",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_variable_activity_value: ::core::option::Option<f64>,
     /// The activity starts at 0.8 and increment by 0.01 every 5000 conflicts until
     /// 0.95. This "hack" seems to work well and comes from:
@@ -8913,16 +14209,61 @@ pub struct SatParameters {
     /// <http://edacc4.informatik.uni-ulm.de/SC13/solver-description-download/136>
     ///
     /// Field 22: `glucose_max_decay`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "glucoseMaxDecay",
+            alias = "glucose_max_decay",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub glucose_max_decay: ::core::option::Option<f64>,
     /// Field 23: `glucose_decay_increment`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "glucoseDecayIncrement",
+            alias = "glucose_decay_increment",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub glucose_decay_increment: ::core::option::Option<f64>,
     /// Field 24: `glucose_decay_increment_period`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "glucoseDecayIncrementPeriod",
+            alias = "glucose_decay_increment_period",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub glucose_decay_increment_period: ::core::option::Option<i32>,
     /// Clause activity parameters (same effect as the one on the variables).
     ///
     /// Field 17: `clause_activity_decay`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "clauseActivityDecay",
+            alias = "clause_activity_decay",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub clause_activity_decay: ::core::option::Option<f64>,
     /// Field 18: `max_clause_activity_value`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxClauseActivityValue",
+            alias = "max_clause_activity_value",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_clause_activity_value: ::core::option::Option<f64>,
     /// The restart strategies will change each time the strategy_counter is
     /// increased. The current strategy will simply be the one at index
@@ -8935,8 +14276,25 @@ pub struct SatParameters {
     /// But more generally, it seems REALLY beneficial to try different strategy.
     ///
     /// Field 61: `restart_algorithms`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "restartAlgorithms",
+            alias = "restart_algorithms",
+            with = "::buffa::json_helpers::repeated_closed_enum",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec"
+        )
+    )]
     pub restart_algorithms: ::buffa::alloc::vec::Vec<sat_parameters::RestartAlgorithm>,
     /// Field 70: `default_restart_algorithms`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "defaultRestartAlgorithms",
+            alias = "default_restart_algorithms",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub default_restart_algorithms: ::core::option::Option<
         ::buffa::alloc::string::String,
     >,
@@ -8944,38 +14302,118 @@ pub struct SatParameters {
     /// used by the LUBY_RESTART strategy.
     ///
     /// Field 30: `restart_period`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "restartPeriod",
+            alias = "restart_period",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub restart_period: ::core::option::Option<i32>,
     /// Size of the window for the moving average restarts.
     ///
     /// Field 62: `restart_running_window_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "restartRunningWindowSize",
+            alias = "restart_running_window_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub restart_running_window_size: ::core::option::Option<i32>,
     /// In the moving average restart algorithms, a restart is triggered if the
     /// window average times this ratio is greater that the global average.
     ///
     /// Field 63: `restart_dl_average_ratio`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "restartDlAverageRatio",
+            alias = "restart_dl_average_ratio",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub restart_dl_average_ratio: ::core::option::Option<f64>,
     /// Field 71: `restart_lbd_average_ratio`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "restartLbdAverageRatio",
+            alias = "restart_lbd_average_ratio",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub restart_lbd_average_ratio: ::core::option::Option<f64>,
     /// Block a moving restart algorithm if the trail size of the current conflict
     /// is greater than the multiplier times the moving average of the trail size
     /// at the previous conflicts.
     ///
     /// Field 64: `use_blocking_restart`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useBlockingRestart",
+            alias = "use_blocking_restart",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_blocking_restart: ::core::option::Option<bool>,
     /// Field 65: `blocking_restart_window_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "blockingRestartWindowSize",
+            alias = "blocking_restart_window_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub blocking_restart_window_size: ::core::option::Option<i32>,
     /// Field 66: `blocking_restart_multiplier`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "blockingRestartMultiplier",
+            alias = "blocking_restart_multiplier",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub blocking_restart_multiplier: ::core::option::Option<f64>,
     /// After each restart, if the number of conflict since the last strategy
     /// change is greater that this, then we increment a "strategy_counter" that
     /// can be use to change the search strategy used by the following restarts.
     ///
     /// Field 68: `num_conflicts_before_strategy_changes`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numConflictsBeforeStrategyChanges",
+            alias = "num_conflicts_before_strategy_changes",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub num_conflicts_before_strategy_changes: ::core::option::Option<i32>,
     /// The parameter num_conflicts_before_strategy_changes is increased by that
     /// much after each strategy change.
     ///
     /// Field 69: `strategy_change_increase_ratio`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "strategyChangeIncreaseRatio",
+            alias = "strategy_change_increase_ratio",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub strategy_change_increase_ratio: ::core::option::Option<f64>,
     /// ==========================================================================
     /// Limits
@@ -8985,17 +14423,44 @@ pub struct SatParameters {
     /// The counter will starts at the beginning of the Solve() call.
     ///
     /// Field 36: `max_time_in_seconds`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxTimeInSeconds",
+            alias = "max_time_in_seconds",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_time_in_seconds: ::core::option::Option<f64>,
     /// Maximum time allowed in deterministic time to solve a problem.
     /// The deterministic time should be correlated with the real time used by the
     /// solver, the time unit being as close as possible to a second.
     ///
     /// Field 67: `max_deterministic_time`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxDeterministicTime",
+            alias = "max_deterministic_time",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_deterministic_time: ::core::option::Option<f64>,
     /// Stops after that number of batches has been scheduled. This only make sense
     /// when interleave_search is true.
     ///
     /// Field 291: `max_num_deterministic_batches`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxNumDeterministicBatches",
+            alias = "max_num_deterministic_batches",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_num_deterministic_batches: ::core::option::Option<i32>,
     /// Maximum number of conflicts allowed to solve a problem.
     ///
@@ -9008,6 +14473,15 @@ pub struct SatParameters {
     /// kint64max
     ///
     /// Field 37: `max_number_of_conflicts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxNumberOfConflicts",
+            alias = "max_number_of_conflicts",
+            with = "::buffa::json_helpers::opt_int64",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_number_of_conflicts: ::core::option::Option<i64>,
     /// Maximum memory allowed for the whole thread containing the solver. The
     /// solver will abort as soon as it detects that this limit is crossed. As a
@@ -9017,6 +14491,15 @@ pub struct SatParameters {
     /// TODO(user): This is only used by the pure SAT solver, generalize to CP-SAT.
     ///
     /// Field 40: `max_memory_in_mb`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxMemoryInMb",
+            alias = "max_memory_in_mb",
+            with = "::buffa::json_helpers::opt_int64",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_memory_in_mb: ::core::option::Option<i64>,
     /// Stop the search when the gap between the best feasible objective (O) and
     /// our best objective bound (B) is smaller than a limit.
@@ -9038,8 +14521,26 @@ pub struct SatParameters {
     /// greater than this absolute gap.
     ///
     /// Field 159: `absolute_gap_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "absoluteGapLimit",
+            alias = "absolute_gap_limit",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub absolute_gap_limit: ::core::option::Option<f64>,
     /// Field 160: `relative_gap_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "relativeGapLimit",
+            alias = "relative_gap_limit",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub relative_gap_limit: ::core::option::Option<f64>,
     /// ==========================================================================
     /// Other parameters
@@ -9054,6 +14555,15 @@ pub struct SatParameters {
     /// enables to have more robust benchmarks when evaluating new features.
     ///
     /// Field 31: `random_seed`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "randomSeed",
+            alias = "random_seed",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub random_seed: ::core::option::Option<i32>,
     /// This is mainly here to test the solver variability. Note that in tests, if
     /// not explicitly set to false, all 3 options will be set to true so that
@@ -9061,16 +14571,48 @@ pub struct SatParameters {
     /// many equivalent optimal solutions.
     ///
     /// Field 178: `permute_variable_randomly`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "permuteVariableRandomly",
+            alias = "permute_variable_randomly",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub permute_variable_randomly: ::core::option::Option<bool>,
     /// Field 179: `permute_presolve_constraint_order`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "permutePresolveConstraintOrder",
+            alias = "permute_presolve_constraint_order",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub permute_presolve_constraint_order: ::core::option::Option<bool>,
     /// Field 180: `use_absl_random`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useAbslRandom",
+            alias = "use_absl_random",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_absl_random: ::core::option::Option<bool>,
     /// Whether the solver should log the search progress. This is the maing
     /// logging parameter and if this is false, none of the logging (callbacks,
     /// log_to_stdout, log_to_response, ...) will do anything.
     ///
     /// Field 41: `log_search_progress`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "logSearchProgress",
+            alias = "log_search_progress",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub log_search_progress: ::core::option::Option<bool>,
     /// Whether the solver should display per sub-solver search statistics.
     /// This is only useful is log_search_progress is set to true, and if the
@@ -9078,18 +14620,50 @@ pub struct SatParameters {
     /// of stats with one line per subsolver.
     ///
     /// Field 189: `log_subsolver_statistics`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "logSubsolverStatistics",
+            alias = "log_subsolver_statistics",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub log_subsolver_statistics: ::core::option::Option<bool>,
     /// Add a prefix to all logs.
     ///
     /// Field 185: `log_prefix`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "logPrefix",
+            alias = "log_prefix",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub log_prefix: ::core::option::Option<::buffa::alloc::string::String>,
     /// Log to stdout.
     ///
     /// Field 186: `log_to_stdout`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "logToStdout",
+            alias = "log_to_stdout",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub log_to_stdout: ::core::option::Option<bool>,
     /// Log to response proto.
     ///
     /// Field 187: `log_to_response`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "logToResponse",
+            alias = "log_to_response",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub log_to_response: ::core::option::Option<bool>,
     /// Experimental.
     ///
@@ -9104,6 +14678,14 @@ pub struct SatParameters {
     /// anything (except slow the solver down).
     ///
     /// Field 43: `use_pb_resolution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "usePbResolution",
+            alias = "use_pb_resolution",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_pb_resolution: ::core::option::Option<bool>,
     /// A different algorithm during PB resolution. It minimizes the number of
     /// calls to ReduceCoefficients() which can be time consuming. However, the
@@ -9111,6 +14693,14 @@ pub struct SatParameters {
     /// lead to integer overflows that could otherwise be prevented.
     ///
     /// Field 48: `minimize_reduction_during_pb_resolution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "minimizeReductionDuringPbResolution",
+            alias = "minimize_reduction_during_pb_resolution",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub minimize_reduction_during_pb_resolution: ::core::option::Option<bool>,
     /// Whether or not the assumption levels are taken into account during the LBD
     /// computation. According to the reference below, not counting them improves
@@ -9123,6 +14713,14 @@ pub struct SatParameters {
     /// in Computer Science Volume 7962, 2013, pp 309-317.
     ///
     /// Field 49: `count_assumption_levels_in_lbd`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "countAssumptionLevelsInLbd",
+            alias = "count_assumption_levels_in_lbd",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub count_assumption_levels_in_lbd: ::core::option::Option<bool>,
     /// ==========================================================================
     /// Presolve
@@ -9133,6 +14731,15 @@ pub struct SatParameters {
     /// occurrences of not(x) is not greater than this parameter.
     ///
     /// Field 54: `presolve_bve_threshold`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "presolveBveThreshold",
+            alias = "presolve_bve_threshold",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub presolve_bve_threshold: ::core::option::Option<i32>,
     /// Internal parameter. During BVE, if we eliminate a variable x, by default we
     /// will push all clauses containing x and all clauses containing not(x) to the
@@ -9143,11 +14750,28 @@ pub struct SatParameters {
     /// reason, not all our postsolve algorithm support this.
     ///
     /// Field 324: `filter_sat_postsolve_clauses`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "filterSatPostsolveClauses",
+            alias = "filter_sat_postsolve_clauses",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub filter_sat_postsolve_clauses: ::core::option::Option<bool>,
     /// During presolve, we apply BVE only if this weight times the number of
     /// clauses plus the number of clause literals is not increased.
     ///
     /// Field 55: `presolve_bve_clause_weight`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "presolveBveClauseWeight",
+            alias = "presolve_bve_clause_weight",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub presolve_bve_clause_weight: ::core::option::Option<i32>,
     /// The maximum "deterministic" time limit to spend in probing. A value of
     /// zero will disable the probing.
@@ -9156,17 +14780,51 @@ pub struct SatParameters {
     /// SAT presolve.
     ///
     /// Field 226: `probing_deterministic_time_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "probingDeterministicTimeLimit",
+            alias = "probing_deterministic_time_limit",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub probing_deterministic_time_limit: ::core::option::Option<f64>,
     /// Field 57: `presolve_probing_deterministic_time_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "presolveProbingDeterministicTimeLimit",
+            alias = "presolve_probing_deterministic_time_limit",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub presolve_probing_deterministic_time_limit: ::core::option::Option<f64>,
     /// Whether we use an heuristic to detect some basic case of blocked clause
     /// in the SAT presolve.
     ///
     /// Field 88: `presolve_blocked_clause`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "presolveBlockedClause",
+            alias = "presolve_blocked_clause",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub presolve_blocked_clause: ::core::option::Option<bool>,
     /// Whether or not we use Bounded Variable Addition (BVA) in the presolve.
     ///
     /// Field 72: `presolve_use_bva`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "presolveUseBva",
+            alias = "presolve_use_bva",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub presolve_use_bva: ::core::option::Option<bool>,
     /// Apply Bounded Variable Addition (BVA) if the number of clauses is reduced
     /// by stricly more than this threshold. The algorithm described in the paper
@@ -9174,24 +14832,67 @@ pub struct SatParameters {
     /// worth it to add a new variable just to remove one clause.
     ///
     /// Field 73: `presolve_bva_threshold`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "presolveBvaThreshold",
+            alias = "presolve_bva_threshold",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub presolve_bva_threshold: ::core::option::Option<i32>,
     /// In case of large reduction in a presolve iteration, we perform multiple
     /// presolve iterations. This parameter controls the maximum number of such
     /// presolve iterations.
     ///
     /// Field 138: `max_presolve_iterations`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxPresolveIterations",
+            alias = "max_presolve_iterations",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_presolve_iterations: ::core::option::Option<i32>,
     /// Whether we presolve the cp_model before solving it.
     ///
     /// Field 86: `cp_model_presolve`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "cpModelPresolve",
+            alias = "cp_model_presolve",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub cp_model_presolve: ::core::option::Option<bool>,
     /// How much effort do we spend on probing. 0 disables it completely.
     ///
     /// Field 110: `cp_model_probing_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "cpModelProbingLevel",
+            alias = "cp_model_probing_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub cp_model_probing_level: ::core::option::Option<i32>,
     /// Whether we also use the sat presolve when cp_model_presolve is true.
     ///
     /// Field 93: `cp_model_use_sat_presolve`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "cpModelUseSatPresolve",
+            alias = "cp_model_use_sat_presolve",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub cp_model_use_sat_presolve: ::core::option::Option<bool>,
     /// If we try to load at most ones and exactly ones constraints when running
     /// the pure SAT presolve. Or if we just ignore them.
@@ -9201,6 +14902,14 @@ pub struct SatParameters {
     /// to true.
     ///
     /// Field 335: `load_at_most_ones_in_sat_presolve`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "loadAtMostOnesInSatPresolve",
+            alias = "load_at_most_ones_in_sat_presolve",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub load_at_most_ones_in_sat_presolve: ::core::option::Option<bool>,
     /// If cp_model_presolve is true and there is a large proportion of fixed
     /// variable after the first model copy, remap all the model to a dense set of
@@ -9208,6 +14917,14 @@ pub struct SatParameters {
     /// large models.
     ///
     /// Field 310: `remove_fixed_variables_early`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "removeFixedVariablesEarly",
+            alias = "remove_fixed_variables_early",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub remove_fixed_variables_early: ::core::option::Option<bool>,
     /// If true, we detect variable that are unique to a table constraint and only
     /// there to encode a cost on each tuple. This is usually the case when a WCSP
@@ -9217,6 +14934,14 @@ pub struct SatParameters {
     /// experimental at this point.
     ///
     /// Field 216: `detect_table_with_cost`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "detectTableWithCost",
+            alias = "detect_table_with_cost",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub detect_table_with_cost: ::core::option::Option<bool>,
     /// How much we try to "compress" a table constraint. Compressing more leads to
     /// less Booleans and faster propagation but can reduced the quality of the lp
@@ -9224,24 +14949,67 @@ pub struct SatParameters {
     /// table. At 2, we try to automatically decide if it is worth it.
     ///
     /// Field 217: `table_compression_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "tableCompressionLevel",
+            alias = "table_compression_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub table_compression_level: ::core::option::Option<i32>,
     /// If true, expand all_different constraints that are not permutations.
     /// Permutations (#Variables = #Values) are always expanded.
     ///
     /// Field 170: `expand_alldiff_constraints`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "expandAlldiffConstraints",
+            alias = "expand_alldiff_constraints",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub expand_alldiff_constraints: ::core::option::Option<bool>,
     /// Max domain size for all_different constraints to be expanded.
     ///
     /// Field 320: `max_alldiff_domain_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxAlldiffDomainSize",
+            alias = "max_alldiff_domain_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_alldiff_domain_size: ::core::option::Option<i32>,
     /// If true, expand the reservoir constraints by creating booleans for all
     /// possible precedences between event and encoding the constraint.
     ///
     /// Field 182: `expand_reservoir_constraints`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "expandReservoirConstraints",
+            alias = "expand_reservoir_constraints",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub expand_reservoir_constraints: ::core::option::Option<bool>,
     /// Max domain size for expanding linear2 constraints (ax + by ==/!= c).
     ///
     /// Field 340: `max_domain_size_for_linear2_expansion`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxDomainSizeForLinear2Expansion",
+            alias = "max_domain_size_for_linear2_expansion",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_domain_size_for_linear2_expansion: ::core::option::Option<i32>,
     /// Mainly useful for testing.
     ///
@@ -9259,12 +15027,28 @@ pub struct SatParameters {
     /// constraint).
     ///
     /// Field 288: `expand_reservoir_using_circuit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "expandReservoirUsingCircuit",
+            alias = "expand_reservoir_using_circuit",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub expand_reservoir_using_circuit: ::core::option::Option<bool>,
     /// Encore cumulative with fixed demands and capacity as a reservoir
     /// constraint. The only reason you might want to do that is to test the
     /// reservoir propagation code!
     ///
     /// Field 287: `encode_cumulative_as_reservoir`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "encodeCumulativeAsReservoir",
+            alias = "encode_cumulative_as_reservoir",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub encode_cumulative_as_reservoir: ::core::option::Option<bool>,
     /// If the number of expressions in the lin_max is less that the max size
     /// parameter, model expansion replaces target = max(xi) by linear constraint
@@ -9273,16 +15057,41 @@ pub struct SatParameters {
     /// This is mainly for experimenting compared to a custom lin_max propagator.
     ///
     /// Field 280: `max_lin_max_size_for_expansion`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxLinMaxSizeForExpansion",
+            alias = "max_lin_max_size_for_expansion",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_lin_max_size_for_expansion: ::core::option::Option<i32>,
     /// If true, it disable all constraint expansion.
     /// This should only be used to test the presolve of expanded constraints.
     ///
     /// Field 181: `disable_constraint_expansion`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "disableConstraintExpansion",
+            alias = "disable_constraint_expansion",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub disable_constraint_expansion: ::core::option::Option<bool>,
     /// Linear constraint with a complex right hand side (more than a single
     /// interval) need to be expanded, there is a couple of way to do that.
     ///
     /// Field 223: `encode_complex_linear_constraint_with_integer`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "encodeComplexLinearConstraintWithInteger",
+            alias = "encode_complex_linear_constraint_with_integer",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub encode_complex_linear_constraint_with_integer: ::core::option::Option<bool>,
     /// During presolve, we use a maximum clique heuristic to merge together
     /// no-overlap constraints or at most one constraints. This code can be slow,
@@ -9291,8 +15100,26 @@ pub struct SatParameters {
     /// simplify manual input.
     ///
     /// Field 145: `merge_no_overlap_work_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mergeNoOverlapWorkLimit",
+            alias = "merge_no_overlap_work_limit",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub merge_no_overlap_work_limit: ::core::option::Option<f64>,
     /// Field 146: `merge_at_most_one_work_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mergeAtMostOneWorkLimit",
+            alias = "merge_at_most_one_work_limit",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub merge_at_most_one_work_limit: ::core::option::Option<f64>,
     /// How much substitution (also called free variable aggregation in MIP
     /// litterature) should we perform at presolve. This currently only concerns
@@ -9300,6 +15127,15 @@ pub struct SatParameters {
     /// off and any positive value performs substitution.
     ///
     /// Field 147: `presolve_substitution_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "presolveSubstitutionLevel",
+            alias = "presolve_substitution_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub presolve_substitution_level: ::core::option::Option<i32>,
     /// If true, we will extract from linear constraints, enforcement literals of
     /// the form "integer variable at bound =\> simplified constraint". This should
@@ -9309,6 +15145,14 @@ pub struct SatParameters {
     /// created this way).
     ///
     /// Field 174: `presolve_extract_integer_enforcement`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "presolveExtractIntegerEnforcement",
+            alias = "presolve_extract_integer_enforcement",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub presolve_extract_integer_enforcement: ::core::option::Option<bool>,
     /// A few presolve operations involve detecting constraints included in other
     /// constraint. Since there can be a quadratic number of such pairs, and
@@ -9319,10 +15163,27 @@ pub struct SatParameters {
     /// A value of zero will disable these presolve rules completely.
     ///
     /// Field 201: `presolve_inclusion_work_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "presolveInclusionWorkLimit",
+            alias = "presolve_inclusion_work_limit",
+            with = "::buffa::json_helpers::opt_int64",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub presolve_inclusion_work_limit: ::core::option::Option<i64>,
     /// If true, we don't keep names in our internal copy of the user given model.
     ///
     /// Field 202: `ignore_names`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "ignoreNames",
+            alias = "ignore_names",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub ignore_names: ::core::option::Option<bool>,
     /// Run a max-clique code amongst all the x != y we can find and try to infer
     /// set of variables that are all different. This allows to close neos16.mps
@@ -9334,6 +15195,14 @@ pub struct SatParameters {
     /// x != y have "offsets" between them. I.e. x \> y + offset.
     ///
     /// Field 233: `infer_all_diffs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "inferAllDiffs",
+            alias = "infer_all_diffs",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub infer_all_diffs: ::core::option::Option<bool>,
     /// Try to find large "rectangle" in the linear constraint matrix with
     /// identical lines. If such rectangle is big enough, we can introduce a new
@@ -9341,6 +15210,14 @@ pub struct SatParameters {
     /// the number of non-zero.
     ///
     /// Field 234: `find_big_linear_overlap`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "findBigLinearOverlap",
+            alias = "find_big_linear_overlap",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub find_big_linear_overlap: ::core::option::Option<bool>,
     /// By propagating (or just using binary clauses), one can detect that all
     /// literal of a clause are actually in at most one relationship. Thus this
@@ -9349,6 +15226,14 @@ pub struct SatParameters {
     /// deterministic limit in place.
     ///
     /// Field 333: `find_clauses_that_are_exactly_one`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "findClausesThatAreExactlyOne",
+            alias = "find_clauses_that_are_exactly_one",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub find_clauses_that_are_exactly_one: ::core::option::Option<bool>,
     /// ==========================================================================
     /// Inprocessing
@@ -9358,16 +15243,42 @@ pub struct SatParameters {
     /// each restart to the root level.
     ///
     /// Field 163: `use_sat_inprocessing`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useSatInprocessing",
+            alias = "use_sat_inprocessing",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_sat_inprocessing: ::core::option::Option<bool>,
     /// Proportion of deterministic time we should spend on inprocessing.
     /// At each "restart", if the proportion is below this ratio, we will do some
     /// inprocessing, otherwise, we skip it for this restart.
     ///
     /// Field 273: `inprocessing_dtime_ratio`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "inprocessingDtimeRatio",
+            alias = "inprocessing_dtime_ratio",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub inprocessing_dtime_ratio: ::core::option::Option<f64>,
     /// The amount of dtime we should spend on probing for each inprocessing round.
     ///
     /// Field 274: `inprocessing_probing_dtime`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "inprocessingProbingDtime",
+            alias = "inprocessing_probing_dtime",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub inprocessing_probing_dtime: ::core::option::Option<f64>,
     /// Parameters for an heuristic similar to the one described in "An effective
     /// learnt clause minimization approach for CDCL Sat Solvers",
@@ -9381,10 +15292,35 @@ pub struct SatParameters {
     /// that we keep forever like in the paper.
     ///
     /// Field 275: `inprocessing_minimization_dtime`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "inprocessingMinimizationDtime",
+            alias = "inprocessing_minimization_dtime",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub inprocessing_minimization_dtime: ::core::option::Option<f64>,
     /// Field 297: `inprocessing_minimization_use_conflict_analysis`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "inprocessingMinimizationUseConflictAnalysis",
+            alias = "inprocessing_minimization_use_conflict_analysis",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub inprocessing_minimization_use_conflict_analysis: ::core::option::Option<bool>,
     /// Field 298: `inprocessing_minimization_use_all_orderings`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "inprocessingMinimizationUseAllOrderings",
+            alias = "inprocessing_minimization_use_all_orderings",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub inprocessing_minimization_use_all_orderings: ::core::option::Option<bool>,
     /// Whether we use the algorithm described in "Clausal Congruence closure",
     /// Armin Biere, Katalin Fazekas, Mathias Fleury, Nils Froleyks, 2024.
@@ -9392,12 +15328,28 @@ pub struct SatParameters {
     /// Note that we only have a basic version currently.
     ///
     /// Field 342: `inprocessing_use_congruence_closure`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "inprocessingUseCongruenceClosure",
+            alias = "inprocessing_use_congruence_closure",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub inprocessing_use_congruence_closure: ::core::option::Option<bool>,
     /// Whether we use the SAT sweeping algorithm described in "Clausal Equivalence
     /// Sweeping", Armin Biere, Katalin Fazekas, Mathias Fleury, Nils Froleyks,
     /// 2025.
     ///
     /// Field 354: `inprocessing_use_sat_sweeping`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "inprocessingUseSatSweeping",
+            alias = "inprocessing_use_sat_sweeping",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub inprocessing_use_sat_sweeping: ::core::option::Option<bool>,
     /// ==========================================================================
     /// Multithread
@@ -9419,8 +15371,26 @@ pub struct SatParameters {
     /// MPSolver::SetNumThreads().
     ///
     /// Field 206: `num_workers`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numWorkers",
+            alias = "num_workers",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub num_workers: ::core::option::Option<i32>,
     /// Field 100: `num_search_workers`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numSearchWorkers",
+            alias = "num_search_workers",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub num_search_workers: ::core::option::Option<i32>,
     /// We distinguish subsolvers that consume a full thread, and the ones that are
     /// always interleaved. If left at zero, we will fix this with a default
@@ -9429,6 +15399,15 @@ pub struct SatParameters {
     /// you use.
     ///
     /// Field 294: `num_full_subsolvers`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numFullSubsolvers",
+            alias = "num_full_subsolvers",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub num_full_subsolvers: ::core::option::Option<i32>,
     /// In multi-thread, the solver can be mainly seen as a portfolio of solvers
     /// with different parameters. This field indicates the names of the parameters
@@ -9457,11 +15436,28 @@ pub struct SatParameters {
     /// scheduled. You can see in the log which one are selected for a given run.
     ///
     /// Field 207: `subsolvers`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "subsolvers",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub subsolvers: ::buffa::alloc::vec::Vec<::buffa::alloc::string::String>,
     /// A convenient way to add more workers types.
     /// These will be added at the beginning of the list.
     ///
     /// Field 219: `extra_subsolvers`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "extraSubsolvers",
+            alias = "extra_subsolvers",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub extra_subsolvers: ::buffa::alloc::vec::Vec<::buffa::alloc::string::String>,
     /// Rather than fully specifying subsolvers, it is often convenient to just
     /// remove the ones that are not useful on a given problem or only keep
@@ -9474,8 +15470,26 @@ pub struct SatParameters {
     /// specified via the subsolvers field.
     ///
     /// Field 209: `ignore_subsolvers`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "ignoreSubsolvers",
+            alias = "ignore_subsolvers",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub ignore_subsolvers: ::buffa::alloc::vec::Vec<::buffa::alloc::string::String>,
     /// Field 293: `filter_subsolvers`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "filterSubsolvers",
+            alias = "filter_subsolvers",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub filter_subsolvers: ::buffa::alloc::vec::Vec<::buffa::alloc::string::String>,
     /// It is possible to specify additional subsolver configuration. These can be
     /// referred by their params.name() in the fields above. Note that only the
@@ -9484,6 +15498,15 @@ pub struct SatParameters {
     /// named parameters will be merged into the subsolver configuration.
     ///
     /// Field 210: `subsolver_params`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "subsolverParams",
+            alias = "subsolver_params",
+            skip_serializing_if = "::buffa::json_helpers::skip_if::is_empty_vec",
+            deserialize_with = "::buffa::json_helpers::null_as_default"
+        )
+    )]
     pub subsolver_params: ::buffa::alloc::vec::Vec<Self>,
     /// Experimental. If this is true, then we interleave all our major search
     /// strategy and distribute the work amongst num_workers.
@@ -9493,16 +15516,49 @@ pub struct SatParameters {
     /// synchronizing and scheduling the next batch of tasks.
     ///
     /// Field 136: `interleave_search`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "interleaveSearch",
+            alias = "interleave_search",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub interleave_search: ::core::option::Option<bool>,
     /// Field 134: `interleave_batch_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "interleaveBatchSize",
+            alias = "interleave_batch_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub interleave_batch_size: ::core::option::Option<i32>,
     /// Allows objective sharing between workers.
     ///
     /// Field 113: `share_objective_bounds`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "shareObjectiveBounds",
+            alias = "share_objective_bounds",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub share_objective_bounds: ::core::option::Option<bool>,
     /// Allows sharing of the bounds of modified variables at level 0.
     ///
     /// Field 114: `share_level_zero_bounds`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "shareLevelZeroBounds",
+            alias = "share_level_zero_bounds",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub share_level_zero_bounds: ::core::option::Option<bool>,
     /// Allows sharing of the bounds on linear2 discovered at level 0. This is
     /// mainly interesting on scheduling type of problems when we branch on
@@ -9511,24 +15567,65 @@ pub struct SatParameters {
     /// Warning: This currently non-deterministic.
     ///
     /// Field 326: `share_linear2_bounds`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "shareLinear2Bounds",
+            alias = "share_linear2_bounds",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub share_linear2_bounds: ::core::option::Option<bool>,
     /// Allows sharing of new learned binary clause between workers.
     ///
     /// Field 203: `share_binary_clauses`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "shareBinaryClauses",
+            alias = "share_binary_clauses",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub share_binary_clauses: ::core::option::Option<bool>,
     /// Allows sharing of short glue clauses between workers.
     /// Implicitly disabled if share_binary_clauses is false.
     ///
     /// Field 285: `share_glue_clauses`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "shareGlueClauses",
+            alias = "share_glue_clauses",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub share_glue_clauses: ::core::option::Option<bool>,
     /// Minimize and detect subsumption of shared clauses immediately after they
     /// are imported.
     ///
     /// Field 300: `minimize_shared_clauses`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "minimizeSharedClauses",
+            alias = "minimize_shared_clauses",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub minimize_shared_clauses: ::core::option::Option<bool>,
     /// The amount of dtime between each export of shared glue clauses.
     ///
     /// Field 322: `share_glue_clauses_dtime`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "shareGlueClausesDtime",
+            alias = "share_glue_clauses_dtime",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub share_glue_clauses_dtime: ::core::option::Option<f64>,
     /// ==========================================================================
     /// Proofs
@@ -9543,6 +15640,14 @@ pub struct SatParameters {
     ///  - symmetry_level \<= 1.
     ///
     /// Field 344: `check_lrat_proof`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "checkLratProof",
+            alias = "check_lrat_proof",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub check_lrat_proof: ::core::option::Option<bool>,
     /// If true, and if output_lrat_proof is true and the problem is UNSAT, check
     /// that the merged proof file is valid, i.e., that clause sharing between
@@ -9551,6 +15656,14 @@ pub struct SatParameters {
     /// only works for pure SAT problems, with num_workers = 1.
     ///
     /// Field 352: `check_merged_lrat_proof`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "checkMergedLratProof",
+            alias = "check_merged_lrat_proof",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub check_merged_lrat_proof: ::core::option::Option<bool>,
     /// If true, an LRAT proof that all the clauses inferred by the solver are
     /// valid is output to several files (one for presolve -- reduced to trivial
@@ -9562,6 +15675,14 @@ pub struct SatParameters {
     ///  - symmetry_level \<= 1.
     ///
     /// Field 345: `output_lrat_proof`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "outputLratProof",
+            alias = "output_lrat_proof",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub output_lrat_proof: ::core::option::Option<bool>,
     /// If true, and if the problem is UNSAT, a DRAT proof of this UNSAT property
     /// is checked after the solver has finished. As of November 2025, this only
@@ -9572,6 +15693,14 @@ pub struct SatParameters {
     ///  - symmetry_level \<= 1.
     ///
     /// Field 346: `check_drat_proof`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "checkDratProof",
+            alias = "check_drat_proof",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub check_drat_proof: ::core::option::Option<bool>,
     /// If true, a DRAT proof that all the clauses inferred by the solver are valid
     /// is output to a file. As of December 2025, this only works for pure SAT
@@ -9582,11 +15711,28 @@ pub struct SatParameters {
     ///  - symmetry_level \<= 1.
     ///
     /// Field 347: `output_drat_proof`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "outputDratProof",
+            alias = "output_drat_proof",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub output_drat_proof: ::core::option::Option<bool>,
     /// The maximum time allowed to check the DRAT proof (this can take more time
     /// than the solve itself). Only used if check_drat_proof is true.
     ///
     /// Field 348: `max_drat_time_in_seconds`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxDratTimeInSeconds",
+            alias = "max_drat_time_in_seconds",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_drat_time_in_seconds: ::core::option::Option<f64>,
     /// ==========================================================================
     /// Debugging parameters
@@ -9597,23 +15743,64 @@ pub struct SatParameters {
     /// using the full solver instead.
     ///
     /// Field 162: `debug_postsolve_with_full_solver`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "debugPostsolveWithFullSolver",
+            alias = "debug_postsolve_with_full_solver",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub debug_postsolve_with_full_solver: ::core::option::Option<bool>,
     /// If positive, try to stop just after that many presolve rules have been
     /// applied. This is mainly useful for debugging presolve.
     ///
     /// Field 151: `debug_max_num_presolve_operations`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "debugMaxNumPresolveOperations",
+            alias = "debug_max_num_presolve_operations",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub debug_max_num_presolve_operations: ::core::option::Option<i32>,
     /// Crash if we do not manage to complete the hint into a full solution.
     ///
     /// Field 195: `debug_crash_on_bad_hint`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "debugCrashOnBadHint",
+            alias = "debug_crash_on_bad_hint",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub debug_crash_on_bad_hint: ::core::option::Option<bool>,
     /// Crash if presolve breaks a feasible hint.
     ///
     /// Field 306: `debug_crash_if_presolve_breaks_hint`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "debugCrashIfPresolveBreaksHint",
+            alias = "debug_crash_if_presolve_breaks_hint",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub debug_crash_if_presolve_breaks_hint: ::core::option::Option<bool>,
     /// Crash if the LRAT UNSAT proof is invalid.
     ///
     /// Field 339: `debug_crash_if_lrat_check_fails`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "debugCrashIfLratCheckFails",
+            alias = "debug_crash_if_lrat_check_fails",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub debug_crash_if_lrat_check_fails: ::core::option::Option<bool>,
     /// ==========================================================================
     /// Max-sat parameters
@@ -9625,6 +15812,14 @@ pub struct SatParameters {
     /// otherwise.
     ///
     /// Field 35: `use_optimization_hints`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useOptimizationHints",
+            alias = "use_optimization_hints",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_optimization_hints: ::core::option::Option<bool>,
     /// If positive, we spend some effort on each core:
     /// - At level 1, we use a simple heuristic to try to minimize an UNSAT core.
@@ -9632,19 +15827,53 @@ pub struct SatParameters {
     ///   literal in at most one relationship in this core.
     ///
     /// Field 50: `core_minimization_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "coreMinimizationLevel",
+            alias = "core_minimization_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub core_minimization_level: ::core::option::Option<i32>,
     /// Whether we try to find more independent cores for a given set of
     /// assumptions in the core based max-SAT algorithms.
     ///
     /// Field 84: `find_multiple_cores`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "findMultipleCores",
+            alias = "find_multiple_cores",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub find_multiple_cores: ::core::option::Option<bool>,
     /// If true, when the max-sat algo find a core, we compute the minimal number
     /// of literals in the core that needs to be true to have a feasible solution.
     /// This is also called core exhaustion in more recent max-SAT papers.
     ///
     /// Field 89: `cover_optimization`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "coverOptimization",
+            alias = "cover_optimization",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub cover_optimization: ::core::option::Option<bool>,
     /// Field 51: `max_sat_assumption_order`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxSatAssumptionOrder",
+            alias = "max_sat_assumption_order",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_sat_assumption_order: ::core::option::Option<
         sat_parameters::MaxSatAssumptionOrder,
     >,
@@ -9652,8 +15881,25 @@ pub struct SatParameters {
     /// max_sat_assumption_order.
     ///
     /// Field 52: `max_sat_reverse_assumption_order`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxSatReverseAssumptionOrder",
+            alias = "max_sat_reverse_assumption_order",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_sat_reverse_assumption_order: ::core::option::Option<bool>,
     /// Field 53: `max_sat_stratification`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxSatStratification",
+            alias = "max_sat_stratification",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_sat_stratification: ::core::option::Option<
         sat_parameters::MaxSatStratificationAlgorithm,
     >,
@@ -9672,6 +15918,15 @@ pub struct SatParameters {
     /// no progress is made.
     ///
     /// Field 221: `propagation_loop_detection_factor`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "propagationLoopDetectionFactor",
+            alias = "propagation_loop_detection_factor",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub propagation_loop_detection_factor: ::core::option::Option<f64>,
     /// When this is true, then a disjunctive constraint will try to use the
     /// precedence relations between time intervals to propagate their bounds
@@ -9684,12 +15939,29 @@ pub struct SatParameters {
     /// depending on the problem, turning this off may lead to a faster solution.
     ///
     /// Field 74: `use_precedences_in_disjunctive_constraint`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "usePrecedencesInDisjunctiveConstraint",
+            alias = "use_precedences_in_disjunctive_constraint",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_precedences_in_disjunctive_constraint: ::core::option::Option<bool>,
     /// At root level, we might compute the transitive closure of "precedences"
     /// relations so that we can exploit that in scheduling problems. Setting this
     /// to zero disable the feature.
     ///
     /// Field 327: `transitive_precedences_work_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "transitivePrecedencesWorkLimit",
+            alias = "transitive_precedences_work_limit",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub transitive_precedences_work_limit: ::core::option::Option<i32>,
     /// Create one literal for each disjunction of two pairs of tasks. This slows
     /// down the solve time, but improves the lower bound of the objective in the
@@ -9698,12 +15970,29 @@ pub struct SatParameters {
     /// true.
     ///
     /// Field 229: `max_size_to_create_precedence_literals_in_disjunctive`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxSizeToCreatePrecedenceLiteralsInDisjunctive",
+            alias = "max_size_to_create_precedence_literals_in_disjunctive",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_size_to_create_precedence_literals_in_disjunctive: ::core::option::Option<
         i32,
     >,
     /// Enable stronger and more expensive propagation on no_overlap constraint.
     ///
     /// Field 230: `use_strong_propagation_in_disjunctive`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useStrongPropagationInDisjunctive",
+            alias = "use_strong_propagation_in_disjunctive",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_strong_propagation_in_disjunctive: ::core::option::Option<bool>,
     /// Whether we try to branch on decision "interval A before interval B" rather
     /// than on intervals bounds. This usually works better, but slow down a bit
@@ -9713,8 +16002,24 @@ pub struct SatParameters {
     /// it some corner cases, they can cause some failing CHECK in the solver.
     ///
     /// Field 263: `use_dynamic_precedence_in_disjunctive`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useDynamicPrecedenceInDisjunctive",
+            alias = "use_dynamic_precedence_in_disjunctive",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_dynamic_precedence_in_disjunctive: ::core::option::Option<bool>,
     /// Field 268: `use_dynamic_precedence_in_cumulative`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useDynamicPrecedenceInCumulative",
+            alias = "use_dynamic_precedence_in_cumulative",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_dynamic_precedence_in_cumulative: ::core::option::Option<bool>,
     /// When this is true, the cumulative constraint is reinforced with overload
     /// checking, i.e., an additional level of reasoning based on energy. This
@@ -9725,6 +16030,14 @@ pub struct SatParameters {
     /// depending on the problem, turning this off may lead to a faster solution.
     ///
     /// Field 78: `use_overload_checker_in_cumulative`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useOverloadCheckerInCumulative",
+            alias = "use_overload_checker_in_cumulative",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_overload_checker_in_cumulative: ::core::option::Option<bool>,
     /// Enable a heuristic to solve cumulative constraints using a modified energy
     /// constraint. We modify the usual energy definition by applying a
@@ -9735,6 +16048,14 @@ pub struct SatParameters {
     /// a solution.
     ///
     /// Field 286: `use_conservative_scale_overload_checker`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useConservativeScaleOverloadChecker",
+            alias = "use_conservative_scale_overload_checker",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_conservative_scale_overload_checker: ::core::option::Option<bool>,
     /// When this is true, the cumulative constraint is reinforced with timetable
     /// edge finding, i.e., an additional level of reasoning based on the
@@ -9745,11 +16066,28 @@ pub struct SatParameters {
     /// depending on the problem, turning this off may lead to a faster solution.
     ///
     /// Field 79: `use_timetable_edge_finding_in_cumulative`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useTimetableEdgeFindingInCumulative",
+            alias = "use_timetable_edge_finding_in_cumulative",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_timetable_edge_finding_in_cumulative: ::core::option::Option<bool>,
     /// Max number of intervals for the timetable_edge_finding algorithm to
     /// propagate. A value of 0 disables the constraint.
     ///
     /// Field 260: `max_num_intervals_for_timetable_edge_finding`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxNumIntervalsForTimetableEdgeFinding",
+            alias = "max_num_intervals_for_timetable_edge_finding",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_num_intervals_for_timetable_edge_finding: ::core::option::Option<i32>,
     /// If true, detect and create constraint for integer variable that are "after"
     /// a set of intervals in the same cumulative constraint.
@@ -9759,8 +16097,24 @@ pub struct SatParameters {
     /// assumes we have a DAG otherwise it fails.
     ///
     /// Field 215: `use_hard_precedences_in_cumulative`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useHardPrecedencesInCumulative",
+            alias = "use_hard_precedences_in_cumulative",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_hard_precedences_in_cumulative: ::core::option::Option<bool>,
     /// Field 220: `exploit_all_precedences`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exploitAllPrecedences",
+            alias = "exploit_all_precedences",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub exploit_all_precedences: ::core::option::Option<bool>,
     /// When this is true, the cumulative constraint is reinforced with propagators
     /// from the disjunctive constraint to improve the inference on a set of tasks
@@ -9774,6 +16128,14 @@ pub struct SatParameters {
     /// depending on the problem, turning this off may lead to a faster solution.
     ///
     /// Field 80: `use_disjunctive_constraint_in_cumulative`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useDisjunctiveConstraintInCumulative",
+            alias = "use_disjunctive_constraint_in_cumulative",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_disjunctive_constraint_in_cumulative: ::core::option::Option<bool>,
     /// If less than this number of boxes are present in a no-overlap 2d, we
     /// create 4 Booleans per pair of boxes:
@@ -9790,6 +16152,15 @@ pub struct SatParameters {
     /// relations.
     ///
     /// Field 321: `no_overlap_2d_boolean_relations_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "noOverlap2dBooleanRelationsLimit",
+            alias = "no_overlap_2d_boolean_relations_limit",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub no_overlap_2d_boolean_relations_limit: ::core::option::Option<i32>,
     /// When this is true, the no_overlap_2d constraint is reinforced with
     /// propagators from the cumulative constraints. It consists of ignoring the
@@ -9798,26 +16169,67 @@ pub struct SatParameters {
     /// axis. This additional level supplements the default level of reasoning.
     ///
     /// Field 200: `use_timetabling_in_no_overlap_2d`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useTimetablingInNoOverlap2d",
+            alias = "use_timetabling_in_no_overlap_2d",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_timetabling_in_no_overlap_2d: ::core::option::Option<bool>,
     /// When this is true, the no_overlap_2d constraint is reinforced with
     /// energetic reasoning. This additional level supplements the default level of
     /// reasoning.
     ///
     /// Field 213: `use_energetic_reasoning_in_no_overlap_2d`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useEnergeticReasoningInNoOverlap2d",
+            alias = "use_energetic_reasoning_in_no_overlap_2d",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_energetic_reasoning_in_no_overlap_2d: ::core::option::Option<bool>,
     /// When this is true, the no_overlap_2d constraint is reinforced with
     /// an energetic reasoning that uses an area-based energy. This can be combined
     /// with the two other overlap heuristics above.
     ///
     /// Field 271: `use_area_energetic_reasoning_in_no_overlap_2d`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useAreaEnergeticReasoningInNoOverlap2d",
+            alias = "use_area_energetic_reasoning_in_no_overlap_2d",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_area_energetic_reasoning_in_no_overlap_2d: ::core::option::Option<bool>,
     /// Field 299: `use_try_edge_reasoning_in_no_overlap_2d`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useTryEdgeReasoningInNoOverlap2d",
+            alias = "use_try_edge_reasoning_in_no_overlap_2d",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_try_edge_reasoning_in_no_overlap_2d: ::core::option::Option<bool>,
     /// If the number of pairs to look is below this threshold, do an extra step of
     /// propagation in the no_overlap_2d constraint by looking at all pairs of
     /// intervals.
     ///
     /// Field 276: `max_pairs_pairwise_reasoning_in_no_overlap_2d`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxPairsPairwiseReasoningInNoOverlap2d",
+            alias = "max_pairs_pairwise_reasoning_in_no_overlap_2d",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_pairs_pairwise_reasoning_in_no_overlap_2d: ::core::option::Option<i32>,
     /// Detects when the space where items of a no_overlap_2d constraint can placed
     /// is disjoint (ie., fixed boxes split the domain). When it is the case, we
@@ -9831,6 +16243,15 @@ pub struct SatParameters {
     /// is less than this parameter and \<= 1 disables it.
     ///
     /// Field 315: `maximum_regions_to_split_in_disconnected_no_overlap_2d`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maximumRegionsToSplitInDisconnectedNoOverlap2d",
+            alias = "maximum_regions_to_split_in_disconnected_no_overlap_2d",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub maximum_regions_to_split_in_disconnected_no_overlap_2d: ::core::option::Option<
         i32,
     >,
@@ -9842,17 +16263,41 @@ pub struct SatParameters {
     /// part of the model.
     ///
     /// Field 323: `use_linear3_for_no_overlap_2d_precedences`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useLinear3ForNoOverlap2dPrecedences",
+            alias = "use_linear3_for_no_overlap_2d_precedences",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_linear3_for_no_overlap_2d_precedences: ::core::option::Option<bool>,
     /// When set, it activates a few scheduling parameters to improve the lower
     /// bound of scheduling problems. This is only effective with multiple workers
     /// as it modifies the reduced_cost, lb_tree_search, and probing workers.
     ///
     /// Field 214: `use_dual_scheduling_heuristics`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useDualSchedulingHeuristics",
+            alias = "use_dual_scheduling_heuristics",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_dual_scheduling_heuristics: ::core::option::Option<bool>,
     /// Turn on extra propagation for the circuit constraint.
     /// This can be quite slow.
     ///
     /// Field 311: `use_all_different_for_circuit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useAllDifferentForCircuit",
+            alias = "use_all_different_for_circuit",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_all_different_for_circuit: ::core::option::Option<bool>,
     /// If the size of a subset of nodes of a RoutesConstraint is less than this
     /// value, use linear constraints of size 1 and 2 (such as capacity and time
@@ -9864,12 +16309,30 @@ pub struct SatParameters {
     /// parameter should not be too large (e.g. 10 or 20).
     ///
     /// Field 312: `routing_cut_subset_size_for_binary_relation_bound`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "routingCutSubsetSizeForBinaryRelationBound",
+            alias = "routing_cut_subset_size_for_binary_relation_bound",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub routing_cut_subset_size_for_binary_relation_bound: ::core::option::Option<i32>,
     /// Similar to above, but with a different algorithm producing better cuts, at
     /// the price of a higher O(2^n) complexity, where n is the subset size. Hence
     /// the value of this parameter should be small (e.g. less than 10).
     ///
     /// Field 313: `routing_cut_subset_size_for_tight_binary_relation_bound`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "routingCutSubsetSizeForTightBinaryRelationBound",
+            alias = "routing_cut_subset_size_for_tight_binary_relation_bound",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub routing_cut_subset_size_for_tight_binary_relation_bound: ::core::option::Option<
         i32,
     >,
@@ -9878,6 +16341,15 @@ pub struct SatParameters {
     /// that parameter shouldn't really be much more than 10.
     ///
     /// Field 316: `routing_cut_subset_size_for_exact_binary_relation_bound`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "routingCutSubsetSizeForExactBinaryRelationBound",
+            alias = "routing_cut_subset_size_for_exact_binary_relation_bound",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub routing_cut_subset_size_for_exact_binary_relation_bound: ::core::option::Option<
         i32,
     >,
@@ -9887,6 +16359,15 @@ pub struct SatParameters {
     /// of a given subset. This is slow, so it shouldn't really be larger than 10.
     ///
     /// Field 318: `routing_cut_subset_size_for_shortest_paths_bound`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "routingCutSubsetSizeForShortestPathsBound",
+            alias = "routing_cut_subset_size_for_shortest_paths_bound",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub routing_cut_subset_size_for_shortest_paths_bound: ::core::option::Option<i32>,
     /// The amount of "effort" to spend in dynamic programming for computing
     /// routing cuts. This is in term of basic operations needed by the algorithm
@@ -9894,17 +16375,53 @@ pub struct SatParameters {
     /// compute.
     ///
     /// Field 314: `routing_cut_dp_effort`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "routingCutDpEffort",
+            alias = "routing_cut_dp_effort",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub routing_cut_dp_effort: ::core::option::Option<f64>,
     /// If the length of an infeasible path is less than this value, a cut will be
     /// added to exclude it.
     ///
     /// Field 317: `routing_cut_max_infeasible_path_length`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "routingCutMaxInfeasiblePathLength",
+            alias = "routing_cut_max_infeasible_path_length",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub routing_cut_max_infeasible_path_length: ::core::option::Option<i32>,
     /// Field 82: `search_branching`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "searchBranching",
+            alias = "search_branching",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub search_branching: ::core::option::Option<sat_parameters::SearchBranching>,
     /// Conflict limit used in the phase that exploit the solution hint.
     ///
     /// Field 153: `hint_conflict_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "hintConflictLimit",
+            alias = "hint_conflict_limit",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub hint_conflict_limit: ::core::option::Option<i32>,
     /// If true, the solver tries to repair the solution given in the hint. This
     /// search terminates after the 'hint_conflict_limit' is reached and the solver
@@ -9912,36 +16429,95 @@ pub struct SatParameters {
     /// hint until the hint_conflict_limit is reached.
     ///
     /// Field 167: `repair_hint`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "repairHint",
+            alias = "repair_hint",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub repair_hint: ::core::option::Option<bool>,
     /// If true, variables appearing in the solution hints will be fixed to their
     /// hinted value.
     ///
     /// Field 192: `fix_variables_to_their_hinted_value`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "fixVariablesToTheirHintedValue",
+            alias = "fix_variables_to_their_hinted_value",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub fix_variables_to_their_hinted_value: ::core::option::Option<bool>,
     /// If true, search will continuously probe Boolean variables, and integer
     /// variable bounds. This parameter is set to true in parallel on the probing
     /// worker.
     ///
     /// Field 176: `use_probing_search`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useProbingSearch",
+            alias = "use_probing_search",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_probing_search: ::core::option::Option<bool>,
     /// Use extended probing (probe bool_or, at_most_one, exactly_one).
     ///
     /// Field 269: `use_extended_probing`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useExtendedProbing",
+            alias = "use_extended_probing",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_extended_probing: ::core::option::Option<bool>,
     /// How many combinations of pairs or triplets of variables we want to scan.
     ///
     /// Field 272: `probing_num_combinations_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "probingNumCombinationsLimit",
+            alias = "probing_num_combinations_limit",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub probing_num_combinations_limit: ::core::option::Option<i32>,
     /// Add a shaving phase (where the solver tries to prove that the lower or
     /// upper bound of a variable are infeasible) to the probing search. (\<= 0
     /// disables it).
     ///
     /// Field 204: `shaving_deterministic_time_in_probing_search`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "shavingDeterministicTimeInProbingSearch",
+            alias = "shaving_deterministic_time_in_probing_search",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shaving_deterministic_time_in_probing_search: ::core::option::Option<f64>,
     /// Specifies the amount of deterministic time spent of each try at shaving a
     /// bound in the shaving search.
     ///
     /// Field 205: `shaving_search_deterministic_time`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "shavingSearchDeterministicTime",
+            alias = "shaving_search_deterministic_time",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shaving_search_deterministic_time: ::core::option::Option<f64>,
     /// Specifies the threshold between two modes in the shaving procedure.
     /// If the range of the variable/objective is less than this threshold, then
@@ -9949,28 +16525,71 @@ pub struct SatParameters {
     /// will try to remove one range at a time.
     ///
     /// Field 290: `shaving_search_threshold`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "shavingSearchThreshold",
+            alias = "shaving_search_threshold",
+            with = "::buffa::json_helpers::opt_int64",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shaving_search_threshold: ::core::option::Option<i64>,
     /// If true, search will search in ascending max objective value (when
     /// minimizing) starting from the lower bound of the objective.
     ///
     /// Field 228: `use_objective_lb_search`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useObjectiveLbSearch",
+            alias = "use_objective_lb_search",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_objective_lb_search: ::core::option::Option<bool>,
     /// This search differs from the previous search as it will not use assumptions
     /// to bound the objective, and it will recreate a full model with the
     /// hardcoded objective value.
     ///
     /// Field 253: `use_objective_shaving_search`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useObjectiveShavingSearch",
+            alias = "use_objective_shaving_search",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_objective_shaving_search: ::core::option::Option<bool>,
     /// This search takes all Boolean or integer variables, and maximize or
     /// minimize them in order to reduce their domain. -1 is automatic, otherwise
     /// value 0 disables it, and 1, 2, or 3 changes something.
     ///
     /// Field 289: `variables_shaving_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "variablesShavingLevel",
+            alias = "variables_shaving_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub variables_shaving_level: ::core::option::Option<i32>,
     /// The solver ignores the pseudo costs of variables with number of recordings
     /// less than this threshold.
     ///
     /// Field 123: `pseudo_cost_reliability_threshold`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "pseudoCostReliabilityThreshold",
+            alias = "pseudo_cost_reliability_threshold",
+            with = "::buffa::json_helpers::opt_int64",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub pseudo_cost_reliability_threshold: ::core::option::Option<i64>,
     /// The default optimization method is a simple "linear scan", each time trying
     /// to find a better solution than the previous one. If this is true, then we
@@ -9978,6 +16597,14 @@ pub struct SatParameters {
     /// lower bound instead.
     ///
     /// Field 83: `optimize_with_core`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "optimizeWithCore",
+            alias = "optimize_with_core",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub optimize_with_core: ::core::option::Option<bool>,
     /// Do a more conventional tree search (by opposition to SAT based one) where
     /// we keep all the explored node in a tree. This is meant to be used in a
@@ -9986,6 +16613,14 @@ pub struct SatParameters {
     /// the worst open node in the tree.
     ///
     /// Field 188: `optimize_with_lb_tree_search`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "optimizeWithLbTreeSearch",
+            alias = "optimize_with_lb_tree_search",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub optimize_with_lb_tree_search: ::core::option::Option<bool>,
     /// Experimental. Save the current LP basis at each node of the search tree so
     /// that when we jump around, we can load it and reduce the number of LP
@@ -9995,6 +16630,14 @@ pub struct SatParameters {
     /// simplification... More work is needed to make it robust in all cases.
     ///
     /// Field 284: `save_lp_basis_in_lb_tree_search`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "saveLpBasisInLbTreeSearch",
+            alias = "save_lp_basis_in_lb_tree_search",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub save_lp_basis_in_lb_tree_search: ::core::option::Option<bool>,
     /// If non-negative, perform a binary search on the objective variable in order
     /// to find an \[min, max\] interval outside of which the solver proved unsat/sat
@@ -10002,6 +16645,15 @@ pub struct SatParameters {
     /// on some problems.
     ///
     /// Field 99: `binary_search_num_conflicts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "binarySearchNumConflicts",
+            alias = "binary_search_num_conflicts",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub binary_search_num_conflicts: ::core::option::Option<i32>,
     /// This has no effect if optimize_with_core is false. If true, use a different
     /// core-based algorithm similar to the max-HS algo for max-SAT. This is a
@@ -10011,51 +16663,137 @@ pub struct SatParameters {
     /// <http://aaai.org/ocs/index.php/AAAI/AAAI17/paper/view/14489>
     ///
     /// Field 85: `optimize_with_max_hs`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "optimizeWithMaxHs",
+            alias = "optimize_with_max_hs",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub optimize_with_max_hs: ::core::option::Option<bool>,
     /// Parameters for an heuristic similar to the one described in the paper:
     /// "Feasibility Jump: an LP-free Lagrangian MIP heuristic", Bjørnar
     /// Luteberget, Giorgio Sartor, 2023, Mathematical Programming Computation.
     ///
     /// Field 265: `use_feasibility_jump`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useFeasibilityJump",
+            alias = "use_feasibility_jump",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_feasibility_jump: ::core::option::Option<bool>,
     /// Disable every other type of subsolver, setting this turns CP-SAT into a
     /// pure local-search solver.
     ///
     /// Field 240: `use_ls_only`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useLsOnly",
+            alias = "use_ls_only",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_ls_only: ::core::option::Option<bool>,
     /// On each restart, we randomly choose if we use decay (with this parameter)
     /// or no decay.
     ///
     /// Field 242: `feasibility_jump_decay`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "feasibilityJumpDecay",
+            alias = "feasibility_jump_decay",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub feasibility_jump_decay: ::core::option::Option<f64>,
     /// How much do we linearize the problem in the local search code.
     ///
     /// Field 257: `feasibility_jump_linearization_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "feasibilityJumpLinearizationLevel",
+            alias = "feasibility_jump_linearization_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub feasibility_jump_linearization_level: ::core::option::Option<i32>,
     /// This is a factor that directly influence the work before each restart.
     /// Increasing it leads to longer restart.
     ///
     /// Field 258: `feasibility_jump_restart_factor`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "feasibilityJumpRestartFactor",
+            alias = "feasibility_jump_restart_factor",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub feasibility_jump_restart_factor: ::core::option::Option<i32>,
     /// How much dtime for each LS batch.
     ///
     /// Field 292: `feasibility_jump_batch_dtime`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "feasibilityJumpBatchDtime",
+            alias = "feasibility_jump_batch_dtime",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub feasibility_jump_batch_dtime: ::core::option::Option<f64>,
     /// Probability for a variable to have a non default value upon restarts or
     /// perturbations.
     ///
     /// Field 247: `feasibility_jump_var_randomization_probability`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "feasibilityJumpVarRandomizationProbability",
+            alias = "feasibility_jump_var_randomization_probability",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub feasibility_jump_var_randomization_probability: ::core::option::Option<f64>,
     /// Max distance between the default value and the pertubated value relative to
     /// the range of the domain of the variable.
     ///
     /// Field 248: `feasibility_jump_var_perburbation_range_ratio`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "feasibilityJumpVarPerburbationRangeRatio",
+            alias = "feasibility_jump_var_perburbation_range_ratio",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub feasibility_jump_var_perburbation_range_ratio: ::core::option::Option<f64>,
     /// When stagnating, feasibility jump will either restart from a default
     /// solution (with some possible randomization), or randomly pertubate the
     /// current solution. This parameter selects the first option.
     ///
     /// Field 250: `feasibility_jump_enable_restarts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "feasibilityJumpEnableRestarts",
+            alias = "feasibility_jump_enable_restarts",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub feasibility_jump_enable_restarts: ::core::option::Option<bool>,
     /// Maximum size of no_overlap or no_overlap_2d constraint for a quadratic
     /// expansion. This might look a lot, but by expanding such constraint, we get
@@ -10063,21 +16801,57 @@ pub struct SatParameters {
     /// log n) one.
     ///
     /// Field 264: `feasibility_jump_max_expanded_constraint_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "feasibilityJumpMaxExpandedConstraintSize",
+            alias = "feasibility_jump_max_expanded_constraint_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub feasibility_jump_max_expanded_constraint_size: ::core::option::Option<i32>,
     /// This will create incomplete subsolvers (that are not LNS subsolvers)
     /// that use the feasibility jump code to find improving solution, treating
     /// the objective improvement as a hard constraint.
     ///
     /// Field 244: `num_violation_ls`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "numViolationLs",
+            alias = "num_violation_ls",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub num_violation_ls: ::core::option::Option<i32>,
     /// How long violation_ls should wait before perturbating a solution.
     ///
     /// Field 249: `violation_ls_perturbation_period`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "violationLsPerturbationPeriod",
+            alias = "violation_ls_perturbation_period",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub violation_ls_perturbation_period: ::core::option::Option<i32>,
     /// Probability of using compound move search each restart.
     /// TODO(user): Add reference to paper when published.
     ///
     /// Field 259: `violation_ls_compound_move_probability`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "violationLsCompoundMoveProbability",
+            alias = "violation_ls_compound_move_probability",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub violation_ls_compound_move_probability: ::core::option::Option<f64>,
     /// Enables shared tree search.
     /// If positive, start this many complete worker threads to explore a shared
@@ -10088,29 +16862,80 @@ pub struct SatParameters {
     /// number of shared tree workeres based on the total number of workers.
     ///
     /// Field 235: `shared_tree_num_workers`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sharedTreeNumWorkers",
+            alias = "shared_tree_num_workers",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shared_tree_num_workers: ::core::option::Option<i32>,
     /// Set on shared subtree workers. Users should not set this directly.
     ///
     /// Field 236: `use_shared_tree_search`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useSharedTreeSearch",
+            alias = "use_shared_tree_search",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_shared_tree_search: ::core::option::Option<bool>,
     /// Minimum restarts before a worker will replace a subtree
     /// that looks "bad" based on the average LBD of learned clauses.
     ///
     /// Field 282: `shared_tree_worker_min_restarts_per_subtree`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sharedTreeWorkerMinRestartsPerSubtree",
+            alias = "shared_tree_worker_min_restarts_per_subtree",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shared_tree_worker_min_restarts_per_subtree: ::core::option::Option<i32>,
     /// If true, workers share more of the information from their local trail.
     /// Specifically, literals implied by the shared tree decisions.
     ///
     /// Field 295: `shared_tree_worker_enable_trail_sharing`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sharedTreeWorkerEnableTrailSharing",
+            alias = "shared_tree_worker_enable_trail_sharing",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shared_tree_worker_enable_trail_sharing: ::core::option::Option<bool>,
     /// If true, shared tree workers share their target phase when returning an
     /// assigned subtree for the next worker to use.
     ///
     /// Field 304: `shared_tree_worker_enable_phase_sharing`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sharedTreeWorkerEnablePhaseSharing",
+            alias = "shared_tree_worker_enable_phase_sharing",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shared_tree_worker_enable_phase_sharing: ::core::option::Option<bool>,
     /// How many open leaf nodes should the shared tree maintain per worker.
     ///
     /// Field 281: `shared_tree_open_leaves_per_worker`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sharedTreeOpenLeavesPerWorker",
+            alias = "shared_tree_open_leaves_per_worker",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shared_tree_open_leaves_per_worker: ::core::option::Option<f64>,
     /// In order to limit total shared memory and communication overhead, limit the
     /// total number of nodes that may be generated in the shared tree. If the
@@ -10118,8 +16943,26 @@ pub struct SatParameters {
     /// workers. Note: this limit includes interior nodes, not just leaves.
     ///
     /// Field 238: `shared_tree_max_nodes_per_worker`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sharedTreeMaxNodesPerWorker",
+            alias = "shared_tree_max_nodes_per_worker",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shared_tree_max_nodes_per_worker: ::core::option::Option<i32>,
     /// Field 239: `shared_tree_split_strategy`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sharedTreeSplitStrategy",
+            alias = "shared_tree_split_strategy",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shared_tree_split_strategy: ::core::option::Option<
         sat_parameters::SharedTreeSplitStrategy,
     >,
@@ -10132,12 +16975,30 @@ pub struct SatParameters {
     /// SPLIT_STRATEGY_BALANCED_TREE and SPLIT_STRATEGY_DISCREPANCY.
     ///
     /// Field 305: `shared_tree_balance_tolerance`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sharedTreeBalanceTolerance",
+            alias = "shared_tree_balance_tolerance",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shared_tree_balance_tolerance: ::core::option::Option<i32>,
     /// How much dtime a worker will wait between proposing splits.
     /// This limits the contention in splitting the shared tree, and also reduces
     /// the number of too-easy subtrees that are generates.
     ///
     /// Field 328: `shared_tree_split_min_dtime`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "sharedTreeSplitMinDtime",
+            alias = "shared_tree_split_min_dtime",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub shared_tree_split_min_dtime: ::core::option::Option<f64>,
     /// Whether we enumerate all solutions of a problem without objective.
     ///
@@ -10150,6 +17011,14 @@ pub struct SatParameters {
     ///   wants to enumerate all solutions of the presolved model.
     ///
     /// Field 87: `enumerate_all_solutions`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "enumerateAllSolutions",
+            alias = "enumerate_all_solutions",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub enumerate_all_solutions: ::core::option::Option<bool>,
     /// If true, we disable the presolve reductions that remove feasible solutions
     /// from the search space. Such solution are usually dominated by a "better"
@@ -10161,6 +17030,14 @@ pub struct SatParameters {
     /// search space.
     ///
     /// Field 173: `keep_all_feasible_solutions_in_presolve`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "keepAllFeasibleSolutionsInPresolve",
+            alias = "keep_all_feasible_solutions_in_presolve",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub keep_all_feasible_solutions_in_presolve: ::core::option::Option<bool>,
     /// If true, add information about the derived variable domains to the
     /// CpSolverResponse. It is an option because it makes the response slighly
@@ -10169,6 +17046,14 @@ pub struct SatParameters {
     /// tightened_variables field in CpSolverResponse for more details.
     ///
     /// Field 132: `fill_tightened_domains_in_response`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "fillTightenedDomainsInResponse",
+            alias = "fill_tightened_domains_in_response",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub fill_tightened_domains_in_response: ::core::option::Option<bool>,
     /// If true, the final response addition_solutions field will be filled with
     /// all solutions from our solutions pool.
@@ -10182,6 +17067,14 @@ pub struct SatParameters {
     /// solution callbacks.
     ///
     /// Field 194: `fill_additional_solutions_in_response`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "fillAdditionalSolutionsInResponse",
+            alias = "fill_additional_solutions_in_response",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub fill_additional_solutions_in_response: ::core::option::Option<bool>,
     /// If true, the solver will add a default integer branching strategy to the
     /// already defined search strategy. If not, some variable might still not be
@@ -10189,6 +17082,14 @@ pub struct SatParameters {
     /// be set to their lower bound.
     ///
     /// Field 106: `instantiate_all_variables`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "instantiateAllVariables",
+            alias = "instantiate_all_variables",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub instantiate_all_variables: ::core::option::Option<bool>,
     /// If true, then the precedences propagator try to detect for each variable if
     /// it has a set of "optional incoming arc" for which at least one of them is
@@ -10196,39 +17097,114 @@ pub struct SatParameters {
     /// of precedence.
     ///
     /// Field 95: `auto_detect_greater_than_at_least_one_of`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "autoDetectGreaterThanAtLeastOneOf",
+            alias = "auto_detect_greater_than_at_least_one_of",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub auto_detect_greater_than_at_least_one_of: ::core::option::Option<bool>,
     /// For an optimization problem, stop the solver as soon as we have a solution.
     ///
     /// Field 98: `stop_after_first_solution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "stopAfterFirstSolution",
+            alias = "stop_after_first_solution",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub stop_after_first_solution: ::core::option::Option<bool>,
     /// Mainly used when improving the presolver. When true, stops the solver after
     /// the presolve is complete (or after loading and root level propagation).
     ///
     /// Field 149: `stop_after_presolve`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "stopAfterPresolve",
+            alias = "stop_after_presolve",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub stop_after_presolve: ::core::option::Option<bool>,
     /// Field 252: `stop_after_root_propagation`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "stopAfterRootPropagation",
+            alias = "stop_after_root_propagation",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub stop_after_root_propagation: ::core::option::Option<bool>,
     /// LNS parameters.
     ///
     /// Initial parameters for neighborhood generation.
     ///
     /// Field 307: `lns_initial_difficulty`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "lnsInitialDifficulty",
+            alias = "lns_initial_difficulty",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub lns_initial_difficulty: ::core::option::Option<f64>,
     /// Field 308: `lns_initial_deterministic_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "lnsInitialDeterministicLimit",
+            alias = "lns_initial_deterministic_limit",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub lns_initial_deterministic_limit: ::core::option::Option<f64>,
     /// Testing parameters used to disable all lns workers.
     ///
     /// Field 283: `use_lns`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useLns",
+            alias = "use_lns",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_lns: ::core::option::Option<bool>,
     /// Experimental parameters to disable everything but lns.
     ///
     /// Field 101: `use_lns_only`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useLnsOnly",
+            alias = "use_lns_only",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_lns_only: ::core::option::Option<bool>,
     /// Size of the top-n different solutions kept by the solver.
     /// This parameter must be \> 0. Currently, having this larger than one mainly
     /// impact the "base" solution chosen for a LNS/LS fragment.
     ///
     /// Field 193: `solution_pool_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "solutionPoolSize",
+            alias = "solution_pool_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub solution_pool_size: ::core::option::Option<i32>,
     /// If solution_pool_size is \<= this, we will use DP to keep a "diverse" set
     /// of solutions (the one further apart via hamming distance) in the pool.
@@ -10236,51 +17212,144 @@ pub struct SatParameters {
     /// large.
     ///
     /// Field 329: `solution_pool_diversity_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "solutionPoolDiversityLimit",
+            alias = "solution_pool_diversity_limit",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub solution_pool_diversity_limit: ::core::option::Option<i32>,
     /// In order to not get stuck in local optima, when this is non-zero, we try to
     /// also work on "older" solutions with a worse objective value so we get a
     /// chance to follow a different LS/LNS trajectory.
     ///
     /// Field 325: `alternative_pool_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "alternativePoolSize",
+            alias = "alternative_pool_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub alternative_pool_size: ::core::option::Option<i32>,
     /// Turns on relaxation induced neighborhood generator.
     ///
     /// Field 129: `use_rins_lns`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useRinsLns",
+            alias = "use_rins_lns",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_rins_lns: ::core::option::Option<bool>,
     /// Adds a feasibility pump subsolver along with lns subsolvers.
     ///
     /// Field 164: `use_feasibility_pump`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useFeasibilityPump",
+            alias = "use_feasibility_pump",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_feasibility_pump: ::core::option::Option<bool>,
     /// Turns on neighborhood generator based on local branching LP. Based on Huang
     /// et al., "Local Branching Relaxation Heuristics for Integer Linear
     /// Programs", 2023.
     ///
     /// Field 255: `use_lb_relax_lns`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useLbRelaxLns",
+            alias = "use_lb_relax_lns",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_lb_relax_lns: ::core::option::Option<bool>,
     /// Only use lb-relax if we have at least that many workers.
     ///
     /// Field 296: `lb_relax_num_workers_threshold`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "lbRelaxNumWorkersThreshold",
+            alias = "lb_relax_num_workers_threshold",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub lb_relax_num_workers_threshold: ::core::option::Option<i32>,
     /// Field 165: `fp_rounding`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "fpRounding",
+            alias = "fp_rounding",
+            with = "::buffa::json_helpers::opt_closed_enum",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub fp_rounding: ::core::option::Option<sat_parameters::FPRoundingMethod>,
     /// If true, registers more lns subsolvers with different parameters.
     ///
     /// Field 137: `diversify_lns_params`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "diversifyLnsParams",
+            alias = "diversify_lns_params",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub diversify_lns_params: ::core::option::Option<bool>,
     /// Randomize fixed search.
     ///
     /// Field 103: `randomize_search`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "randomizeSearch",
+            alias = "randomize_search",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub randomize_search: ::core::option::Option<bool>,
     /// Search randomization will collect the top
     /// 'search_random_variable_pool_size' valued variables, and pick one randomly.
     /// The value of the variable is specific to each strategy.
     ///
     /// Field 104: `search_random_variable_pool_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "searchRandomVariablePoolSize",
+            alias = "search_random_variable_pool_size",
+            with = "::buffa::json_helpers::opt_int64",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub search_random_variable_pool_size: ::core::option::Option<i64>,
     /// Experimental code: specify if the objective pushes all tasks toward the
     /// start of the schedule.
     ///
     /// Field 262: `push_all_tasks_toward_start`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "pushAllTasksTowardStart",
+            alias = "push_all_tasks_toward_start",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub push_all_tasks_toward_start: ::core::option::Option<bool>,
     /// If true, we automatically detect variables whose constraint are always
     /// enforced by the same literal and we mark them as optional. This allows
@@ -10290,6 +17359,14 @@ pub struct SatParameters {
     /// some situation. It should however gives correct solutions. Fix.
     ///
     /// Field 108: `use_optional_variables`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useOptionalVariables",
+            alias = "use_optional_variables",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_optional_variables: ::core::option::Option<bool>,
     /// The solver usually exploit the LP relaxation of a model. If this option is
     /// true, then whatever is infered by the LP will be used like an heuristic to
@@ -10297,29 +17374,70 @@ pub struct SatParameters {
     /// numerical imprecision issues.
     ///
     /// Field 109: `use_exact_lp_reason`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useExactLpReason",
+            alias = "use_exact_lp_reason",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_exact_lp_reason: ::core::option::Option<bool>,
     /// This can be beneficial if there is a lot of no-overlap constraints but a
     /// relatively low number of different intervals in the problem. Like 1000
     /// intervals, but 1M intervals in the no-overlap constraints covering them.
     ///
     /// Field 133: `use_combined_no_overlap`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useCombinedNoOverlap",
+            alias = "use_combined_no_overlap",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_combined_no_overlap: ::core::option::Option<bool>,
     /// All at_most_one constraints with a size \<= param will be replaced by a
     /// quadratic number of binary implications.
     ///
     /// Field 270: `at_most_one_max_expansion_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "atMostOneMaxExpansionSize",
+            alias = "at_most_one_max_expansion_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub at_most_one_max_expansion_size: ::core::option::Option<i32>,
     /// Indicates if the CP-SAT layer should catch Control-C (SIGINT) signals
     /// when calling solve. If set, catching the SIGINT signal will terminate the
     /// search gracefully, as if a time limit was reached.
     ///
     /// Field 135: `catch_sigint_signal`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "catchSigintSignal",
+            alias = "catch_sigint_signal",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub catch_sigint_signal: ::core::option::Option<bool>,
     /// Stores and exploits "implied-bounds" in the solver. That is, relations of
     /// the form literal =\> (var \>= bound). This is currently used to derive
     /// stronger cuts.
     ///
     /// Field 144: `use_implied_bounds`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useImpliedBounds",
+            alias = "use_implied_bounds",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_implied_bounds: ::core::option::Option<bool>,
     /// Whether we try to do a few degenerate iteration at the end of an LP solve
     /// to minimize the fractionality of the integer variable in the basis. This
@@ -10327,6 +17445,14 @@ pub struct SatParameters {
     /// time to do such polish step.
     ///
     /// Field 175: `polish_lp_solution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "polishLpSolution",
+            alias = "polish_lp_solution",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub polish_lp_solution: ::core::option::Option<bool>,
     /// The internal LP tolerances used by CP-SAT. These applies to the internal
     /// and scaled problem. If the domains of your variables are large it might be
@@ -10335,14 +17461,40 @@ pub struct SatParameters {
     /// solves.
     ///
     /// Field 266: `lp_primal_tolerance`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "lpPrimalTolerance",
+            alias = "lp_primal_tolerance",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub lp_primal_tolerance: ::core::option::Option<f64>,
     /// Field 267: `lp_dual_tolerance`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "lpDualTolerance",
+            alias = "lp_dual_tolerance",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub lp_dual_tolerance: ::core::option::Option<f64>,
     /// Temporary flag util the feature is more mature. This convert intervals to
     /// the newer proto format that support affine start/var/end instead of just
     /// variables.
     ///
     /// Field 177: `convert_intervals`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "convertIntervals",
+            alias = "convert_intervals",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub convert_intervals: ::core::option::Option<bool>,
     /// Whether we try to automatically detect the symmetries in a model and
     /// exploit them. Currently, at level 1 we detect them in presolve and try
@@ -10352,6 +17504,15 @@ pub struct SatParameters {
     /// symmetry as possible in presolve.
     ///
     /// Field 183: `symmetry_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "symmetryLevel",
+            alias = "symmetry_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub symmetry_level: ::core::option::Option<i32>,
     /// When we have symmetry, it is possible to "fold" all variables from the same
     /// orbit into a single variable, while having the same power of LP relaxation.
@@ -10360,6 +17521,14 @@ pub struct SatParameters {
     /// translation between the folded LP and the rest of the problem.
     ///
     /// Field 301: `use_symmetry_in_lp`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useSymmetryInLp",
+            alias = "use_symmetry_in_lp",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_symmetry_in_lp: ::core::option::Option<bool>,
     /// Experimental. This will compute the symmetry of the problem once and for
     /// all. All presolve operations we do should keep the symmetry group intact
@@ -10367,22 +17536,56 @@ pub struct SatParameters {
     /// will disable a bunch of presolve operations that could be supported.
     ///
     /// Field 303: `keep_symmetry_in_presolve`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "keepSymmetryInPresolve",
+            alias = "keep_symmetry_in_presolve",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub keep_symmetry_in_presolve: ::core::option::Option<bool>,
     /// Deterministic time limit for symmetry detection.
     ///
     /// Field 302: `symmetry_detection_deterministic_time_limit`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "symmetryDetectionDeterministicTimeLimit",
+            alias = "symmetry_detection_deterministic_time_limit",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub symmetry_detection_deterministic_time_limit: ::core::option::Option<f64>,
     /// The new linear propagation code treat all constraints at once and use
     /// an adaptation of Bellman-Ford-Tarjan to propagate constraint in a smarter
     /// order and potentially detect propagation cycle earlier.
     ///
     /// Field 224: `new_linear_propagation`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "newLinearPropagation",
+            alias = "new_linear_propagation",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub new_linear_propagation: ::core::option::Option<bool>,
     /// Linear constraints that are not pseudo-Boolean and that are longer than
     /// this size will be split into sqrt(size) intermediate sums in order to have
     /// faster propation in the CP engine.
     ///
     /// Field 256: `linear_split_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "linearSplitSize",
+            alias = "linear_split_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub linear_split_size: ::core::option::Option<i32>,
     /// ==========================================================================
     /// Linear programming relaxation
@@ -10394,11 +17597,29 @@ pub struct SatParameters {
     /// all the Boolean constraints.
     ///
     /// Field 90: `linearization_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "linearizationLevel",
+            alias = "linearization_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub linearization_level: ::core::option::Option<i32>,
     /// A non-negative level indicating how much we should try to fully encode
     /// Integer variables as Boolean.
     ///
     /// Field 107: `boolean_encoding_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "booleanEncodingLevel",
+            alias = "boolean_encoding_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub boolean_encoding_level: ::core::option::Option<i32>,
     /// When loading a*x + b*y ==/!= c when x and y are both fully encoded.
     /// The solver may decide to replace the linear equation by a set of clauses.
@@ -10406,6 +17627,15 @@ pub struct SatParameters {
     /// threshold.
     ///
     /// Field 191: `max_domain_size_when_encoding_eq_neq_constraints`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxDomainSizeWhenEncodingEqNeqConstraints",
+            alias = "max_domain_size_when_encoding_eq_neq_constraints",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_domain_size_when_encoding_eq_neq_constraints: ::core::option::Option<i32>,
     /// The limit on the number of cuts in our cut pool. When this is reached we do
     /// not generate cuts anymore.
@@ -10414,17 +17644,43 @@ pub struct SatParameters {
     /// generate cuts but only keep the best n or something.
     ///
     /// Field 91: `max_num_cuts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxNumCuts",
+            alias = "max_num_cuts",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_num_cuts: ::core::option::Option<i32>,
     /// Control the global cut effort. Zero will turn off all cut. For now we just
     /// have one level. Note also that most cuts are only used at linearization
     /// level \>= 2.
     ///
     /// Field 196: `cut_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "cutLevel",
+            alias = "cut_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub cut_level: ::core::option::Option<i32>,
     /// For the cut that can be generated at any level, this control if we only
     /// try to generate them at the root node.
     ///
     /// Field 92: `only_add_cuts_at_level_zero`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "onlyAddCutsAtLevelZero",
+            alias = "only_add_cuts_at_level_zero",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub only_add_cuts_at_level_zero: ::core::option::Option<bool>,
     /// When the LP objective is fractional, do we add the cut that forces the
     /// linear objective expression to be greater or equal to this fractional value
@@ -10433,44 +17689,109 @@ pub struct SatParameters {
     /// help.
     ///
     /// Field 197: `add_objective_cut`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "addObjectiveCut",
+            alias = "add_objective_cut",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub add_objective_cut: ::core::option::Option<bool>,
     /// Whether we generate and add Chvatal-Gomory cuts to the LP at root node.
     /// Note that for now, this is not heavily tuned.
     ///
     /// Field 117: `add_cg_cuts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "addCgCuts",
+            alias = "add_cg_cuts",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub add_cg_cuts: ::core::option::Option<bool>,
     /// Whether we generate MIR cuts at root node.
     /// Note that for now, this is not heavily tuned.
     ///
     /// Field 120: `add_mir_cuts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "addMirCuts",
+            alias = "add_mir_cuts",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub add_mir_cuts: ::core::option::Option<bool>,
     /// Whether we generate Zero-Half cuts at root node.
     /// Note that for now, this is not heavily tuned.
     ///
     /// Field 169: `add_zero_half_cuts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "addZeroHalfCuts",
+            alias = "add_zero_half_cuts",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub add_zero_half_cuts: ::core::option::Option<bool>,
     /// Whether we generate clique cuts from the binary implication graph. Note
     /// that as the search goes on, this graph will contains new binary clauses
     /// learned by the SAT engine.
     ///
     /// Field 172: `add_clique_cuts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "addCliqueCuts",
+            alias = "add_clique_cuts",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub add_clique_cuts: ::core::option::Option<bool>,
     /// Whether we generate RLT cuts. This is still experimental but can help on
     /// binary problem with a lot of clauses of size 3.
     ///
     /// Field 279: `add_rlt_cuts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "addRltCuts",
+            alias = "add_rlt_cuts",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub add_rlt_cuts: ::core::option::Option<bool>,
     /// Cut generator for all diffs can add too many cuts for large all_diff
     /// constraints. This parameter restricts the large all_diff constraints to
     /// have a cut generator.
     ///
     /// Field 148: `max_all_diff_cut_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxAllDiffCutSize",
+            alias = "max_all_diff_cut_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_all_diff_cut_size: ::core::option::Option<i32>,
     /// For the lin max constraints, generates the cuts described in "Strong
     /// mixed-integer programming formulations for trained neural networks" by Ross
     /// Anderson et. (<https://arxiv.org/pdf/1811.01988.pdf>)
     ///
     /// Field 152: `add_lin_max_cuts`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "addLinMaxCuts",
+            alias = "add_lin_max_cuts",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub add_lin_max_cuts: ::core::option::Option<bool>,
     /// In the integer rounding procedure used for MIR and Gomory cut, the maximum
     /// "scaling" we use (must be positive). The lower this is, the lower the
@@ -10482,6 +17803,15 @@ pub struct SatParameters {
     /// and Lodi.
     ///
     /// Field 119: `max_integer_rounding_scaling`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxIntegerRoundingScaling",
+            alias = "max_integer_rounding_scaling",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_integer_rounding_scaling: ::core::option::Option<i32>,
     /// If true, we start by an empty LP, and only add constraints not satisfied
     /// by the current LP solution batch by batch. A constraint that is only added
@@ -10489,6 +17819,14 @@ pub struct SatParameters {
     /// currently consider all constraints as lazy here.
     ///
     /// Field 112: `add_lp_constraints_lazily`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "addLpConstraintsLazily",
+            alias = "add_lp_constraints_lazily",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub add_lp_constraints_lazily: ::core::option::Option<bool>,
     /// Even at the root node, we do not want to spend too much time on the LP if
     /// it is "difficult". So we solve it in "chunks" of that many iterations. The
@@ -10496,6 +17834,15 @@ pub struct SatParameters {
     /// root node.
     ///
     /// Field 227: `root_lp_iterations`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "rootLpIterations",
+            alias = "root_lp_iterations",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub root_lp_iterations: ::core::option::Option<i32>,
     /// While adding constraints, skip the constraints which have orthogonality
     /// less than 'min_orthogonality_for_lp_constraints' with already added
@@ -10504,33 +17851,96 @@ pub struct SatParameters {
     /// feature.
     ///
     /// Field 115: `min_orthogonality_for_lp_constraints`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "minOrthogonalityForLpConstraints",
+            alias = "min_orthogonality_for_lp_constraints",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub min_orthogonality_for_lp_constraints: ::core::option::Option<f64>,
     /// Max number of time we perform cut generation and resolve the LP at level 0.
     ///
     /// Field 154: `max_cut_rounds_at_level_zero`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxCutRoundsAtLevelZero",
+            alias = "max_cut_rounds_at_level_zero",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_cut_rounds_at_level_zero: ::core::option::Option<i32>,
     /// If a constraint/cut in LP is not active for that many consecutive OPTIMAL
     /// solves, remove it from the LP. Note that it might be added again later if
     /// it become violated by the current LP solution.
     ///
     /// Field 121: `max_consecutive_inactive_count`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "maxConsecutiveInactiveCount",
+            alias = "max_consecutive_inactive_count",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub max_consecutive_inactive_count: ::core::option::Option<i32>,
     /// These parameters are similar to sat clause management activity parameters.
     /// They are effective only if the number of generated cuts exceed the storage
     /// limit. Default values are based on a few experiments on miplib instances.
     ///
     /// Field 155: `cut_max_active_count_value`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "cutMaxActiveCountValue",
+            alias = "cut_max_active_count_value",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub cut_max_active_count_value: ::core::option::Option<f64>,
     /// Field 156: `cut_active_count_decay`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "cutActiveCountDecay",
+            alias = "cut_active_count_decay",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub cut_active_count_decay: ::core::option::Option<f64>,
     /// Target number of constraints to remove during cleanup.
     ///
     /// Field 157: `cut_cleanup_target`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "cutCleanupTarget",
+            alias = "cut_cleanup_target",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub cut_cleanup_target: ::core::option::Option<i32>,
     /// Add that many lazy constraints (or cuts) at once in the LP. Note that at
     /// the beginning of the solve, we do add more than this.
     ///
     /// Field 122: `new_constraints_batch_size`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "newConstraintsBatchSize",
+            alias = "new_constraints_batch_size",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub new_constraints_batch_size: ::core::option::Option<i32>,
     /// All the "exploit_*" parameters below work in the same way: when branching
     /// on an IntegerVariable, these parameters affect the value the variable is
@@ -10546,43 +17956,107 @@ pub struct SatParameters {
     /// of the full problem.
     ///
     /// Field 94: `exploit_integer_lp_solution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exploitIntegerLpSolution",
+            alias = "exploit_integer_lp_solution",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub exploit_integer_lp_solution: ::core::option::Option<bool>,
     /// If true and the Lp relaxation of the problem has a solution, try to exploit
     /// it. This is same as above except in this case the lp solution might not be
     /// an integer solution.
     ///
     /// Field 116: `exploit_all_lp_solution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exploitAllLpSolution",
+            alias = "exploit_all_lp_solution",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub exploit_all_lp_solution: ::core::option::Option<bool>,
     /// When branching on a variable, follow the last best solution value.
     ///
     /// Field 130: `exploit_best_solution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exploitBestSolution",
+            alias = "exploit_best_solution",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub exploit_best_solution: ::core::option::Option<bool>,
     /// When branching on a variable, follow the last best relaxation solution
     /// value. We use the relaxation with the tightest bound on the objective as
     /// the best relaxation solution.
     ///
     /// Field 161: `exploit_relaxation_solution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exploitRelaxationSolution",
+            alias = "exploit_relaxation_solution",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub exploit_relaxation_solution: ::core::option::Option<bool>,
     /// When branching an a variable that directly affect the objective,
     /// branch on the value that lead to the best objective first.
     ///
     /// Field 131: `exploit_objective`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "exploitObjective",
+            alias = "exploit_objective",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub exploit_objective: ::core::option::Option<bool>,
     /// Infer products of Boolean or of Boolean time IntegerVariable from the
     /// linear constrainst in the problem. This can be used in some cuts, altough
     /// for now we don't really exploit it.
     ///
     /// Field 277: `detect_linearized_product`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "detectLinearizedProduct",
+            alias = "detect_linearized_product",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub detect_linearized_product: ::core::option::Option<bool>,
     /// This should be better on integer problems.
     /// But it is still work in progress.
     ///
     /// Field 336: `use_new_integer_conflict_resolution`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "useNewIntegerConflictResolution",
+            alias = "use_new_integer_conflict_resolution",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub use_new_integer_conflict_resolution: ::core::option::Option<bool>,
     /// If true, and during integer conflict resolution (icr) the 1-UIP is an
     /// integer literal for which we do not have an associated Boolean. Create one.
     ///
     /// Field 341: `create_1uip_boolean_during_icr`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "create1uipBooleanDuringIcr",
+            alias = "create_1uip_boolean_during_icr",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub create_1uip_boolean_during_icr: ::core::option::Option<bool>,
     /// ==========================================================================
     /// MIP -\> CP-SAT (i.e. IP with integer coeff) conversion parameters that are
@@ -10599,18 +18073,44 @@ pub struct SatParameters {
     /// the solution, then the converted model will likely not be relevant.
     ///
     /// Field 124: `mip_max_bound`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipMaxBound",
+            alias = "mip_max_bound",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_max_bound: ::core::option::Option<f64>,
     /// All continuous variable of the problem will be multiplied by this factor.
     /// By default, we don't do any variable scaling and rely on the MIP model to
     /// specify continuous variable domain with the wanted precision.
     ///
     /// Field 125: `mip_var_scaling`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipVarScaling",
+            alias = "mip_var_scaling",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_var_scaling: ::core::option::Option<f64>,
     /// If this is false, then mip_var_scaling is only applied to variables with
     /// "small" domain. If it is true, we scale all floating point variable
     /// independenlty of their domain.
     ///
     /// Field 225: `mip_scale_large_domain`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipScaleLargeDomain",
+            alias = "mip_scale_large_domain",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_scale_large_domain: ::core::option::Option<bool>,
     /// If true, some continuous variable might be automatically scaled. For now,
     /// this is only the case where we detect that a variable is actually an
@@ -10619,6 +18119,14 @@ pub struct SatParameters {
     /// domain by 2 to make it implied integer.
     ///
     /// Field 166: `mip_automatically_scale_variables`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipAutomaticallyScaleVariables",
+            alias = "mip_automatically_scale_variables",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_automatically_scale_variables: ::core::option::Option<bool>,
     /// If one try to solve a MIP model with CP-SAT, because we assume all variable
     /// to be integer after scaling, we will not necessarily have the correct
@@ -10634,6 +18142,14 @@ pub struct SatParameters {
     /// presolve and after implied integer detection.
     ///
     /// Field 222: `only_solve_ip`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "onlySolveIp",
+            alias = "only_solve_ip",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub only_solve_ip: ::core::option::Option<bool>,
     /// When scaling constraint with double coefficients to integer coefficients,
     /// we will multiply by a power of 2 and round the coefficients. We will choose
@@ -10654,6 +18170,15 @@ pub struct SatParameters {
     /// that fact but still scale as best as we can.
     ///
     /// Field 126: `mip_wanted_precision`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipWantedPrecision",
+            alias = "mip_wanted_precision",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_wanted_precision: ::core::option::Option<f64>,
     /// To avoid integer overflow, we always force the maximum possible constraint
     /// activity (and objective value) according to the initial variable domain to
@@ -10665,12 +18190,30 @@ pub struct SatParameters {
     /// lower than this.
     ///
     /// Field 127: `mip_max_activity_exponent`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipMaxActivityExponent",
+            alias = "mip_max_activity_exponent",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_max_activity_exponent: ::core::option::Option<i32>,
     /// As explained in mip_precision and mip_max_activity_exponent, we cannot
     /// always reach the wanted precision during scaling. We use this threshold to
     /// enphasize in the logs when the precision seems bad.
     ///
     /// Field 128: `mip_check_precision`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipCheckPrecision",
+            alias = "mip_check_precision",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_check_precision: ::core::option::Option<f64>,
     /// Even if we make big error when scaling the objective, we can always derive
     /// a correct lower bound on the original objective by using the exact lower
@@ -10679,6 +18222,14 @@ pub struct SatParameters {
     /// off.
     ///
     /// Field 198: `mip_compute_true_objective_bound`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipComputeTrueObjectiveBound",
+            alias = "mip_compute_true_objective_bound",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_compute_true_objective_bound: ::core::option::Option<bool>,
     /// Any finite values in the input MIP must be below this threshold, otherwise
     /// the model will be reported invalid. This is needed to avoid floating point
@@ -10687,6 +18238,15 @@ pub struct SatParameters {
     /// MIP.
     ///
     /// Field 199: `mip_max_valid_magnitude`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipMaxValidMagnitude",
+            alias = "mip_max_valid_magnitude",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_max_valid_magnitude: ::core::option::Option<f64>,
     /// By default, any variable/constraint bound with a finite value and a
     /// magnitude greater than the mip_max_valid_magnitude will result with a
@@ -10696,11 +18256,28 @@ pub struct SatParameters {
     /// It is recommended to keep it at false, and create valid bounds.
     ///
     /// Field 278: `mip_treat_high_magnitude_bounds_as_infinity`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipTreatHighMagnitudeBoundsAsInfinity",
+            alias = "mip_treat_high_magnitude_bounds_as_infinity",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_treat_high_magnitude_bounds_as_infinity: ::core::option::Option<bool>,
     /// Any value in the input mip with a magnitude lower than this will be set to
     /// zero. This is to avoid some issue in LP presolving.
     ///
     /// Field 232: `mip_drop_tolerance`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipDropTolerance",
+            alias = "mip_drop_tolerance",
+            with = "::buffa::json_helpers::opt_double",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_drop_tolerance: ::core::option::Option<f64>,
     /// When solving a MIP, we do some basic floating point presolving before
     /// scaling the problem to integer to be handled by CP-SAT. This control how
@@ -10708,7 +18285,17 @@ pub struct SatParameters {
     /// model, but it is not always behaving nicely.
     ///
     /// Field 261: `mip_presolve_level`
+    #[cfg_attr(
+        feature = "json",
+        serde(
+            rename = "mipPresolveLevel",
+            alias = "mip_presolve_level",
+            with = "::buffa::json_helpers::opt_int32",
+            skip_serializing_if = "::core::option::Option::is_none"
+        )
+    )]
     pub mip_presolve_level: ::core::option::Option<i32>,
+    #[cfg_attr(feature = "json", serde(skip))]
     #[doc(hidden)]
     pub __buffa_unknown_fields: ::buffa::UnknownFields,
 }
@@ -18594,6 +26181,2989 @@ impl ::buffa::ExtensionSet for SatParameters {
         &mut self.__buffa_unknown_fields
     }
 }
+#[cfg(feature = "text")]
+impl ::buffa::text::TextFormat for SatParameters {
+    fn encode_text(
+        &self,
+        enc: &mut ::buffa::text::TextEncoder<'_>,
+    ) -> ::core::fmt::Result {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        if let ::core::option::Option::Some(ref __v) = self.name {
+            enc.write_field_name("name")?;
+            enc.write_string(__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.preferred_variable_order {
+            enc.write_field_name("preferred_variable_order")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.initial_polarity {
+            enc.write_field_name("initial_polarity")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_phase_saving {
+            enc.write_field_name("use_phase_saving")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.polarity_rephase_increment {
+            enc.write_field_name("polarity_rephase_increment")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.polarity_exploit_ls_hints {
+            enc.write_field_name("polarity_exploit_ls_hints")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.random_polarity_ratio {
+            enc.write_field_name("random_polarity_ratio")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.random_branches_ratio {
+            enc.write_field_name("random_branches_ratio")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_erwa_heuristic {
+            enc.write_field_name("use_erwa_heuristic")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.initial_variables_activity {
+            enc.write_field_name("initial_variables_activity")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .also_bump_variables_in_conflict_reasons
+        {
+            enc.write_field_name("also_bump_variables_in_conflict_reasons")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.minimization_algorithm {
+            enc.write_field_name("minimization_algorithm")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.binary_minimization_algorithm
+        {
+            enc.write_field_name("binary_minimization_algorithm")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .subsumption_during_conflict_analysis
+        {
+            enc.write_field_name("subsumption_during_conflict_analysis")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .extra_subsumption_during_conflict_analysis
+        {
+            enc.write_field_name("extra_subsumption_during_conflict_analysis")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .decision_subsumption_during_conflict_analysis
+        {
+            enc.write_field_name("decision_subsumption_during_conflict_analysis")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .eagerly_subsume_last_n_conflicts
+        {
+            enc.write_field_name("eagerly_subsume_last_n_conflicts")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.subsume_during_vivification {
+            enc.write_field_name("subsume_during_vivification")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_chronological_backtracking
+        {
+            enc.write_field_name("use_chronological_backtracking")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_backjump_levels {
+            enc.write_field_name("max_backjump_levels")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .chronological_backtrack_min_conflicts
+        {
+            enc.write_field_name("chronological_backtrack_min_conflicts")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.clause_cleanup_period {
+            enc.write_field_name("clause_cleanup_period")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .clause_cleanup_period_increment
+        {
+            enc.write_field_name("clause_cleanup_period_increment")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.clause_cleanup_target {
+            enc.write_field_name("clause_cleanup_target")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.clause_cleanup_ratio {
+            enc.write_field_name("clause_cleanup_ratio")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.clause_cleanup_lbd_bound {
+            enc.write_field_name("clause_cleanup_lbd_bound")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.clause_cleanup_lbd_tier1 {
+            enc.write_field_name("clause_cleanup_lbd_tier1")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.clause_cleanup_lbd_tier2 {
+            enc.write_field_name("clause_cleanup_lbd_tier2")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.clause_cleanup_ordering {
+            enc.write_field_name("clause_cleanup_ordering")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.pb_cleanup_increment {
+            enc.write_field_name("pb_cleanup_increment")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.pb_cleanup_ratio {
+            enc.write_field_name("pb_cleanup_ratio")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.variable_activity_decay {
+            enc.write_field_name("variable_activity_decay")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_variable_activity_value {
+            enc.write_field_name("max_variable_activity_value")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.glucose_max_decay {
+            enc.write_field_name("glucose_max_decay")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.glucose_decay_increment {
+            enc.write_field_name("glucose_decay_increment")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .glucose_decay_increment_period
+        {
+            enc.write_field_name("glucose_decay_increment_period")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.clause_activity_decay {
+            enc.write_field_name("clause_activity_decay")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_clause_activity_value {
+            enc.write_field_name("max_clause_activity_value")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.default_restart_algorithms {
+            enc.write_field_name("default_restart_algorithms")?;
+            enc.write_string(__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.restart_period {
+            enc.write_field_name("restart_period")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.restart_running_window_size {
+            enc.write_field_name("restart_running_window_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.restart_dl_average_ratio {
+            enc.write_field_name("restart_dl_average_ratio")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.restart_lbd_average_ratio {
+            enc.write_field_name("restart_lbd_average_ratio")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_blocking_restart {
+            enc.write_field_name("use_blocking_restart")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.blocking_restart_window_size
+        {
+            enc.write_field_name("blocking_restart_window_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.blocking_restart_multiplier {
+            enc.write_field_name("blocking_restart_multiplier")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .num_conflicts_before_strategy_changes
+        {
+            enc.write_field_name("num_conflicts_before_strategy_changes")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .strategy_change_increase_ratio
+        {
+            enc.write_field_name("strategy_change_increase_ratio")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_time_in_seconds {
+            enc.write_field_name("max_time_in_seconds")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_deterministic_time {
+            enc.write_field_name("max_deterministic_time")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_num_deterministic_batches
+        {
+            enc.write_field_name("max_num_deterministic_batches")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_number_of_conflicts {
+            enc.write_field_name("max_number_of_conflicts")?;
+            enc.write_i64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_memory_in_mb {
+            enc.write_field_name("max_memory_in_mb")?;
+            enc.write_i64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.absolute_gap_limit {
+            enc.write_field_name("absolute_gap_limit")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.relative_gap_limit {
+            enc.write_field_name("relative_gap_limit")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.random_seed {
+            enc.write_field_name("random_seed")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.permute_variable_randomly {
+            enc.write_field_name("permute_variable_randomly")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .permute_presolve_constraint_order
+        {
+            enc.write_field_name("permute_presolve_constraint_order")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_absl_random {
+            enc.write_field_name("use_absl_random")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.log_search_progress {
+            enc.write_field_name("log_search_progress")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.log_subsolver_statistics {
+            enc.write_field_name("log_subsolver_statistics")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.log_prefix {
+            enc.write_field_name("log_prefix")?;
+            enc.write_string(__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.log_to_stdout {
+            enc.write_field_name("log_to_stdout")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.log_to_response {
+            enc.write_field_name("log_to_response")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_pb_resolution {
+            enc.write_field_name("use_pb_resolution")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .minimize_reduction_during_pb_resolution
+        {
+            enc.write_field_name("minimize_reduction_during_pb_resolution")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .count_assumption_levels_in_lbd
+        {
+            enc.write_field_name("count_assumption_levels_in_lbd")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.presolve_bve_threshold {
+            enc.write_field_name("presolve_bve_threshold")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.filter_sat_postsolve_clauses
+        {
+            enc.write_field_name("filter_sat_postsolve_clauses")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.presolve_bve_clause_weight {
+            enc.write_field_name("presolve_bve_clause_weight")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .probing_deterministic_time_limit
+        {
+            enc.write_field_name("probing_deterministic_time_limit")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .presolve_probing_deterministic_time_limit
+        {
+            enc.write_field_name("presolve_probing_deterministic_time_limit")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.presolve_blocked_clause {
+            enc.write_field_name("presolve_blocked_clause")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.presolve_use_bva {
+            enc.write_field_name("presolve_use_bva")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.presolve_bva_threshold {
+            enc.write_field_name("presolve_bva_threshold")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_presolve_iterations {
+            enc.write_field_name("max_presolve_iterations")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.cp_model_presolve {
+            enc.write_field_name("cp_model_presolve")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.cp_model_probing_level {
+            enc.write_field_name("cp_model_probing_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.cp_model_use_sat_presolve {
+            enc.write_field_name("cp_model_use_sat_presolve")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .load_at_most_ones_in_sat_presolve
+        {
+            enc.write_field_name("load_at_most_ones_in_sat_presolve")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.remove_fixed_variables_early
+        {
+            enc.write_field_name("remove_fixed_variables_early")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.detect_table_with_cost {
+            enc.write_field_name("detect_table_with_cost")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.table_compression_level {
+            enc.write_field_name("table_compression_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.expand_alldiff_constraints {
+            enc.write_field_name("expand_alldiff_constraints")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_alldiff_domain_size {
+            enc.write_field_name("max_alldiff_domain_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.expand_reservoir_constraints
+        {
+            enc.write_field_name("expand_reservoir_constraints")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .max_domain_size_for_linear2_expansion
+        {
+            enc.write_field_name("max_domain_size_for_linear2_expansion")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .expand_reservoir_using_circuit
+        {
+            enc.write_field_name("expand_reservoir_using_circuit")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .encode_cumulative_as_reservoir
+        {
+            enc.write_field_name("encode_cumulative_as_reservoir")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .max_lin_max_size_for_expansion
+        {
+            enc.write_field_name("max_lin_max_size_for_expansion")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.disable_constraint_expansion
+        {
+            enc.write_field_name("disable_constraint_expansion")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .encode_complex_linear_constraint_with_integer
+        {
+            enc.write_field_name("encode_complex_linear_constraint_with_integer")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.merge_no_overlap_work_limit {
+            enc.write_field_name("merge_no_overlap_work_limit")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.merge_at_most_one_work_limit
+        {
+            enc.write_field_name("merge_at_most_one_work_limit")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.presolve_substitution_level {
+            enc.write_field_name("presolve_substitution_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .presolve_extract_integer_enforcement
+        {
+            enc.write_field_name("presolve_extract_integer_enforcement")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.presolve_inclusion_work_limit
+        {
+            enc.write_field_name("presolve_inclusion_work_limit")?;
+            enc.write_i64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.ignore_names {
+            enc.write_field_name("ignore_names")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.infer_all_diffs {
+            enc.write_field_name("infer_all_diffs")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.find_big_linear_overlap {
+            enc.write_field_name("find_big_linear_overlap")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .find_clauses_that_are_exactly_one
+        {
+            enc.write_field_name("find_clauses_that_are_exactly_one")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_sat_inprocessing {
+            enc.write_field_name("use_sat_inprocessing")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.inprocessing_dtime_ratio {
+            enc.write_field_name("inprocessing_dtime_ratio")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.inprocessing_probing_dtime {
+            enc.write_field_name("inprocessing_probing_dtime")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .inprocessing_minimization_dtime
+        {
+            enc.write_field_name("inprocessing_minimization_dtime")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .inprocessing_minimization_use_conflict_analysis
+        {
+            enc.write_field_name("inprocessing_minimization_use_conflict_analysis")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .inprocessing_minimization_use_all_orderings
+        {
+            enc.write_field_name("inprocessing_minimization_use_all_orderings")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .inprocessing_use_congruence_closure
+        {
+            enc.write_field_name("inprocessing_use_congruence_closure")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.inprocessing_use_sat_sweeping
+        {
+            enc.write_field_name("inprocessing_use_sat_sweeping")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.num_workers {
+            enc.write_field_name("num_workers")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.num_search_workers {
+            enc.write_field_name("num_search_workers")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.num_full_subsolvers {
+            enc.write_field_name("num_full_subsolvers")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.interleave_search {
+            enc.write_field_name("interleave_search")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.interleave_batch_size {
+            enc.write_field_name("interleave_batch_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.share_objective_bounds {
+            enc.write_field_name("share_objective_bounds")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.share_level_zero_bounds {
+            enc.write_field_name("share_level_zero_bounds")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.share_linear2_bounds {
+            enc.write_field_name("share_linear2_bounds")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.share_binary_clauses {
+            enc.write_field_name("share_binary_clauses")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.share_glue_clauses {
+            enc.write_field_name("share_glue_clauses")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.minimize_shared_clauses {
+            enc.write_field_name("minimize_shared_clauses")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.share_glue_clauses_dtime {
+            enc.write_field_name("share_glue_clauses_dtime")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.check_lrat_proof {
+            enc.write_field_name("check_lrat_proof")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.check_merged_lrat_proof {
+            enc.write_field_name("check_merged_lrat_proof")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.output_lrat_proof {
+            enc.write_field_name("output_lrat_proof")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.check_drat_proof {
+            enc.write_field_name("check_drat_proof")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.output_drat_proof {
+            enc.write_field_name("output_drat_proof")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_drat_time_in_seconds {
+            enc.write_field_name("max_drat_time_in_seconds")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .debug_postsolve_with_full_solver
+        {
+            enc.write_field_name("debug_postsolve_with_full_solver")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .debug_max_num_presolve_operations
+        {
+            enc.write_field_name("debug_max_num_presolve_operations")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.debug_crash_on_bad_hint {
+            enc.write_field_name("debug_crash_on_bad_hint")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .debug_crash_if_presolve_breaks_hint
+        {
+            enc.write_field_name("debug_crash_if_presolve_breaks_hint")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .debug_crash_if_lrat_check_fails
+        {
+            enc.write_field_name("debug_crash_if_lrat_check_fails")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_optimization_hints {
+            enc.write_field_name("use_optimization_hints")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.core_minimization_level {
+            enc.write_field_name("core_minimization_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.find_multiple_cores {
+            enc.write_field_name("find_multiple_cores")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.cover_optimization {
+            enc.write_field_name("cover_optimization")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_sat_assumption_order {
+            enc.write_field_name("max_sat_assumption_order")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .max_sat_reverse_assumption_order
+        {
+            enc.write_field_name("max_sat_reverse_assumption_order")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_sat_stratification {
+            enc.write_field_name("max_sat_stratification")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .propagation_loop_detection_factor
+        {
+            enc.write_field_name("propagation_loop_detection_factor")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_precedences_in_disjunctive_constraint
+        {
+            enc.write_field_name("use_precedences_in_disjunctive_constraint")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .transitive_precedences_work_limit
+        {
+            enc.write_field_name("transitive_precedences_work_limit")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .max_size_to_create_precedence_literals_in_disjunctive
+        {
+            enc.write_field_name(
+                "max_size_to_create_precedence_literals_in_disjunctive",
+            )?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_strong_propagation_in_disjunctive
+        {
+            enc.write_field_name("use_strong_propagation_in_disjunctive")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_dynamic_precedence_in_disjunctive
+        {
+            enc.write_field_name("use_dynamic_precedence_in_disjunctive")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_dynamic_precedence_in_cumulative
+        {
+            enc.write_field_name("use_dynamic_precedence_in_cumulative")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_overload_checker_in_cumulative
+        {
+            enc.write_field_name("use_overload_checker_in_cumulative")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_conservative_scale_overload_checker
+        {
+            enc.write_field_name("use_conservative_scale_overload_checker")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_timetable_edge_finding_in_cumulative
+        {
+            enc.write_field_name("use_timetable_edge_finding_in_cumulative")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .max_num_intervals_for_timetable_edge_finding
+        {
+            enc.write_field_name("max_num_intervals_for_timetable_edge_finding")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_hard_precedences_in_cumulative
+        {
+            enc.write_field_name("use_hard_precedences_in_cumulative")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.exploit_all_precedences {
+            enc.write_field_name("exploit_all_precedences")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_disjunctive_constraint_in_cumulative
+        {
+            enc.write_field_name("use_disjunctive_constraint_in_cumulative")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .no_overlap_2d_boolean_relations_limit
+        {
+            enc.write_field_name("no_overlap_2d_boolean_relations_limit")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_timetabling_in_no_overlap_2d
+        {
+            enc.write_field_name("use_timetabling_in_no_overlap_2d")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_energetic_reasoning_in_no_overlap_2d
+        {
+            enc.write_field_name("use_energetic_reasoning_in_no_overlap_2d")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_area_energetic_reasoning_in_no_overlap_2d
+        {
+            enc.write_field_name("use_area_energetic_reasoning_in_no_overlap_2d")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_try_edge_reasoning_in_no_overlap_2d
+        {
+            enc.write_field_name("use_try_edge_reasoning_in_no_overlap_2d")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .max_pairs_pairwise_reasoning_in_no_overlap_2d
+        {
+            enc.write_field_name("max_pairs_pairwise_reasoning_in_no_overlap_2d")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .maximum_regions_to_split_in_disconnected_no_overlap_2d
+        {
+            enc.write_field_name(
+                "maximum_regions_to_split_in_disconnected_no_overlap_2d",
+            )?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_linear3_for_no_overlap_2d_precedences
+        {
+            enc.write_field_name("use_linear3_for_no_overlap_2d_precedences")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_dual_scheduling_heuristics
+        {
+            enc.write_field_name("use_dual_scheduling_heuristics")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_all_different_for_circuit
+        {
+            enc.write_field_name("use_all_different_for_circuit")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .routing_cut_subset_size_for_binary_relation_bound
+        {
+            enc.write_field_name("routing_cut_subset_size_for_binary_relation_bound")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .routing_cut_subset_size_for_tight_binary_relation_bound
+        {
+            enc.write_field_name(
+                "routing_cut_subset_size_for_tight_binary_relation_bound",
+            )?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .routing_cut_subset_size_for_exact_binary_relation_bound
+        {
+            enc.write_field_name(
+                "routing_cut_subset_size_for_exact_binary_relation_bound",
+            )?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .routing_cut_subset_size_for_shortest_paths_bound
+        {
+            enc.write_field_name("routing_cut_subset_size_for_shortest_paths_bound")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.routing_cut_dp_effort {
+            enc.write_field_name("routing_cut_dp_effort")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .routing_cut_max_infeasible_path_length
+        {
+            enc.write_field_name("routing_cut_max_infeasible_path_length")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.search_branching {
+            enc.write_field_name("search_branching")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.hint_conflict_limit {
+            enc.write_field_name("hint_conflict_limit")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.repair_hint {
+            enc.write_field_name("repair_hint")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .fix_variables_to_their_hinted_value
+        {
+            enc.write_field_name("fix_variables_to_their_hinted_value")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_probing_search {
+            enc.write_field_name("use_probing_search")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_extended_probing {
+            enc.write_field_name("use_extended_probing")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .probing_num_combinations_limit
+        {
+            enc.write_field_name("probing_num_combinations_limit")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .shaving_deterministic_time_in_probing_search
+        {
+            enc.write_field_name("shaving_deterministic_time_in_probing_search")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .shaving_search_deterministic_time
+        {
+            enc.write_field_name("shaving_search_deterministic_time")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.shaving_search_threshold {
+            enc.write_field_name("shaving_search_threshold")?;
+            enc.write_i64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_objective_lb_search {
+            enc.write_field_name("use_objective_lb_search")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_objective_shaving_search
+        {
+            enc.write_field_name("use_objective_shaving_search")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.variables_shaving_level {
+            enc.write_field_name("variables_shaving_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .pseudo_cost_reliability_threshold
+        {
+            enc.write_field_name("pseudo_cost_reliability_threshold")?;
+            enc.write_i64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.optimize_with_core {
+            enc.write_field_name("optimize_with_core")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.optimize_with_lb_tree_search
+        {
+            enc.write_field_name("optimize_with_lb_tree_search")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .save_lp_basis_in_lb_tree_search
+        {
+            enc.write_field_name("save_lp_basis_in_lb_tree_search")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.binary_search_num_conflicts {
+            enc.write_field_name("binary_search_num_conflicts")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.optimize_with_max_hs {
+            enc.write_field_name("optimize_with_max_hs")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_feasibility_jump {
+            enc.write_field_name("use_feasibility_jump")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_ls_only {
+            enc.write_field_name("use_ls_only")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.feasibility_jump_decay {
+            enc.write_field_name("feasibility_jump_decay")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .feasibility_jump_linearization_level
+        {
+            enc.write_field_name("feasibility_jump_linearization_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .feasibility_jump_restart_factor
+        {
+            enc.write_field_name("feasibility_jump_restart_factor")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.feasibility_jump_batch_dtime
+        {
+            enc.write_field_name("feasibility_jump_batch_dtime")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .feasibility_jump_var_randomization_probability
+        {
+            enc.write_field_name("feasibility_jump_var_randomization_probability")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .feasibility_jump_var_perburbation_range_ratio
+        {
+            enc.write_field_name("feasibility_jump_var_perburbation_range_ratio")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .feasibility_jump_enable_restarts
+        {
+            enc.write_field_name("feasibility_jump_enable_restarts")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .feasibility_jump_max_expanded_constraint_size
+        {
+            enc.write_field_name("feasibility_jump_max_expanded_constraint_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.num_violation_ls {
+            enc.write_field_name("num_violation_ls")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .violation_ls_perturbation_period
+        {
+            enc.write_field_name("violation_ls_perturbation_period")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .violation_ls_compound_move_probability
+        {
+            enc.write_field_name("violation_ls_compound_move_probability")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.shared_tree_num_workers {
+            enc.write_field_name("shared_tree_num_workers")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_shared_tree_search {
+            enc.write_field_name("use_shared_tree_search")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .shared_tree_worker_min_restarts_per_subtree
+        {
+            enc.write_field_name("shared_tree_worker_min_restarts_per_subtree")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .shared_tree_worker_enable_trail_sharing
+        {
+            enc.write_field_name("shared_tree_worker_enable_trail_sharing")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .shared_tree_worker_enable_phase_sharing
+        {
+            enc.write_field_name("shared_tree_worker_enable_phase_sharing")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .shared_tree_open_leaves_per_worker
+        {
+            enc.write_field_name("shared_tree_open_leaves_per_worker")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .shared_tree_max_nodes_per_worker
+        {
+            enc.write_field_name("shared_tree_max_nodes_per_worker")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.shared_tree_split_strategy {
+            enc.write_field_name("shared_tree_split_strategy")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.shared_tree_balance_tolerance
+        {
+            enc.write_field_name("shared_tree_balance_tolerance")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.shared_tree_split_min_dtime {
+            enc.write_field_name("shared_tree_split_min_dtime")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.enumerate_all_solutions {
+            enc.write_field_name("enumerate_all_solutions")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .keep_all_feasible_solutions_in_presolve
+        {
+            enc.write_field_name("keep_all_feasible_solutions_in_presolve")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .fill_tightened_domains_in_response
+        {
+            enc.write_field_name("fill_tightened_domains_in_response")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .fill_additional_solutions_in_response
+        {
+            enc.write_field_name("fill_additional_solutions_in_response")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.instantiate_all_variables {
+            enc.write_field_name("instantiate_all_variables")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .auto_detect_greater_than_at_least_one_of
+        {
+            enc.write_field_name("auto_detect_greater_than_at_least_one_of")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.stop_after_first_solution {
+            enc.write_field_name("stop_after_first_solution")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.stop_after_presolve {
+            enc.write_field_name("stop_after_presolve")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.stop_after_root_propagation {
+            enc.write_field_name("stop_after_root_propagation")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.lns_initial_difficulty {
+            enc.write_field_name("lns_initial_difficulty")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .lns_initial_deterministic_limit
+        {
+            enc.write_field_name("lns_initial_deterministic_limit")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_lns {
+            enc.write_field_name("use_lns")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_lns_only {
+            enc.write_field_name("use_lns_only")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.solution_pool_size {
+            enc.write_field_name("solution_pool_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.solution_pool_diversity_limit
+        {
+            enc.write_field_name("solution_pool_diversity_limit")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.alternative_pool_size {
+            enc.write_field_name("alternative_pool_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_rins_lns {
+            enc.write_field_name("use_rins_lns")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_feasibility_pump {
+            enc.write_field_name("use_feasibility_pump")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_lb_relax_lns {
+            enc.write_field_name("use_lb_relax_lns")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .lb_relax_num_workers_threshold
+        {
+            enc.write_field_name("lb_relax_num_workers_threshold")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.fp_rounding {
+            enc.write_field_name("fp_rounding")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.diversify_lns_params {
+            enc.write_field_name("diversify_lns_params")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.randomize_search {
+            enc.write_field_name("randomize_search")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .search_random_variable_pool_size
+        {
+            enc.write_field_name("search_random_variable_pool_size")?;
+            enc.write_i64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.push_all_tasks_toward_start {
+            enc.write_field_name("push_all_tasks_toward_start")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_optional_variables {
+            enc.write_field_name("use_optional_variables")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_exact_lp_reason {
+            enc.write_field_name("use_exact_lp_reason")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_combined_no_overlap {
+            enc.write_field_name("use_combined_no_overlap")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .at_most_one_max_expansion_size
+        {
+            enc.write_field_name("at_most_one_max_expansion_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.catch_sigint_signal {
+            enc.write_field_name("catch_sigint_signal")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_implied_bounds {
+            enc.write_field_name("use_implied_bounds")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.polish_lp_solution {
+            enc.write_field_name("polish_lp_solution")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.lp_primal_tolerance {
+            enc.write_field_name("lp_primal_tolerance")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.lp_dual_tolerance {
+            enc.write_field_name("lp_dual_tolerance")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.convert_intervals {
+            enc.write_field_name("convert_intervals")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.symmetry_level {
+            enc.write_field_name("symmetry_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.use_symmetry_in_lp {
+            enc.write_field_name("use_symmetry_in_lp")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.keep_symmetry_in_presolve {
+            enc.write_field_name("keep_symmetry_in_presolve")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .symmetry_detection_deterministic_time_limit
+        {
+            enc.write_field_name("symmetry_detection_deterministic_time_limit")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.new_linear_propagation {
+            enc.write_field_name("new_linear_propagation")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.linear_split_size {
+            enc.write_field_name("linear_split_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.linearization_level {
+            enc.write_field_name("linearization_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.boolean_encoding_level {
+            enc.write_field_name("boolean_encoding_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .max_domain_size_when_encoding_eq_neq_constraints
+        {
+            enc.write_field_name("max_domain_size_when_encoding_eq_neq_constraints")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_num_cuts {
+            enc.write_field_name("max_num_cuts")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.cut_level {
+            enc.write_field_name("cut_level")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.only_add_cuts_at_level_zero {
+            enc.write_field_name("only_add_cuts_at_level_zero")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.add_objective_cut {
+            enc.write_field_name("add_objective_cut")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.add_cg_cuts {
+            enc.write_field_name("add_cg_cuts")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.add_mir_cuts {
+            enc.write_field_name("add_mir_cuts")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.add_zero_half_cuts {
+            enc.write_field_name("add_zero_half_cuts")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.add_clique_cuts {
+            enc.write_field_name("add_clique_cuts")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.add_rlt_cuts {
+            enc.write_field_name("add_rlt_cuts")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_all_diff_cut_size {
+            enc.write_field_name("max_all_diff_cut_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.add_lin_max_cuts {
+            enc.write_field_name("add_lin_max_cuts")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_integer_rounding_scaling
+        {
+            enc.write_field_name("max_integer_rounding_scaling")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.add_lp_constraints_lazily {
+            enc.write_field_name("add_lp_constraints_lazily")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.root_lp_iterations {
+            enc.write_field_name("root_lp_iterations")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .min_orthogonality_for_lp_constraints
+        {
+            enc.write_field_name("min_orthogonality_for_lp_constraints")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.max_cut_rounds_at_level_zero
+        {
+            enc.write_field_name("max_cut_rounds_at_level_zero")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .max_consecutive_inactive_count
+        {
+            enc.write_field_name("max_consecutive_inactive_count")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.cut_max_active_count_value {
+            enc.write_field_name("cut_max_active_count_value")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.cut_active_count_decay {
+            enc.write_field_name("cut_active_count_decay")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.cut_cleanup_target {
+            enc.write_field_name("cut_cleanup_target")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.new_constraints_batch_size {
+            enc.write_field_name("new_constraints_batch_size")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.exploit_integer_lp_solution {
+            enc.write_field_name("exploit_integer_lp_solution")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.exploit_all_lp_solution {
+            enc.write_field_name("exploit_all_lp_solution")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.exploit_best_solution {
+            enc.write_field_name("exploit_best_solution")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.exploit_relaxation_solution {
+            enc.write_field_name("exploit_relaxation_solution")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.exploit_objective {
+            enc.write_field_name("exploit_objective")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.detect_linearized_product {
+            enc.write_field_name("detect_linearized_product")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .use_new_integer_conflict_resolution
+        {
+            enc.write_field_name("use_new_integer_conflict_resolution")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .create_1uip_boolean_during_icr
+        {
+            enc.write_field_name("create_1uip_boolean_during_icr")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.mip_max_bound {
+            enc.write_field_name("mip_max_bound")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.mip_var_scaling {
+            enc.write_field_name("mip_var_scaling")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.mip_scale_large_domain {
+            enc.write_field_name("mip_scale_large_domain")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .mip_automatically_scale_variables
+        {
+            enc.write_field_name("mip_automatically_scale_variables")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.only_solve_ip {
+            enc.write_field_name("only_solve_ip")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.mip_wanted_precision {
+            enc.write_field_name("mip_wanted_precision")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.mip_max_activity_exponent {
+            enc.write_field_name("mip_max_activity_exponent")?;
+            enc.write_i32(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.mip_check_precision {
+            enc.write_field_name("mip_check_precision")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .mip_compute_true_objective_bound
+        {
+            enc.write_field_name("mip_compute_true_objective_bound")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.mip_max_valid_magnitude {
+            enc.write_field_name("mip_max_valid_magnitude")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self
+            .mip_treat_high_magnitude_bounds_as_infinity
+        {
+            enc.write_field_name("mip_treat_high_magnitude_bounds_as_infinity")?;
+            enc.write_bool(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.mip_drop_tolerance {
+            enc.write_field_name("mip_drop_tolerance")?;
+            enc.write_f64(*__v)?;
+        }
+        if let ::core::option::Option::Some(ref __v) = self.mip_presolve_level {
+            enc.write_field_name("mip_presolve_level")?;
+            enc.write_i32(*__v)?;
+        }
+        for __v in &self.restart_algorithms {
+            enc.write_field_name("restart_algorithms")?;
+            enc.write_enum_name(__v.proto_name())?;
+        }
+        for __v in &self.subsolvers {
+            enc.write_field_name("subsolvers")?;
+            enc.write_string(__v)?;
+        }
+        for __v in &self.extra_subsolvers {
+            enc.write_field_name("extra_subsolvers")?;
+            enc.write_string(__v)?;
+        }
+        for __v in &self.ignore_subsolvers {
+            enc.write_field_name("ignore_subsolvers")?;
+            enc.write_string(__v)?;
+        }
+        for __v in &self.filter_subsolvers {
+            enc.write_field_name("filter_subsolvers")?;
+            enc.write_string(__v)?;
+        }
+        for __v in &self.subsolver_params {
+            enc.write_field_name("subsolver_params")?;
+            enc.write_message(__v)?;
+        }
+        enc.write_unknown_fields(&self.__buffa_unknown_fields)?;
+        ::core::result::Result::Ok(())
+    }
+    fn merge_text(
+        &mut self,
+        dec: &mut ::buffa::text::TextDecoder<'_>,
+    ) -> ::core::result::Result<(), ::buffa::text::ParseError> {
+        #[allow(unused_imports)]
+        use ::buffa::Enumeration as _;
+        while let ::core::option::Option::Some(__name) = dec.read_field_name()? {
+            match __name {
+                "name" => {
+                    self.name = ::core::option::Option::Some(
+                        dec.read_string()?.into_owned(),
+                    );
+                }
+                "preferred_variable_order" => {
+                    self.preferred_variable_order = ::core::option::Option::Some(
+                        dec.read_closed_enum_by_name::<sat_parameters::VariableOrder>()?,
+                    );
+                }
+                "initial_polarity" => {
+                    self.initial_polarity = ::core::option::Option::Some(
+                        dec.read_closed_enum_by_name::<sat_parameters::Polarity>()?,
+                    );
+                }
+                "use_phase_saving" => {
+                    self.use_phase_saving = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "polarity_rephase_increment" => {
+                    self.polarity_rephase_increment = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "polarity_exploit_ls_hints" => {
+                    self.polarity_exploit_ls_hints = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "random_polarity_ratio" => {
+                    self.random_polarity_ratio = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "random_branches_ratio" => {
+                    self.random_branches_ratio = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "use_erwa_heuristic" => {
+                    self.use_erwa_heuristic = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "initial_variables_activity" => {
+                    self.initial_variables_activity = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "also_bump_variables_in_conflict_reasons" => {
+                    self.also_bump_variables_in_conflict_reasons = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "minimization_algorithm" => {
+                    self.minimization_algorithm = ::core::option::Option::Some(
+                        dec
+                            .read_closed_enum_by_name::<
+                                sat_parameters::ConflictMinimizationAlgorithm,
+                            >()?,
+                    );
+                }
+                "binary_minimization_algorithm" => {
+                    self.binary_minimization_algorithm = ::core::option::Option::Some(
+                        dec
+                            .read_closed_enum_by_name::<
+                                sat_parameters::BinaryMinizationAlgorithm,
+                            >()?,
+                    );
+                }
+                "subsumption_during_conflict_analysis" => {
+                    self.subsumption_during_conflict_analysis = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "extra_subsumption_during_conflict_analysis" => {
+                    self.extra_subsumption_during_conflict_analysis = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "decision_subsumption_during_conflict_analysis" => {
+                    self.decision_subsumption_during_conflict_analysis = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "eagerly_subsume_last_n_conflicts" => {
+                    self.eagerly_subsume_last_n_conflicts = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "subsume_during_vivification" => {
+                    self.subsume_during_vivification = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_chronological_backtracking" => {
+                    self.use_chronological_backtracking = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_backjump_levels" => {
+                    self.max_backjump_levels = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "chronological_backtrack_min_conflicts" => {
+                    self.chronological_backtrack_min_conflicts = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "clause_cleanup_period" => {
+                    self.clause_cleanup_period = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "clause_cleanup_period_increment" => {
+                    self.clause_cleanup_period_increment = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "clause_cleanup_target" => {
+                    self.clause_cleanup_target = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "clause_cleanup_ratio" => {
+                    self.clause_cleanup_ratio = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "clause_cleanup_lbd_bound" => {
+                    self.clause_cleanup_lbd_bound = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "clause_cleanup_lbd_tier1" => {
+                    self.clause_cleanup_lbd_tier1 = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "clause_cleanup_lbd_tier2" => {
+                    self.clause_cleanup_lbd_tier2 = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "clause_cleanup_ordering" => {
+                    self.clause_cleanup_ordering = ::core::option::Option::Some(
+                        dec.read_closed_enum_by_name::<sat_parameters::ClauseOrdering>()?,
+                    );
+                }
+                "pb_cleanup_increment" => {
+                    self.pb_cleanup_increment = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "pb_cleanup_ratio" => {
+                    self.pb_cleanup_ratio = ::core::option::Option::Some(dec.read_f64()?);
+                }
+                "variable_activity_decay" => {
+                    self.variable_activity_decay = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "max_variable_activity_value" => {
+                    self.max_variable_activity_value = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "glucose_max_decay" => {
+                    self.glucose_max_decay = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "glucose_decay_increment" => {
+                    self.glucose_decay_increment = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "glucose_decay_increment_period" => {
+                    self.glucose_decay_increment_period = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "clause_activity_decay" => {
+                    self.clause_activity_decay = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "max_clause_activity_value" => {
+                    self.max_clause_activity_value = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "default_restart_algorithms" => {
+                    self.default_restart_algorithms = ::core::option::Option::Some(
+                        dec.read_string()?.into_owned(),
+                    );
+                }
+                "restart_period" => {
+                    self.restart_period = ::core::option::Option::Some(dec.read_i32()?);
+                }
+                "restart_running_window_size" => {
+                    self.restart_running_window_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "restart_dl_average_ratio" => {
+                    self.restart_dl_average_ratio = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "restart_lbd_average_ratio" => {
+                    self.restart_lbd_average_ratio = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "use_blocking_restart" => {
+                    self.use_blocking_restart = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "blocking_restart_window_size" => {
+                    self.blocking_restart_window_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "blocking_restart_multiplier" => {
+                    self.blocking_restart_multiplier = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "num_conflicts_before_strategy_changes" => {
+                    self.num_conflicts_before_strategy_changes = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "strategy_change_increase_ratio" => {
+                    self.strategy_change_increase_ratio = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "max_time_in_seconds" => {
+                    self.max_time_in_seconds = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "max_deterministic_time" => {
+                    self.max_deterministic_time = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "max_num_deterministic_batches" => {
+                    self.max_num_deterministic_batches = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "max_number_of_conflicts" => {
+                    self.max_number_of_conflicts = ::core::option::Option::Some(
+                        dec.read_i64()?,
+                    );
+                }
+                "max_memory_in_mb" => {
+                    self.max_memory_in_mb = ::core::option::Option::Some(dec.read_i64()?);
+                }
+                "absolute_gap_limit" => {
+                    self.absolute_gap_limit = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "relative_gap_limit" => {
+                    self.relative_gap_limit = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "random_seed" => {
+                    self.random_seed = ::core::option::Option::Some(dec.read_i32()?);
+                }
+                "permute_variable_randomly" => {
+                    self.permute_variable_randomly = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "permute_presolve_constraint_order" => {
+                    self.permute_presolve_constraint_order = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_absl_random" => {
+                    self.use_absl_random = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "log_search_progress" => {
+                    self.log_search_progress = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "log_subsolver_statistics" => {
+                    self.log_subsolver_statistics = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "log_prefix" => {
+                    self.log_prefix = ::core::option::Option::Some(
+                        dec.read_string()?.into_owned(),
+                    );
+                }
+                "log_to_stdout" => {
+                    self.log_to_stdout = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "log_to_response" => {
+                    self.log_to_response = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "use_pb_resolution" => {
+                    self.use_pb_resolution = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "minimize_reduction_during_pb_resolution" => {
+                    self.minimize_reduction_during_pb_resolution = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "count_assumption_levels_in_lbd" => {
+                    self.count_assumption_levels_in_lbd = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "presolve_bve_threshold" => {
+                    self.presolve_bve_threshold = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "filter_sat_postsolve_clauses" => {
+                    self.filter_sat_postsolve_clauses = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "presolve_bve_clause_weight" => {
+                    self.presolve_bve_clause_weight = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "probing_deterministic_time_limit" => {
+                    self.probing_deterministic_time_limit = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "presolve_probing_deterministic_time_limit" => {
+                    self.presolve_probing_deterministic_time_limit = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "presolve_blocked_clause" => {
+                    self.presolve_blocked_clause = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "presolve_use_bva" => {
+                    self.presolve_use_bva = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "presolve_bva_threshold" => {
+                    self.presolve_bva_threshold = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "max_presolve_iterations" => {
+                    self.max_presolve_iterations = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "cp_model_presolve" => {
+                    self.cp_model_presolve = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "cp_model_probing_level" => {
+                    self.cp_model_probing_level = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "cp_model_use_sat_presolve" => {
+                    self.cp_model_use_sat_presolve = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "load_at_most_ones_in_sat_presolve" => {
+                    self.load_at_most_ones_in_sat_presolve = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "remove_fixed_variables_early" => {
+                    self.remove_fixed_variables_early = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "detect_table_with_cost" => {
+                    self.detect_table_with_cost = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "table_compression_level" => {
+                    self.table_compression_level = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "expand_alldiff_constraints" => {
+                    self.expand_alldiff_constraints = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_alldiff_domain_size" => {
+                    self.max_alldiff_domain_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "expand_reservoir_constraints" => {
+                    self.expand_reservoir_constraints = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_domain_size_for_linear2_expansion" => {
+                    self.max_domain_size_for_linear2_expansion = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "expand_reservoir_using_circuit" => {
+                    self.expand_reservoir_using_circuit = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "encode_cumulative_as_reservoir" => {
+                    self.encode_cumulative_as_reservoir = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_lin_max_size_for_expansion" => {
+                    self.max_lin_max_size_for_expansion = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "disable_constraint_expansion" => {
+                    self.disable_constraint_expansion = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "encode_complex_linear_constraint_with_integer" => {
+                    self.encode_complex_linear_constraint_with_integer = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "merge_no_overlap_work_limit" => {
+                    self.merge_no_overlap_work_limit = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "merge_at_most_one_work_limit" => {
+                    self.merge_at_most_one_work_limit = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "presolve_substitution_level" => {
+                    self.presolve_substitution_level = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "presolve_extract_integer_enforcement" => {
+                    self.presolve_extract_integer_enforcement = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "presolve_inclusion_work_limit" => {
+                    self.presolve_inclusion_work_limit = ::core::option::Option::Some(
+                        dec.read_i64()?,
+                    );
+                }
+                "ignore_names" => {
+                    self.ignore_names = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "infer_all_diffs" => {
+                    self.infer_all_diffs = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "find_big_linear_overlap" => {
+                    self.find_big_linear_overlap = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "find_clauses_that_are_exactly_one" => {
+                    self.find_clauses_that_are_exactly_one = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_sat_inprocessing" => {
+                    self.use_sat_inprocessing = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "inprocessing_dtime_ratio" => {
+                    self.inprocessing_dtime_ratio = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "inprocessing_probing_dtime" => {
+                    self.inprocessing_probing_dtime = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "inprocessing_minimization_dtime" => {
+                    self.inprocessing_minimization_dtime = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "inprocessing_minimization_use_conflict_analysis" => {
+                    self.inprocessing_minimization_use_conflict_analysis = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "inprocessing_minimization_use_all_orderings" => {
+                    self.inprocessing_minimization_use_all_orderings = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "inprocessing_use_congruence_closure" => {
+                    self.inprocessing_use_congruence_closure = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "inprocessing_use_sat_sweeping" => {
+                    self.inprocessing_use_sat_sweeping = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "num_workers" => {
+                    self.num_workers = ::core::option::Option::Some(dec.read_i32()?);
+                }
+                "num_search_workers" => {
+                    self.num_search_workers = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "num_full_subsolvers" => {
+                    self.num_full_subsolvers = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "interleave_search" => {
+                    self.interleave_search = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "interleave_batch_size" => {
+                    self.interleave_batch_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "share_objective_bounds" => {
+                    self.share_objective_bounds = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "share_level_zero_bounds" => {
+                    self.share_level_zero_bounds = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "share_linear2_bounds" => {
+                    self.share_linear2_bounds = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "share_binary_clauses" => {
+                    self.share_binary_clauses = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "share_glue_clauses" => {
+                    self.share_glue_clauses = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "minimize_shared_clauses" => {
+                    self.minimize_shared_clauses = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "share_glue_clauses_dtime" => {
+                    self.share_glue_clauses_dtime = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "check_lrat_proof" => {
+                    self.check_lrat_proof = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "check_merged_lrat_proof" => {
+                    self.check_merged_lrat_proof = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "output_lrat_proof" => {
+                    self.output_lrat_proof = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "check_drat_proof" => {
+                    self.check_drat_proof = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "output_drat_proof" => {
+                    self.output_drat_proof = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_drat_time_in_seconds" => {
+                    self.max_drat_time_in_seconds = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "debug_postsolve_with_full_solver" => {
+                    self.debug_postsolve_with_full_solver = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "debug_max_num_presolve_operations" => {
+                    self.debug_max_num_presolve_operations = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "debug_crash_on_bad_hint" => {
+                    self.debug_crash_on_bad_hint = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "debug_crash_if_presolve_breaks_hint" => {
+                    self.debug_crash_if_presolve_breaks_hint = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "debug_crash_if_lrat_check_fails" => {
+                    self.debug_crash_if_lrat_check_fails = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_optimization_hints" => {
+                    self.use_optimization_hints = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "core_minimization_level" => {
+                    self.core_minimization_level = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "find_multiple_cores" => {
+                    self.find_multiple_cores = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "cover_optimization" => {
+                    self.cover_optimization = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_sat_assumption_order" => {
+                    self.max_sat_assumption_order = ::core::option::Option::Some(
+                        dec
+                            .read_closed_enum_by_name::<
+                                sat_parameters::MaxSatAssumptionOrder,
+                            >()?,
+                    );
+                }
+                "max_sat_reverse_assumption_order" => {
+                    self.max_sat_reverse_assumption_order = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_sat_stratification" => {
+                    self.max_sat_stratification = ::core::option::Option::Some(
+                        dec
+                            .read_closed_enum_by_name::<
+                                sat_parameters::MaxSatStratificationAlgorithm,
+                            >()?,
+                    );
+                }
+                "propagation_loop_detection_factor" => {
+                    self.propagation_loop_detection_factor = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "use_precedences_in_disjunctive_constraint" => {
+                    self.use_precedences_in_disjunctive_constraint = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "transitive_precedences_work_limit" => {
+                    self.transitive_precedences_work_limit = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "max_size_to_create_precedence_literals_in_disjunctive" => {
+                    self.max_size_to_create_precedence_literals_in_disjunctive = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "use_strong_propagation_in_disjunctive" => {
+                    self.use_strong_propagation_in_disjunctive = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_dynamic_precedence_in_disjunctive" => {
+                    self.use_dynamic_precedence_in_disjunctive = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_dynamic_precedence_in_cumulative" => {
+                    self.use_dynamic_precedence_in_cumulative = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_overload_checker_in_cumulative" => {
+                    self.use_overload_checker_in_cumulative = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_conservative_scale_overload_checker" => {
+                    self.use_conservative_scale_overload_checker = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_timetable_edge_finding_in_cumulative" => {
+                    self.use_timetable_edge_finding_in_cumulative = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_num_intervals_for_timetable_edge_finding" => {
+                    self.max_num_intervals_for_timetable_edge_finding = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "use_hard_precedences_in_cumulative" => {
+                    self.use_hard_precedences_in_cumulative = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "exploit_all_precedences" => {
+                    self.exploit_all_precedences = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_disjunctive_constraint_in_cumulative" => {
+                    self.use_disjunctive_constraint_in_cumulative = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "no_overlap_2d_boolean_relations_limit" => {
+                    self.no_overlap_2d_boolean_relations_limit = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "use_timetabling_in_no_overlap_2d" => {
+                    self.use_timetabling_in_no_overlap_2d = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_energetic_reasoning_in_no_overlap_2d" => {
+                    self.use_energetic_reasoning_in_no_overlap_2d = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_area_energetic_reasoning_in_no_overlap_2d" => {
+                    self.use_area_energetic_reasoning_in_no_overlap_2d = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_try_edge_reasoning_in_no_overlap_2d" => {
+                    self.use_try_edge_reasoning_in_no_overlap_2d = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_pairs_pairwise_reasoning_in_no_overlap_2d" => {
+                    self.max_pairs_pairwise_reasoning_in_no_overlap_2d = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "maximum_regions_to_split_in_disconnected_no_overlap_2d" => {
+                    self.maximum_regions_to_split_in_disconnected_no_overlap_2d = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "use_linear3_for_no_overlap_2d_precedences" => {
+                    self.use_linear3_for_no_overlap_2d_precedences = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_dual_scheduling_heuristics" => {
+                    self.use_dual_scheduling_heuristics = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_all_different_for_circuit" => {
+                    self.use_all_different_for_circuit = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "routing_cut_subset_size_for_binary_relation_bound" => {
+                    self.routing_cut_subset_size_for_binary_relation_bound = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "routing_cut_subset_size_for_tight_binary_relation_bound" => {
+                    self.routing_cut_subset_size_for_tight_binary_relation_bound = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "routing_cut_subset_size_for_exact_binary_relation_bound" => {
+                    self.routing_cut_subset_size_for_exact_binary_relation_bound = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "routing_cut_subset_size_for_shortest_paths_bound" => {
+                    self.routing_cut_subset_size_for_shortest_paths_bound = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "routing_cut_dp_effort" => {
+                    self.routing_cut_dp_effort = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "routing_cut_max_infeasible_path_length" => {
+                    self.routing_cut_max_infeasible_path_length = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "search_branching" => {
+                    self.search_branching = ::core::option::Option::Some(
+                        dec
+                            .read_closed_enum_by_name::<
+                                sat_parameters::SearchBranching,
+                            >()?,
+                    );
+                }
+                "hint_conflict_limit" => {
+                    self.hint_conflict_limit = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "repair_hint" => {
+                    self.repair_hint = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "fix_variables_to_their_hinted_value" => {
+                    self.fix_variables_to_their_hinted_value = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_probing_search" => {
+                    self.use_probing_search = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_extended_probing" => {
+                    self.use_extended_probing = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "probing_num_combinations_limit" => {
+                    self.probing_num_combinations_limit = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "shaving_deterministic_time_in_probing_search" => {
+                    self.shaving_deterministic_time_in_probing_search = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "shaving_search_deterministic_time" => {
+                    self.shaving_search_deterministic_time = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "shaving_search_threshold" => {
+                    self.shaving_search_threshold = ::core::option::Option::Some(
+                        dec.read_i64()?,
+                    );
+                }
+                "use_objective_lb_search" => {
+                    self.use_objective_lb_search = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_objective_shaving_search" => {
+                    self.use_objective_shaving_search = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "variables_shaving_level" => {
+                    self.variables_shaving_level = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "pseudo_cost_reliability_threshold" => {
+                    self.pseudo_cost_reliability_threshold = ::core::option::Option::Some(
+                        dec.read_i64()?,
+                    );
+                }
+                "optimize_with_core" => {
+                    self.optimize_with_core = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "optimize_with_lb_tree_search" => {
+                    self.optimize_with_lb_tree_search = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "save_lp_basis_in_lb_tree_search" => {
+                    self.save_lp_basis_in_lb_tree_search = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "binary_search_num_conflicts" => {
+                    self.binary_search_num_conflicts = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "optimize_with_max_hs" => {
+                    self.optimize_with_max_hs = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_feasibility_jump" => {
+                    self.use_feasibility_jump = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_ls_only" => {
+                    self.use_ls_only = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "feasibility_jump_decay" => {
+                    self.feasibility_jump_decay = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "feasibility_jump_linearization_level" => {
+                    self.feasibility_jump_linearization_level = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "feasibility_jump_restart_factor" => {
+                    self.feasibility_jump_restart_factor = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "feasibility_jump_batch_dtime" => {
+                    self.feasibility_jump_batch_dtime = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "feasibility_jump_var_randomization_probability" => {
+                    self.feasibility_jump_var_randomization_probability = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "feasibility_jump_var_perburbation_range_ratio" => {
+                    self.feasibility_jump_var_perburbation_range_ratio = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "feasibility_jump_enable_restarts" => {
+                    self.feasibility_jump_enable_restarts = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "feasibility_jump_max_expanded_constraint_size" => {
+                    self.feasibility_jump_max_expanded_constraint_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "num_violation_ls" => {
+                    self.num_violation_ls = ::core::option::Option::Some(dec.read_i32()?);
+                }
+                "violation_ls_perturbation_period" => {
+                    self.violation_ls_perturbation_period = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "violation_ls_compound_move_probability" => {
+                    self.violation_ls_compound_move_probability = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "shared_tree_num_workers" => {
+                    self.shared_tree_num_workers = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "use_shared_tree_search" => {
+                    self.use_shared_tree_search = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "shared_tree_worker_min_restarts_per_subtree" => {
+                    self.shared_tree_worker_min_restarts_per_subtree = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "shared_tree_worker_enable_trail_sharing" => {
+                    self.shared_tree_worker_enable_trail_sharing = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "shared_tree_worker_enable_phase_sharing" => {
+                    self.shared_tree_worker_enable_phase_sharing = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "shared_tree_open_leaves_per_worker" => {
+                    self.shared_tree_open_leaves_per_worker = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "shared_tree_max_nodes_per_worker" => {
+                    self.shared_tree_max_nodes_per_worker = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "shared_tree_split_strategy" => {
+                    self.shared_tree_split_strategy = ::core::option::Option::Some(
+                        dec
+                            .read_closed_enum_by_name::<
+                                sat_parameters::SharedTreeSplitStrategy,
+                            >()?,
+                    );
+                }
+                "shared_tree_balance_tolerance" => {
+                    self.shared_tree_balance_tolerance = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "shared_tree_split_min_dtime" => {
+                    self.shared_tree_split_min_dtime = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "enumerate_all_solutions" => {
+                    self.enumerate_all_solutions = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "keep_all_feasible_solutions_in_presolve" => {
+                    self.keep_all_feasible_solutions_in_presolve = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "fill_tightened_domains_in_response" => {
+                    self.fill_tightened_domains_in_response = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "fill_additional_solutions_in_response" => {
+                    self.fill_additional_solutions_in_response = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "instantiate_all_variables" => {
+                    self.instantiate_all_variables = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "auto_detect_greater_than_at_least_one_of" => {
+                    self.auto_detect_greater_than_at_least_one_of = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "stop_after_first_solution" => {
+                    self.stop_after_first_solution = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "stop_after_presolve" => {
+                    self.stop_after_presolve = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "stop_after_root_propagation" => {
+                    self.stop_after_root_propagation = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "lns_initial_difficulty" => {
+                    self.lns_initial_difficulty = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "lns_initial_deterministic_limit" => {
+                    self.lns_initial_deterministic_limit = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "use_lns" => {
+                    self.use_lns = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "use_lns_only" => {
+                    self.use_lns_only = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "solution_pool_size" => {
+                    self.solution_pool_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "solution_pool_diversity_limit" => {
+                    self.solution_pool_diversity_limit = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "alternative_pool_size" => {
+                    self.alternative_pool_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "use_rins_lns" => {
+                    self.use_rins_lns = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "use_feasibility_pump" => {
+                    self.use_feasibility_pump = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_lb_relax_lns" => {
+                    self.use_lb_relax_lns = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "lb_relax_num_workers_threshold" => {
+                    self.lb_relax_num_workers_threshold = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "fp_rounding" => {
+                    self.fp_rounding = ::core::option::Option::Some(
+                        dec
+                            .read_closed_enum_by_name::<
+                                sat_parameters::FPRoundingMethod,
+                            >()?,
+                    );
+                }
+                "diversify_lns_params" => {
+                    self.diversify_lns_params = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "randomize_search" => {
+                    self.randomize_search = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "search_random_variable_pool_size" => {
+                    self.search_random_variable_pool_size = ::core::option::Option::Some(
+                        dec.read_i64()?,
+                    );
+                }
+                "push_all_tasks_toward_start" => {
+                    self.push_all_tasks_toward_start = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_optional_variables" => {
+                    self.use_optional_variables = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_exact_lp_reason" => {
+                    self.use_exact_lp_reason = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_combined_no_overlap" => {
+                    self.use_combined_no_overlap = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "at_most_one_max_expansion_size" => {
+                    self.at_most_one_max_expansion_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "catch_sigint_signal" => {
+                    self.catch_sigint_signal = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_implied_bounds" => {
+                    self.use_implied_bounds = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "polish_lp_solution" => {
+                    self.polish_lp_solution = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "lp_primal_tolerance" => {
+                    self.lp_primal_tolerance = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "lp_dual_tolerance" => {
+                    self.lp_dual_tolerance = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "convert_intervals" => {
+                    self.convert_intervals = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "symmetry_level" => {
+                    self.symmetry_level = ::core::option::Option::Some(dec.read_i32()?);
+                }
+                "use_symmetry_in_lp" => {
+                    self.use_symmetry_in_lp = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "keep_symmetry_in_presolve" => {
+                    self.keep_symmetry_in_presolve = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "symmetry_detection_deterministic_time_limit" => {
+                    self.symmetry_detection_deterministic_time_limit = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "new_linear_propagation" => {
+                    self.new_linear_propagation = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "linear_split_size" => {
+                    self.linear_split_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "linearization_level" => {
+                    self.linearization_level = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "boolean_encoding_level" => {
+                    self.boolean_encoding_level = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "max_domain_size_when_encoding_eq_neq_constraints" => {
+                    self.max_domain_size_when_encoding_eq_neq_constraints = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "max_num_cuts" => {
+                    self.max_num_cuts = ::core::option::Option::Some(dec.read_i32()?);
+                }
+                "cut_level" => {
+                    self.cut_level = ::core::option::Option::Some(dec.read_i32()?);
+                }
+                "only_add_cuts_at_level_zero" => {
+                    self.only_add_cuts_at_level_zero = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "add_objective_cut" => {
+                    self.add_objective_cut = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "add_cg_cuts" => {
+                    self.add_cg_cuts = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "add_mir_cuts" => {
+                    self.add_mir_cuts = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "add_zero_half_cuts" => {
+                    self.add_zero_half_cuts = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "add_clique_cuts" => {
+                    self.add_clique_cuts = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "add_rlt_cuts" => {
+                    self.add_rlt_cuts = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "max_all_diff_cut_size" => {
+                    self.max_all_diff_cut_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "add_lin_max_cuts" => {
+                    self.add_lin_max_cuts = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "max_integer_rounding_scaling" => {
+                    self.max_integer_rounding_scaling = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "add_lp_constraints_lazily" => {
+                    self.add_lp_constraints_lazily = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "root_lp_iterations" => {
+                    self.root_lp_iterations = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "min_orthogonality_for_lp_constraints" => {
+                    self.min_orthogonality_for_lp_constraints = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "max_cut_rounds_at_level_zero" => {
+                    self.max_cut_rounds_at_level_zero = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "max_consecutive_inactive_count" => {
+                    self.max_consecutive_inactive_count = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "cut_max_active_count_value" => {
+                    self.cut_max_active_count_value = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "cut_active_count_decay" => {
+                    self.cut_active_count_decay = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "cut_cleanup_target" => {
+                    self.cut_cleanup_target = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "new_constraints_batch_size" => {
+                    self.new_constraints_batch_size = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "exploit_integer_lp_solution" => {
+                    self.exploit_integer_lp_solution = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "exploit_all_lp_solution" => {
+                    self.exploit_all_lp_solution = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "exploit_best_solution" => {
+                    self.exploit_best_solution = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "exploit_relaxation_solution" => {
+                    self.exploit_relaxation_solution = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "exploit_objective" => {
+                    self.exploit_objective = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "detect_linearized_product" => {
+                    self.detect_linearized_product = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "use_new_integer_conflict_resolution" => {
+                    self.use_new_integer_conflict_resolution = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "create_1uip_boolean_during_icr" => {
+                    self.create_1uip_boolean_during_icr = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "mip_max_bound" => {
+                    self.mip_max_bound = ::core::option::Option::Some(dec.read_f64()?);
+                }
+                "mip_var_scaling" => {
+                    self.mip_var_scaling = ::core::option::Option::Some(dec.read_f64()?);
+                }
+                "mip_scale_large_domain" => {
+                    self.mip_scale_large_domain = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "mip_automatically_scale_variables" => {
+                    self.mip_automatically_scale_variables = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "only_solve_ip" => {
+                    self.only_solve_ip = ::core::option::Option::Some(dec.read_bool()?);
+                }
+                "mip_wanted_precision" => {
+                    self.mip_wanted_precision = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "mip_max_activity_exponent" => {
+                    self.mip_max_activity_exponent = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "mip_check_precision" => {
+                    self.mip_check_precision = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "mip_compute_true_objective_bound" => {
+                    self.mip_compute_true_objective_bound = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "mip_max_valid_magnitude" => {
+                    self.mip_max_valid_magnitude = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "mip_treat_high_magnitude_bounds_as_infinity" => {
+                    self.mip_treat_high_magnitude_bounds_as_infinity = ::core::option::Option::Some(
+                        dec.read_bool()?,
+                    );
+                }
+                "mip_drop_tolerance" => {
+                    self.mip_drop_tolerance = ::core::option::Option::Some(
+                        dec.read_f64()?,
+                    );
+                }
+                "mip_presolve_level" => {
+                    self.mip_presolve_level = ::core::option::Option::Some(
+                        dec.read_i32()?,
+                    );
+                }
+                "restart_algorithms" => {
+                    dec.read_repeated_into(
+                        &mut self.restart_algorithms,
+                        |__d| {
+                            __d
+                                .read_closed_enum_by_name::<
+                                    sat_parameters::RestartAlgorithm,
+                                >()
+                        },
+                    )?
+                }
+                "subsolvers" => {
+                    dec.read_repeated_into(
+                        &mut self.subsolvers,
+                        |__d| ::core::result::Result::Ok(__d.read_string()?.into_owned()),
+                    )?
+                }
+                "extra_subsolvers" => {
+                    dec.read_repeated_into(
+                        &mut self.extra_subsolvers,
+                        |__d| ::core::result::Result::Ok(__d.read_string()?.into_owned()),
+                    )?
+                }
+                "ignore_subsolvers" => {
+                    dec.read_repeated_into(
+                        &mut self.ignore_subsolvers,
+                        |__d| ::core::result::Result::Ok(__d.read_string()?.into_owned()),
+                    )?
+                }
+                "filter_subsolvers" => {
+                    dec.read_repeated_into(
+                        &mut self.filter_subsolvers,
+                        |__d| ::core::result::Result::Ok(__d.read_string()?.into_owned()),
+                    )?
+                }
+                "subsolver_params" => {
+                    dec.read_repeated_into(
+                        &mut self.subsolver_params,
+                        |__d| {
+                            let mut __m = ::core::default::Default::default();
+                            __d.merge_message(&mut __m)?;
+                            ::core::result::Result::Ok(__m)
+                        },
+                    )?
+                }
+                _ => dec.skip_value()?,
+            }
+        }
+        ::core::result::Result::Ok(())
+    }
+}
+#[cfg(feature = "json")]
+impl ::buffa::json_helpers::ProtoElemJson for SatParameters {
+    fn serialize_proto_json<S: ::serde::Serializer>(
+        v: &Self,
+        s: S,
+    ) -> ::core::result::Result<S::Ok, S::Error> {
+        ::serde::Serialize::serialize(v, s)
+    }
+    fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+        d: D,
+    ) -> ::core::result::Result<Self, D::Error> {
+        <Self as ::serde::Deserialize>::deserialize(d)
+    }
+}
+#[cfg(feature = "json")]
+#[doc(hidden)]
+pub const __SAT_PARAMETERS_JSON_ANY: ::buffa::type_registry::JsonAnyEntry = ::buffa::type_registry::JsonAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.SatParameters",
+    to_json: ::buffa::type_registry::any_to_json::<SatParameters>,
+    from_json: ::buffa::type_registry::any_from_json::<SatParameters>,
+    is_wkt: false,
+};
+#[cfg(feature = "text")]
+#[doc(hidden)]
+pub const __SAT_PARAMETERS_TEXT_ANY: ::buffa::type_registry::TextAnyEntry = ::buffa::type_registry::TextAnyEntry {
+    type_url: "type.googleapis.com/operations_research.sat.SatParameters",
+    text_encode: ::buffa::type_registry::any_encode_text::<SatParameters>,
+    text_merge: ::buffa::type_registry::any_merge_text::<SatParameters>,
+};
 pub mod sat_parameters {
     #[allow(unused_imports)]
     use super::*;
@@ -18628,6 +29198,99 @@ pub mod sat_parameters {
             Self::IN_ORDER
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for VariableOrder {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for VariableOrder {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = VariableOrder;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ", stringify!(VariableOrder)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<VariableOrder, E> {
+                        <VariableOrder as ::buffa::Enumeration>::from_proto_name(v)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<VariableOrder, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <VariableOrder as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<VariableOrder, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <VariableOrder as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<VariableOrder, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for VariableOrder {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for VariableOrder {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -18691,6 +29354,99 @@ pub mod sat_parameters {
             Self::POLARITY_TRUE
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for Polarity {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for Polarity {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = Polarity;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ", stringify!(Polarity)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<Polarity, E> {
+                        <Polarity as ::buffa::Enumeration>::from_proto_name(v)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<Polarity, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <Polarity as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<Polarity, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <Polarity as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<Polarity, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for Polarity {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for Polarity {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -18751,6 +29507,106 @@ pub mod sat_parameters {
             Self::NONE
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for ConflictMinimizationAlgorithm {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for ConflictMinimizationAlgorithm {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = ConflictMinimizationAlgorithm;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(ConflictMinimizationAlgorithm)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<ConflictMinimizationAlgorithm, E> {
+                        <ConflictMinimizationAlgorithm as ::buffa::Enumeration>::from_proto_name(
+                                v,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<ConflictMinimizationAlgorithm, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <ConflictMinimizationAlgorithm as ::buffa::Enumeration>::from_i32(
+                                v32,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<ConflictMinimizationAlgorithm, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <ConflictMinimizationAlgorithm as ::buffa::Enumeration>::from_i32(
+                                v32,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<ConflictMinimizationAlgorithm, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for ConflictMinimizationAlgorithm {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for ConflictMinimizationAlgorithm {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -18807,6 +29663,106 @@ pub mod sat_parameters {
             Self::NO_BINARY_MINIMIZATION
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for BinaryMinizationAlgorithm {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for BinaryMinizationAlgorithm {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = BinaryMinizationAlgorithm;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(BinaryMinizationAlgorithm)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<BinaryMinizationAlgorithm, E> {
+                        <BinaryMinizationAlgorithm as ::buffa::Enumeration>::from_proto_name(
+                                v,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<BinaryMinizationAlgorithm, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <BinaryMinizationAlgorithm as ::buffa::Enumeration>::from_i32(
+                                v32,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<BinaryMinizationAlgorithm, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <BinaryMinizationAlgorithm as ::buffa::Enumeration>::from_i32(
+                                v32,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<BinaryMinizationAlgorithm, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for BinaryMinizationAlgorithm {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for BinaryMinizationAlgorithm {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -18880,6 +29836,100 @@ pub mod sat_parameters {
             Self::CLAUSE_ACTIVITY
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for ClauseOrdering {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for ClauseOrdering {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = ClauseOrdering;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(ClauseOrdering)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<ClauseOrdering, E> {
+                        <ClauseOrdering as ::buffa::Enumeration>::from_proto_name(v)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<ClauseOrdering, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <ClauseOrdering as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<ClauseOrdering, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <ClauseOrdering as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<ClauseOrdering, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for ClauseOrdering {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for ClauseOrdering {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -18954,6 +30004,100 @@ pub mod sat_parameters {
             Self::NO_RESTART
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for RestartAlgorithm {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for RestartAlgorithm {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = RestartAlgorithm;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(RestartAlgorithm)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<RestartAlgorithm, E> {
+                        <RestartAlgorithm as ::buffa::Enumeration>::from_proto_name(v)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<RestartAlgorithm, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <RestartAlgorithm as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<RestartAlgorithm, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <RestartAlgorithm as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<RestartAlgorithm, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for RestartAlgorithm {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for RestartAlgorithm {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -19026,6 +30170,102 @@ pub mod sat_parameters {
             Self::DEFAULT_ASSUMPTION_ORDER
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for MaxSatAssumptionOrder {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for MaxSatAssumptionOrder {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = MaxSatAssumptionOrder;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(MaxSatAssumptionOrder)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<MaxSatAssumptionOrder, E> {
+                        <MaxSatAssumptionOrder as ::buffa::Enumeration>::from_proto_name(
+                                v,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<MaxSatAssumptionOrder, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <MaxSatAssumptionOrder as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<MaxSatAssumptionOrder, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <MaxSatAssumptionOrder as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<MaxSatAssumptionOrder, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for MaxSatAssumptionOrder {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for MaxSatAssumptionOrder {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -19099,6 +30339,106 @@ pub mod sat_parameters {
             Self::STRATIFICATION_NONE
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for MaxSatStratificationAlgorithm {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for MaxSatStratificationAlgorithm {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = MaxSatStratificationAlgorithm;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(MaxSatStratificationAlgorithm)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<MaxSatStratificationAlgorithm, E> {
+                        <MaxSatStratificationAlgorithm as ::buffa::Enumeration>::from_proto_name(
+                                v,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<MaxSatStratificationAlgorithm, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <MaxSatStratificationAlgorithm as ::buffa::Enumeration>::from_i32(
+                                v32,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<MaxSatStratificationAlgorithm, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <MaxSatStratificationAlgorithm as ::buffa::Enumeration>::from_i32(
+                                v32,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<MaxSatStratificationAlgorithm, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for MaxSatStratificationAlgorithm {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for MaxSatStratificationAlgorithm {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -19213,6 +30553,100 @@ pub mod sat_parameters {
             Self::AUTOMATIC_SEARCH
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for SearchBranching {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for SearchBranching {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = SearchBranching;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(SearchBranching)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<SearchBranching, E> {
+                        <SearchBranching as ::buffa::Enumeration>::from_proto_name(v)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<SearchBranching, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <SearchBranching as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<SearchBranching, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <SearchBranching as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<SearchBranching, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for SearchBranching {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for SearchBranching {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -19336,6 +30770,102 @@ pub mod sat_parameters {
             Self::SPLIT_STRATEGY_AUTO
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for SharedTreeSplitStrategy {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for SharedTreeSplitStrategy {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = SharedTreeSplitStrategy;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(SharedTreeSplitStrategy)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<SharedTreeSplitStrategy, E> {
+                        <SharedTreeSplitStrategy as ::buffa::Enumeration>::from_proto_name(
+                                v,
+                            )
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<SharedTreeSplitStrategy, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <SharedTreeSplitStrategy as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<SharedTreeSplitStrategy, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <SharedTreeSplitStrategy as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<SharedTreeSplitStrategy, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for SharedTreeSplitStrategy {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for SharedTreeSplitStrategy {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -19430,6 +30960,100 @@ pub mod sat_parameters {
             Self::NEAREST_INTEGER
         }
     }
+    #[cfg(feature = "json")]
+    const _: () = {
+        impl ::serde::Serialize for FPRoundingMethod {
+            fn serialize<S: ::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                s.serialize_str(::buffa::Enumeration::proto_name(self))
+            }
+        }
+        impl<'de> ::serde::Deserialize<'de> for FPRoundingMethod {
+            fn deserialize<D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                struct _V;
+                impl ::serde::de::Visitor<'_> for _V {
+                    type Value = FPRoundingMethod;
+                    fn expecting(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.write_str(
+                            concat!(
+                                "a string, integer, or null for ",
+                                stringify!(FPRoundingMethod)
+                            ),
+                        )
+                    }
+                    fn visit_str<E: ::serde::de::Error>(
+                        self,
+                        v: &str,
+                    ) -> ::core::result::Result<FPRoundingMethod, E> {
+                        <FPRoundingMethod as ::buffa::Enumeration>::from_proto_name(v)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::unknown_variant(v, &[])
+                            })
+                    }
+                    fn visit_i64<E: ::serde::de::Error>(
+                        self,
+                        v: i64,
+                    ) -> ::core::result::Result<FPRoundingMethod, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <FPRoundingMethod as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_u64<E: ::serde::de::Error>(
+                        self,
+                        v: u64,
+                    ) -> ::core::result::Result<FPRoundingMethod, E> {
+                        let v32 = i32::try_from(v)
+                            .map_err(|_| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("enum value {v} out of i32 range"),
+                                )
+                            })?;
+                        <FPRoundingMethod as ::buffa::Enumeration>::from_i32(v32)
+                            .ok_or_else(|| {
+                                ::serde::de::Error::custom(
+                                    ::buffa::alloc::format!("unknown enum value {v32}"),
+                                )
+                            })
+                    }
+                    fn visit_unit<E: ::serde::de::Error>(
+                        self,
+                    ) -> ::core::result::Result<FPRoundingMethod, E> {
+                        ::core::result::Result::Ok(::core::default::Default::default())
+                    }
+                }
+                d.deserialize_any(_V)
+            }
+        }
+        impl ::buffa::json_helpers::ProtoElemJson for FPRoundingMethod {
+            fn serialize_proto_json<S: ::serde::Serializer>(
+                v: &Self,
+                s: S,
+            ) -> ::core::result::Result<S::Ok, S::Error> {
+                ::serde::Serialize::serialize(v, s)
+            }
+            fn deserialize_proto_json<'de, D: ::serde::Deserializer<'de>>(
+                d: D,
+            ) -> ::core::result::Result<Self, D::Error> {
+                <Self as ::serde::Deserialize>::deserialize(d)
+            }
+        }
+    };
     impl ::buffa::Enumeration for FPRoundingMethod {
         fn from_i32(value: i32) -> ::core::option::Option<Self> {
             match value {
@@ -19488,6 +31112,7 @@ pub mod sat_parameters {
 pub mod __buffa {
     #[allow(unused_imports)]
     use super::*;
+    #[cfg(feature = "views")]
     pub mod view {
         #[allow(unused_imports)]
         use super::*;
@@ -19689,6 +31314,38 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for IntegerVariableProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !::buffa::json_helpers::skip_if::is_empty_str(self.name) {
+                    __map.serialize_entry("name", self.name)?;
+                }
+                if !self.domain.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "domain",
+                            &::buffa::json_helpers::RepeatedJson(&self.domain),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for IntegerVariableProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "IntegerVariableProto";
@@ -19837,6 +31494,15 @@ pub mod __buffa {
             type View<'a> = IntegerVariableProtoView<'a>;
             type ViewHandle = IntegerVariableProtoOwnedView;
         }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for IntegerVariableProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
+        }
         /// Argument of the constraints of the form OP(literals).
         #[derive(Clone, Debug, Default)]
         pub struct BoolArgumentProtoView<'a> {
@@ -19981,6 +31647,35 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for BoolArgumentProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.literals.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "literals",
+                            &::buffa::json_helpers::RepeatedJson(&self.literals),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for BoolArgumentProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "BoolArgumentProto";
@@ -20100,6 +31795,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::BoolArgumentProto {
             type View<'a> = BoolArgumentProtoView<'a>;
             type ViewHandle = BoolArgumentProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for BoolArgumentProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// Some constraints supports linear expression instead of just using a reference
         /// to a variable. This is especially useful during presolve to reduce the model
@@ -20309,6 +32013,49 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for LinearExpressionProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.vars.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "vars",
+                            &::buffa::json_helpers::RepeatedJson(&self.vars),
+                        )?;
+                }
+                if !self.coeffs.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "coeffs",
+                            &::buffa::json_helpers::RepeatedJson(&self.coeffs),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.offset) {
+                    __map
+                        .serialize_entry(
+                            "offset",
+                            &::buffa::json_helpers::ProtoJson(&self.offset),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for LinearExpressionProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "LinearExpressionProto";
@@ -20442,6 +32189,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::LinearExpressionProto {
             type View<'a> = LinearExpressionProtoView<'a>;
             type ViewHandle = LinearExpressionProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for LinearExpressionProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         #[derive(Clone, Debug, Default)]
         pub struct LinearArgumentProtoView<'a> {
@@ -20640,6 +32396,36 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for LinearArgumentProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                {
+                    if let ::core::option::Option::Some(__v) = self.target.as_option() {
+                        __map.serialize_entry("target", __v)?;
+                    }
+                }
+                if !self.exprs.is_empty() {
+                    __map.serialize_entry("exprs", &*self.exprs)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for LinearArgumentProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "LinearArgumentProto";
@@ -20775,6 +32561,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::LinearArgumentProto {
             type View<'a> = LinearArgumentProtoView<'a>;
             type ViewHandle = LinearArgumentProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for LinearArgumentProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// All expressions must take different values.
         #[derive(Clone, Debug, Default)]
@@ -20920,6 +32715,31 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for AllDifferentConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.exprs.is_empty() {
+                    __map.serialize_entry("exprs", &*self.exprs)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for AllDifferentConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "AllDifferentConstraintProto";
@@ -21054,6 +32874,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::AllDifferentConstraintProto {
             type View<'a> = AllDifferentConstraintProtoView<'a>;
             type ViewHandle = AllDifferentConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for AllDifferentConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// The linear sum vars\[i\] * coeffs\[i\] must fall in the given domain. The domain
         /// has the same format as the one in IntegerVariableProto.
@@ -21298,6 +33127,49 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for LinearConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.vars.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "vars",
+                            &::buffa::json_helpers::RepeatedJson(&self.vars),
+                        )?;
+                }
+                if !self.coeffs.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "coeffs",
+                            &::buffa::json_helpers::RepeatedJson(&self.coeffs),
+                        )?;
+                }
+                if !self.domain.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "domain",
+                            &::buffa::json_helpers::RepeatedJson(&self.domain),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for LinearConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "LinearConstraintProto";
@@ -21433,6 +33305,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::LinearConstraintProto {
             type View<'a> = LinearConstraintProtoView<'a>;
             type ViewHandle = LinearConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for LinearConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// The constraint linear_target = exprs\[linear_index\].
         /// This enforces that index takes one of the value in \[0, vars_size()).
@@ -21771,6 +33652,68 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for ElementConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !::buffa::json_helpers::skip_if::is_zero_i32(&self.index) {
+                    __map
+                        .serialize_entry(
+                            "index",
+                            &::buffa::json_helpers::ProtoJson(&self.index),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i32(&self.target) {
+                    __map
+                        .serialize_entry(
+                            "target",
+                            &::buffa::json_helpers::ProtoJson(&self.target),
+                        )?;
+                }
+                if !self.vars.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "vars",
+                            &::buffa::json_helpers::RepeatedJson(&self.vars),
+                        )?;
+                }
+                {
+                    if let ::core::option::Option::Some(__v) = self
+                        .linear_index
+                        .as_option()
+                    {
+                        __map.serialize_entry("linearIndex", __v)?;
+                    }
+                }
+                {
+                    if let ::core::option::Option::Some(__v) = self
+                        .linear_target
+                        .as_option()
+                    {
+                        __map.serialize_entry("linearTarget", __v)?;
+                    }
+                }
+                if !self.exprs.is_empty() {
+                    __map.serialize_entry("exprs", &*self.exprs)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for ElementConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "ElementConstraintProto";
@@ -21940,6 +33883,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::ElementConstraintProto {
             type View<'a> = ElementConstraintProtoView<'a>;
             type ViewHandle = ElementConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for ElementConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// This is not really a constraint. It is there so it can be referred by other
         /// constraints using this "interval" concept.
@@ -22207,6 +34159,43 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for IntervalConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                {
+                    if let ::core::option::Option::Some(__v) = self.start.as_option() {
+                        __map.serialize_entry("start", __v)?;
+                    }
+                }
+                {
+                    if let ::core::option::Option::Some(__v) = self.end.as_option() {
+                        __map.serialize_entry("end", __v)?;
+                    }
+                }
+                {
+                    if let ::core::option::Option::Some(__v) = self.size.as_option() {
+                        __map.serialize_entry("size", __v)?;
+                    }
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for IntervalConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "IntervalConstraintProto";
@@ -22357,6 +34346,15 @@ pub mod __buffa {
             type View<'a> = IntervalConstraintProtoView<'a>;
             type ViewHandle = IntervalConstraintProtoOwnedView;
         }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for IntervalConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
+        }
         /// All the intervals (index of IntervalConstraintProto) must be disjoint. More
         /// formally, there must exist a sequence so that for each consecutive intervals,
         /// we have end_i \<= start_{i+1}. In particular, intervals of size zero do matter
@@ -22505,6 +34503,35 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for NoOverlapConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.intervals.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "intervals",
+                            &::buffa::json_helpers::RepeatedJson(&self.intervals),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for NoOverlapConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "NoOverlapConstraintProto";
@@ -22632,6 +34659,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::NoOverlapConstraintProto {
             type View<'a> = NoOverlapConstraintProtoView<'a>;
             type ViewHandle = NoOverlapConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for NoOverlapConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// The boxes defined by \[start_x, end_x) * \[start_y, end_y) cannot overlap.
         /// Furthermore, one box is optional if at least one of the x or y interval is
@@ -22835,6 +34871,42 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for NoOverlap2DConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.x_intervals.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "xIntervals",
+                            &::buffa::json_helpers::RepeatedJson(&self.x_intervals),
+                        )?;
+                }
+                if !self.y_intervals.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "yIntervals",
+                            &::buffa::json_helpers::RepeatedJson(&self.y_intervals),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for NoOverlap2DConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "NoOverlap2DConstraintProto";
@@ -22971,6 +35043,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::NoOverlap2DConstraintProto {
             type View<'a> = NoOverlap2DConstraintProtoView<'a>;
             type ViewHandle = NoOverlap2DConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for NoOverlap2DConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// The sum of the demands of the intervals at each interval point cannot exceed
         /// a capacity. Note that intervals are interpreted as \[start, end) and as
@@ -23226,6 +35307,44 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for CumulativeConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                {
+                    if let ::core::option::Option::Some(__v) = self.capacity.as_option()
+                    {
+                        __map.serialize_entry("capacity", __v)?;
+                    }
+                }
+                if !self.intervals.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "intervals",
+                            &::buffa::json_helpers::RepeatedJson(&self.intervals),
+                        )?;
+                }
+                if !self.demands.is_empty() {
+                    __map.serialize_entry("demands", &*self.demands)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for CumulativeConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "CumulativeConstraintProto";
@@ -23376,6 +35495,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::CumulativeConstraintProto {
             type View<'a> = CumulativeConstraintProtoView<'a>;
             type ViewHandle = CumulativeConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for CumulativeConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// Maintain a reservoir level within bounds. The water level starts at 0, and at
         /// any time, it must be within \[min_level, max_level\].
@@ -23665,6 +35793,55 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for ReservoirConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.min_level) {
+                    __map
+                        .serialize_entry(
+                            "minLevel",
+                            &::buffa::json_helpers::ProtoJson(&self.min_level),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.max_level) {
+                    __map
+                        .serialize_entry(
+                            "maxLevel",
+                            &::buffa::json_helpers::ProtoJson(&self.max_level),
+                        )?;
+                }
+                if !self.time_exprs.is_empty() {
+                    __map.serialize_entry("timeExprs", &*self.time_exprs)?;
+                }
+                if !self.level_changes.is_empty() {
+                    __map.serialize_entry("levelChanges", &*self.level_changes)?;
+                }
+                if !self.active_literals.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "activeLiterals",
+                            &::buffa::json_helpers::RepeatedJson(&self.active_literals),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for ReservoirConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "ReservoirConstraintProto";
@@ -23822,6 +35999,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::ReservoirConstraintProto {
             type View<'a> = ReservoirConstraintProtoView<'a>;
             type ViewHandle = ReservoirConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for ReservoirConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// The circuit constraint is defined on a graph where the arc presence are
         /// controlled by literals. Each arc is given by an index in the
@@ -24067,6 +36253,49 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for CircuitConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.tails.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "tails",
+                            &::buffa::json_helpers::RepeatedJson(&self.tails),
+                        )?;
+                }
+                if !self.heads.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "heads",
+                            &::buffa::json_helpers::RepeatedJson(&self.heads),
+                        )?;
+                }
+                if !self.literals.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "literals",
+                            &::buffa::json_helpers::RepeatedJson(&self.literals),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for CircuitConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "CircuitConstraintProto";
@@ -24202,6 +36431,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::CircuitConstraintProto {
             type View<'a> = CircuitConstraintProtoView<'a>;
             type ViewHandle = CircuitConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for CircuitConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// The "VRP" (Vehicle Routing Problem) constraint.
         ///
@@ -24582,6 +36820,66 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for RoutesConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.tails.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "tails",
+                            &::buffa::json_helpers::RepeatedJson(&self.tails),
+                        )?;
+                }
+                if !self.heads.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "heads",
+                            &::buffa::json_helpers::RepeatedJson(&self.heads),
+                        )?;
+                }
+                if !self.literals.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "literals",
+                            &::buffa::json_helpers::RepeatedJson(&self.literals),
+                        )?;
+                }
+                if !self.demands.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "demands",
+                            &::buffa::json_helpers::RepeatedJson(&self.demands),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.capacity) {
+                    __map
+                        .serialize_entry(
+                            "capacity",
+                            &::buffa::json_helpers::ProtoJson(&self.capacity),
+                        )?;
+                }
+                if !self.dimensions.is_empty() {
+                    __map.serialize_entry("dimensions", &*self.dimensions)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for RoutesConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "RoutesConstraintProto";
@@ -24750,6 +37048,15 @@ pub mod __buffa {
             type View<'a> = RoutesConstraintProtoView<'a>;
             type ViewHandle = RoutesConstraintProtoOwnedView;
         }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for RoutesConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
+        }
         pub mod routes_constraint_proto {
             #[allow(unused_imports)]
             use super::*;
@@ -24906,6 +37213,31 @@ pub mod __buffa {
                     self.__buffa_unknown_fields.write_to(buf);
                 }
             }
+            #[cfg(feature = "json")]
+            /// Serializes this view as protobuf JSON.
+            ///
+            /// Implicit-presence fields with default values are omitted, `required`
+            /// fields are always emitted, explicit-presence (`optional`) fields are
+            /// emitted only when set, bytes fields are base64-encoded, and enum
+            /// values are their proto name strings.
+            ///
+            /// This impl uses `serialize_map(None)` because the number of emitted
+            /// fields depends on default-omission rules; serializers that require
+            /// known map lengths (e.g. `bincode`) will return a runtime error.
+            /// Use the owned message type for those formats.
+            impl<'__a> ::serde::Serialize for NodeExpressionsView<'__a> {
+                fn serialize<__S: ::serde::Serializer>(
+                    &self,
+                    __s: __S,
+                ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                    use ::serde::ser::SerializeMap as _;
+                    let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                    if !self.exprs.is_empty() {
+                        __map.serialize_entry("exprs", &*self.exprs)?;
+                    }
+                    __map.end()
+                }
+            }
             impl<'a> ::buffa::MessageName for NodeExpressionsView<'a> {
                 const PACKAGE: &'static str = "operations_research.sat";
                 const NAME: &'static str = "RoutesConstraintProto.NodeExpressions";
@@ -25037,6 +37369,15 @@ pub mod __buffa {
             for super::super::super::routes_constraint_proto::NodeExpressions {
                 type View<'a> = NodeExpressionsView<'a>;
                 type ViewHandle = NodeExpressionsOwnedView;
+            }
+            #[cfg(feature = "json")]
+            impl ::serde::Serialize for NodeExpressionsOwnedView {
+                fn serialize<__S: ::serde::Serializer>(
+                    &self,
+                    __s: __S,
+                ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                    ::serde::Serialize::serialize(&self.0, __s)
+                }
             }
         }
         /// The values of the n-tuple formed by the given expression can only be one of
@@ -25311,6 +37652,48 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for TableConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.vars.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "vars",
+                            &::buffa::json_helpers::RepeatedJson(&self.vars),
+                        )?;
+                }
+                if !self.values.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "values",
+                            &::buffa::json_helpers::RepeatedJson(&self.values),
+                        )?;
+                }
+                if !self.exprs.is_empty() {
+                    __map.serialize_entry("exprs", &*self.exprs)?;
+                }
+                if self.negated {
+                    __map.serialize_entry("negated", &self.negated)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for TableConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "TableConstraintProto";
@@ -25458,6 +37841,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::TableConstraintProto {
             type View<'a> = TableConstraintProtoView<'a>;
             type ViewHandle = TableConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for TableConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// The two arrays of variable each represent a function, the second is the
         /// inverse of the first: f_direct\[i\] == j \<=\> f_inverse\[j\] == i.
@@ -25650,6 +38042,42 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for InverseConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.f_direct.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "fDirect",
+                            &::buffa::json_helpers::RepeatedJson(&self.f_direct),
+                        )?;
+                }
+                if !self.f_inverse.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "fInverse",
+                            &::buffa::json_helpers::RepeatedJson(&self.f_inverse),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for InverseConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "InverseConstraintProto";
@@ -25780,6 +38208,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::InverseConstraintProto {
             type View<'a> = InverseConstraintProtoView<'a>;
             type ViewHandle = InverseConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for InverseConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// This constraint forces a sequence of expressions to be accepted by an
         /// automaton.
@@ -26192,6 +38629,73 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for AutomatonConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.starting_state) {
+                    __map
+                        .serialize_entry(
+                            "startingState",
+                            &::buffa::json_helpers::ProtoJson(&self.starting_state),
+                        )?;
+                }
+                if !self.final_states.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "finalStates",
+                            &::buffa::json_helpers::RepeatedJson(&self.final_states),
+                        )?;
+                }
+                if !self.transition_tail.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "transitionTail",
+                            &::buffa::json_helpers::RepeatedJson(&self.transition_tail),
+                        )?;
+                }
+                if !self.transition_head.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "transitionHead",
+                            &::buffa::json_helpers::RepeatedJson(&self.transition_head),
+                        )?;
+                }
+                if !self.transition_label.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "transitionLabel",
+                            &::buffa::json_helpers::RepeatedJson(&self.transition_label),
+                        )?;
+                }
+                if !self.vars.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "vars",
+                            &::buffa::json_helpers::RepeatedJson(&self.vars),
+                        )?;
+                }
+                if !self.exprs.is_empty() {
+                    __map.serialize_entry("exprs", &*self.exprs)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for AutomatonConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "AutomatonConstraintProto";
@@ -26368,6 +38872,15 @@ pub mod __buffa {
             type View<'a> = AutomatonConstraintProtoView<'a>;
             type ViewHandle = AutomatonConstraintProtoOwnedView;
         }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for AutomatonConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
+        }
         /// A list of variables, without any semantics.
         #[derive(Clone, Debug, Default)]
         pub struct ListOfVariablesProtoView<'a> {
@@ -26512,6 +39025,35 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for ListOfVariablesProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.vars.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "vars",
+                            &::buffa::json_helpers::RepeatedJson(&self.vars),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for ListOfVariablesProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "ListOfVariablesProto";
@@ -26634,6 +39176,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::ListOfVariablesProto {
             type View<'a> = ListOfVariablesProtoView<'a>;
             type ViewHandle = ListOfVariablesProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for ListOfVariablesProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// Next id: 31
         #[derive(Clone, Debug, Default)]
@@ -28213,6 +40764,159 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for ConstraintProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !::buffa::json_helpers::skip_if::is_empty_str(self.name) {
+                    __map.serialize_entry("name", self.name)?;
+                }
+                if !self.enforcement_literal.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "enforcementLiteral",
+                            &::buffa::json_helpers::RepeatedJson(
+                                &self.enforcement_literal,
+                            ),
+                        )?;
+                }
+                if let ::core::option::Option::Some(ref __ov) = self.constraint {
+                    match __ov {
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::BoolOr(
+                            v,
+                        ) => {
+                            __map.serialize_entry("boolOr", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::BoolAnd(
+                            v,
+                        ) => {
+                            __map.serialize_entry("boolAnd", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::AtMostOne(
+                            v,
+                        ) => {
+                            __map.serialize_entry("atMostOne", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::ExactlyOne(
+                            v,
+                        ) => {
+                            __map.serialize_entry("exactlyOne", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::BoolXor(
+                            v,
+                        ) => {
+                            __map.serialize_entry("boolXor", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::IntDiv(
+                            v,
+                        ) => {
+                            __map.serialize_entry("intDiv", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::IntMod(
+                            v,
+                        ) => {
+                            __map.serialize_entry("intMod", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::IntProd(
+                            v,
+                        ) => {
+                            __map.serialize_entry("intProd", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::LinMax(
+                            v,
+                        ) => {
+                            __map.serialize_entry("linMax", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Linear(
+                            v,
+                        ) => {
+                            __map.serialize_entry("linear", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::AllDiff(
+                            v,
+                        ) => {
+                            __map.serialize_entry("allDiff", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Element(
+                            v,
+                        ) => {
+                            __map.serialize_entry("element", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Circuit(
+                            v,
+                        ) => {
+                            __map.serialize_entry("circuit", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Routes(
+                            v,
+                        ) => {
+                            __map.serialize_entry("routes", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Table(
+                            v,
+                        ) => {
+                            __map.serialize_entry("table", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Automaton(
+                            v,
+                        ) => {
+                            __map.serialize_entry("automaton", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Inverse(
+                            v,
+                        ) => {
+                            __map.serialize_entry("inverse", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Reservoir(
+                            v,
+                        ) => {
+                            __map.serialize_entry("reservoir", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Interval(
+                            v,
+                        ) => {
+                            __map.serialize_entry("interval", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::NoOverlap(
+                            v,
+                        ) => {
+                            __map.serialize_entry("noOverlap", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::NoOverlap2d(
+                            v,
+                        ) => {
+                            __map.serialize_entry("noOverlap2d", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::Cumulative(
+                            v,
+                        ) => {
+                            __map.serialize_entry("cumulative", v)?;
+                        }
+                        super::super::__buffa::view::oneof::constraint_proto::Constraint::DummyConstraint(
+                            v,
+                        ) => {
+                            __map.serialize_entry("dummyConstraint", v)?;
+                        }
+                    }
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for ConstraintProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "ConstraintProto";
@@ -28363,6 +41067,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::ConstraintProto {
             type View<'a> = ConstraintProtoView<'a>;
             type ViewHandle = ConstraintProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for ConstraintProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// Optimization objective.
         #[derive(Clone, Debug, Default)]
@@ -28761,6 +41474,97 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for CpObjectiveProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.vars.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "vars",
+                            &::buffa::json_helpers::RepeatedJson(&self.vars),
+                        )?;
+                }
+                if !self.coeffs.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "coeffs",
+                            &::buffa::json_helpers::RepeatedJson(&self.coeffs),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_f64(&self.offset) {
+                    __map
+                        .serialize_entry(
+                            "offset",
+                            &::buffa::json_helpers::ProtoJson(&self.offset),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_f64(&self.scaling_factor) {
+                    __map
+                        .serialize_entry(
+                            "scalingFactor",
+                            &::buffa::json_helpers::ProtoJson(&self.scaling_factor),
+                        )?;
+                }
+                if !self.domain.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "domain",
+                            &::buffa::json_helpers::RepeatedJson(&self.domain),
+                        )?;
+                }
+                if self.scaling_was_exact {
+                    __map.serialize_entry("scalingWasExact", &self.scaling_was_exact)?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(
+                    &self.integer_before_offset,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "integerBeforeOffset",
+                            &::buffa::json_helpers::ProtoJson(
+                                &self.integer_before_offset,
+                            ),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(
+                    &self.integer_after_offset,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "integerAfterOffset",
+                            &::buffa::json_helpers::ProtoJson(&self.integer_after_offset),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(
+                    &self.integer_scaling_factor,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "integerScalingFactor",
+                            &::buffa::json_helpers::ProtoJson(
+                                &self.integer_scaling_factor,
+                            ),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for CpObjectiveProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "CpObjectiveProto";
@@ -28955,6 +41759,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::CpObjectiveProto {
             type View<'a> = CpObjectiveProtoView<'a>;
             type ViewHandle = CpObjectiveProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for CpObjectiveProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// A linear floating point objective: sum coeffs\[i\] * vars\[i\] + offset.
         /// Note that the variable can only still take integer value.
@@ -29174,6 +41987,52 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for FloatObjectiveProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.vars.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "vars",
+                            &::buffa::json_helpers::RepeatedJson(&self.vars),
+                        )?;
+                }
+                if !self.coeffs.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "coeffs",
+                            &::buffa::json_helpers::RepeatedJson(&self.coeffs),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_f64(&self.offset) {
+                    __map
+                        .serialize_entry(
+                            "offset",
+                            &::buffa::json_helpers::ProtoJson(&self.offset),
+                        )?;
+                }
+                if self.maximize {
+                    __map.serialize_entry("maximize", &self.maximize)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for FloatObjectiveProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "FloatObjectiveProto";
@@ -29312,6 +42171,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::FloatObjectiveProto {
             type View<'a> = FloatObjectiveProtoView<'a>;
             type ViewHandle = FloatObjectiveProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for FloatObjectiveProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// Define the strategy to follow when the solver needs to take a new decision.
         /// Note that this strategy is only defined on a subset of variables.
@@ -29567,6 +42435,56 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for DecisionStrategyProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.variables.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "variables",
+                            &::buffa::json_helpers::RepeatedJson(&self.variables),
+                        )?;
+                }
+                if !self.exprs.is_empty() {
+                    __map.serialize_entry("exprs", &*self.exprs)?;
+                }
+                if !::buffa::json_helpers::skip_if::is_default_enum_value(
+                    &self.variable_selection_strategy,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "variableSelectionStrategy",
+                            &self.variable_selection_strategy,
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_default_enum_value(
+                    &self.domain_reduction_strategy,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "domainReductionStrategy",
+                            &self.domain_reduction_strategy,
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for DecisionStrategyProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "DecisionStrategyProto";
@@ -29729,6 +42647,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::DecisionStrategyProto {
             type View<'a> = DecisionStrategyProtoView<'a>;
             type ViewHandle = DecisionStrategyProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for DecisionStrategyProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// This message encodes a partial (or full) assignment of the variables of a
         /// CpModelProto. The variable indices should be unique and valid variable
@@ -29922,6 +42849,42 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for PartialVariableAssignmentView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.vars.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "vars",
+                            &::buffa::json_helpers::RepeatedJson(&self.vars),
+                        )?;
+                }
+                if !self.values.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "values",
+                            &::buffa::json_helpers::RepeatedJson(&self.values),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for PartialVariableAssignmentView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "PartialVariableAssignment";
@@ -30056,6 +43019,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::PartialVariableAssignment {
             type View<'a> = PartialVariableAssignmentView<'a>;
             type ViewHandle = PartialVariableAssignmentOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for PartialVariableAssignmentOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// A permutation of integers encoded as a list of cycles, hence the "sparse"
         /// format. The image of an element cycle\[i\] is cycle\[(i + 1) % cycle_length\].
@@ -30252,6 +43224,42 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for SparsePermutationProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.support.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "support",
+                            &::buffa::json_helpers::RepeatedJson(&self.support),
+                        )?;
+                }
+                if !self.cycle_sizes.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "cycleSizes",
+                            &::buffa::json_helpers::RepeatedJson(&self.cycle_sizes),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for SparsePermutationProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "SparsePermutationProto";
@@ -30385,6 +43393,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::SparsePermutationProto {
             type View<'a> = SparsePermutationProtoView<'a>;
             type ViewHandle = SparsePermutationProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for SparsePermutationProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// A dense matrix of numbers encoded in a flat way, row by row.
         /// That is matrix\[i\]\[j\] = entries\[i * num_cols + j\];
@@ -30567,6 +43584,49 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for DenseMatrixProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !::buffa::json_helpers::skip_if::is_zero_i32(&self.num_rows) {
+                    __map
+                        .serialize_entry(
+                            "numRows",
+                            &::buffa::json_helpers::ProtoJson(&self.num_rows),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i32(&self.num_cols) {
+                    __map
+                        .serialize_entry(
+                            "numCols",
+                            &::buffa::json_helpers::ProtoJson(&self.num_cols),
+                        )?;
+                }
+                if !self.entries.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "entries",
+                            &::buffa::json_helpers::RepeatedJson(&self.entries),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for DenseMatrixProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "DenseMatrixProto";
@@ -30696,6 +43756,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::DenseMatrixProto {
             type View<'a> = DenseMatrixProtoView<'a>;
             type ViewHandle = DenseMatrixProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for DenseMatrixProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// EXPERIMENTAL. For now, this is meant to be used by the solver and not filled
         /// by clients.
@@ -30912,6 +43981,34 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for SymmetryProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.permutations.is_empty() {
+                    __map.serialize_entry("permutations", &*self.permutations)?;
+                }
+                if !self.orbitopes.is_empty() {
+                    __map.serialize_entry("orbitopes", &*self.orbitopes)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for SymmetryProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "SymmetryProto";
@@ -31060,6 +44157,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::SymmetryProto {
             type View<'a> = SymmetryProtoView<'a>;
             type ViewHandle = SymmetryProtoOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for SymmetryProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// A constraint programming problem.
         #[derive(Clone, Debug, Default)]
@@ -31641,6 +44747,75 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for CpModelProtoView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !::buffa::json_helpers::skip_if::is_empty_str(self.name) {
+                    __map.serialize_entry("name", self.name)?;
+                }
+                if !self.variables.is_empty() {
+                    __map.serialize_entry("variables", &*self.variables)?;
+                }
+                if !self.constraints.is_empty() {
+                    __map.serialize_entry("constraints", &*self.constraints)?;
+                }
+                {
+                    if let ::core::option::Option::Some(__v) = self.objective.as_option()
+                    {
+                        __map.serialize_entry("objective", __v)?;
+                    }
+                }
+                {
+                    if let ::core::option::Option::Some(__v) = self
+                        .floating_point_objective
+                        .as_option()
+                    {
+                        __map.serialize_entry("floatingPointObjective", __v)?;
+                    }
+                }
+                if !self.search_strategy.is_empty() {
+                    __map.serialize_entry("searchStrategy", &*self.search_strategy)?;
+                }
+                {
+                    if let ::core::option::Option::Some(__v) = self
+                        .solution_hint
+                        .as_option()
+                    {
+                        __map.serialize_entry("solutionHint", __v)?;
+                    }
+                }
+                if !self.assumptions.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "assumptions",
+                            &::buffa::json_helpers::RepeatedJson(&self.assumptions),
+                        )?;
+                }
+                {
+                    if let ::core::option::Option::Some(__v) = self.symmetry.as_option()
+                    {
+                        __map.serialize_entry("symmetry", __v)?;
+                    }
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for CpModelProtoView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "CpModelProto";
@@ -31892,6 +45067,15 @@ pub mod __buffa {
             type View<'a> = CpModelProtoView<'a>;
             type ViewHandle = CpModelProtoOwnedView;
         }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for CpModelProtoOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
+        }
         /// Just a message used to store dense solution.
         /// This is used by the additional_solutions field.
         #[derive(Clone, Debug, Default)]
@@ -32037,6 +45221,35 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for CpSolverSolutionView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !self.values.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "values",
+                            &::buffa::json_helpers::RepeatedJson(&self.values),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for CpSolverSolutionView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "CpSolverSolution";
@@ -32156,6 +45369,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::CpSolverSolution {
             type View<'a> = CpSolverSolutionView<'a>;
             type ViewHandle = CpSolverSolutionOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for CpSolverSolutionOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// The response returned by a solver trying to solve a CpModelProto.
         ///
@@ -32969,6 +46191,207 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for CpSolverResponseView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if !::buffa::json_helpers::skip_if::is_default_enum_value(&self.status) {
+                    __map.serialize_entry("status", &self.status)?;
+                }
+                if !self.solution.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "solution",
+                            &::buffa::json_helpers::RepeatedJson(&self.solution),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_f64(&self.objective_value) {
+                    __map
+                        .serialize_entry(
+                            "objectiveValue",
+                            &::buffa::json_helpers::ProtoJson(&self.objective_value),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_f64(
+                    &self.best_objective_bound,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "bestObjectiveBound",
+                            &::buffa::json_helpers::ProtoJson(&self.best_objective_bound),
+                        )?;
+                }
+                if !self.additional_solutions.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "additionalSolutions",
+                            &*self.additional_solutions,
+                        )?;
+                }
+                if !self.tightened_variables.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "tightenedVariables",
+                            &*self.tightened_variables,
+                        )?;
+                }
+                if !self.sufficient_assumptions_for_infeasibility.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "sufficientAssumptionsForInfeasibility",
+                            &::buffa::json_helpers::RepeatedJson(
+                                &self.sufficient_assumptions_for_infeasibility,
+                            ),
+                        )?;
+                }
+                {
+                    if let ::core::option::Option::Some(__v) = self
+                        .integer_objective
+                        .as_option()
+                    {
+                        __map.serialize_entry("integerObjective", __v)?;
+                    }
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(
+                    &self.inner_objective_lower_bound,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "innerObjectiveLowerBound",
+                            &::buffa::json_helpers::ProtoJson(
+                                &self.inner_objective_lower_bound,
+                            ),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.num_integers) {
+                    __map
+                        .serialize_entry(
+                            "numIntegers",
+                            &::buffa::json_helpers::ProtoJson(&self.num_integers),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.num_booleans) {
+                    __map
+                        .serialize_entry(
+                            "numBooleans",
+                            &::buffa::json_helpers::ProtoJson(&self.num_booleans),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(
+                    &self.num_fixed_booleans,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "numFixedBooleans",
+                            &::buffa::json_helpers::ProtoJson(&self.num_fixed_booleans),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.num_conflicts) {
+                    __map
+                        .serialize_entry(
+                            "numConflicts",
+                            &::buffa::json_helpers::ProtoJson(&self.num_conflicts),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.num_branches) {
+                    __map
+                        .serialize_entry(
+                            "numBranches",
+                            &::buffa::json_helpers::ProtoJson(&self.num_branches),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(
+                    &self.num_binary_propagations,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "numBinaryPropagations",
+                            &::buffa::json_helpers::ProtoJson(
+                                &self.num_binary_propagations,
+                            ),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(
+                    &self.num_integer_propagations,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "numIntegerPropagations",
+                            &::buffa::json_helpers::ProtoJson(
+                                &self.num_integer_propagations,
+                            ),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(&self.num_restarts) {
+                    __map
+                        .serialize_entry(
+                            "numRestarts",
+                            &::buffa::json_helpers::ProtoJson(&self.num_restarts),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_i64(
+                    &self.num_lp_iterations,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "numLpIterations",
+                            &::buffa::json_helpers::ProtoJson(&self.num_lp_iterations),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_f64(&self.wall_time) {
+                    __map
+                        .serialize_entry(
+                            "wallTime",
+                            &::buffa::json_helpers::ProtoJson(&self.wall_time),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_f64(&self.user_time) {
+                    __map
+                        .serialize_entry(
+                            "userTime",
+                            &::buffa::json_helpers::ProtoJson(&self.user_time),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_f64(
+                    &self.deterministic_time,
+                ) {
+                    __map
+                        .serialize_entry(
+                            "deterministicTime",
+                            &::buffa::json_helpers::ProtoJson(&self.deterministic_time),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_zero_f64(&self.gap_integral) {
+                    __map
+                        .serialize_entry(
+                            "gapIntegral",
+                            &::buffa::json_helpers::ProtoJson(&self.gap_integral),
+                        )?;
+                }
+                if !::buffa::json_helpers::skip_if::is_empty_str(self.solution_info) {
+                    __map.serialize_entry("solutionInfo", self.solution_info)?;
+                }
+                if !::buffa::json_helpers::skip_if::is_empty_str(self.solve_log) {
+                    __map.serialize_entry("solveLog", self.solve_log)?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for CpSolverResponseView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "CpSolverResponse";
@@ -33308,6 +46731,15 @@ pub mod __buffa {
         impl ::buffa::HasMessageView for super::super::CpSolverResponse {
             type View<'a> = CpSolverResponseView<'a>;
             type ViewHandle = CpSolverResponseOwnedView;
+        }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for CpSolverResponseOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
         }
         /// Contains the definitions for all the sat algorithm parameters and their
         /// default values.
@@ -40515,6 +53947,1855 @@ pub mod __buffa {
                 self.__buffa_unknown_fields.write_to(buf);
             }
         }
+        #[cfg(feature = "json")]
+        /// Serializes this view as protobuf JSON.
+        ///
+        /// Implicit-presence fields with default values are omitted, `required`
+        /// fields are always emitted, explicit-presence (`optional`) fields are
+        /// emitted only when set, bytes fields are base64-encoded, and enum
+        /// values are their proto name strings.
+        ///
+        /// This impl uses `serialize_map(None)` because the number of emitted
+        /// fields depends on default-omission rules; serializers that require
+        /// known map lengths (e.g. `bincode`) will return a runtime error.
+        /// Use the owned message type for those formats.
+        impl<'__a> ::serde::Serialize for SatParametersView<'__a> {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                use ::serde::ser::SerializeMap as _;
+                let mut __map = __s.serialize_map(::core::option::Option::None)?;
+                if let ::core::option::Option::Some(__v) = self.name {
+                    __map.serialize_entry("name", __v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.preferred_variable_order
+                {
+                    __map
+                        .serialize_entry(
+                            "preferredVariableOrder",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.initial_polarity {
+                    __map
+                        .serialize_entry(
+                            "initialPolarity",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_phase_saving {
+                    __map.serialize_entry("usePhaseSaving", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .polarity_rephase_increment
+                {
+                    __map
+                        .serialize_entry(
+                            "polarityRephaseIncrement",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.polarity_exploit_ls_hints
+                {
+                    __map.serialize_entry("polarityExploitLsHints", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.random_polarity_ratio {
+                    __map
+                        .serialize_entry(
+                            "randomPolarityRatio",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.random_branches_ratio {
+                    __map
+                        .serialize_entry(
+                            "randomBranchesRatio",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_erwa_heuristic {
+                    __map.serialize_entry("useErwaHeuristic", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .initial_variables_activity
+                {
+                    __map
+                        .serialize_entry(
+                            "initialVariablesActivity",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .also_bump_variables_in_conflict_reasons
+                {
+                    __map.serialize_entry("alsoBumpVariablesInConflictReasons", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.minimization_algorithm {
+                    __map
+                        .serialize_entry(
+                            "minimizationAlgorithm",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .binary_minimization_algorithm
+                {
+                    __map
+                        .serialize_entry(
+                            "binaryMinimizationAlgorithm",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .subsumption_during_conflict_analysis
+                {
+                    __map.serialize_entry("subsumptionDuringConflictAnalysis", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .extra_subsumption_during_conflict_analysis
+                {
+                    __map
+                        .serialize_entry(
+                            "extraSubsumptionDuringConflictAnalysis",
+                            &__v,
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .decision_subsumption_during_conflict_analysis
+                {
+                    __map
+                        .serialize_entry(
+                            "decisionSubsumptionDuringConflictAnalysis",
+                            &__v,
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .eagerly_subsume_last_n_conflicts
+                {
+                    __map
+                        .serialize_entry(
+                            "eagerlySubsumeLastNConflicts",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .subsume_during_vivification
+                {
+                    __map.serialize_entry("subsumeDuringVivification", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_chronological_backtracking
+                {
+                    __map.serialize_entry("useChronologicalBacktracking", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_backjump_levels {
+                    __map
+                        .serialize_entry(
+                            "maxBackjumpLevels",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .chronological_backtrack_min_conflicts
+                {
+                    __map
+                        .serialize_entry(
+                            "chronologicalBacktrackMinConflicts",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.clause_cleanup_period {
+                    __map
+                        .serialize_entry(
+                            "clauseCleanupPeriod",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .clause_cleanup_period_increment
+                {
+                    __map
+                        .serialize_entry(
+                            "clauseCleanupPeriodIncrement",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.clause_cleanup_target {
+                    __map
+                        .serialize_entry(
+                            "clauseCleanupTarget",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.clause_cleanup_ratio {
+                    __map
+                        .serialize_entry(
+                            "clauseCleanupRatio",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.clause_cleanup_lbd_bound
+                {
+                    __map
+                        .serialize_entry(
+                            "clauseCleanupLbdBound",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.clause_cleanup_lbd_tier1
+                {
+                    __map
+                        .serialize_entry(
+                            "clauseCleanupLbdTier1",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.clause_cleanup_lbd_tier2
+                {
+                    __map
+                        .serialize_entry(
+                            "clauseCleanupLbdTier2",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.clause_cleanup_ordering {
+                    __map
+                        .serialize_entry(
+                            "clauseCleanupOrdering",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.pb_cleanup_increment {
+                    __map
+                        .serialize_entry(
+                            "pbCleanupIncrement",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.pb_cleanup_ratio {
+                    __map
+                        .serialize_entry(
+                            "pbCleanupRatio",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.variable_activity_decay {
+                    __map
+                        .serialize_entry(
+                            "variableActivityDecay",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_variable_activity_value
+                {
+                    __map
+                        .serialize_entry(
+                            "maxVariableActivityValue",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.glucose_max_decay {
+                    __map
+                        .serialize_entry(
+                            "glucoseMaxDecay",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.glucose_decay_increment {
+                    __map
+                        .serialize_entry(
+                            "glucoseDecayIncrement",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .glucose_decay_increment_period
+                {
+                    __map
+                        .serialize_entry(
+                            "glucoseDecayIncrementPeriod",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.clause_activity_decay {
+                    __map
+                        .serialize_entry(
+                            "clauseActivityDecay",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_clause_activity_value
+                {
+                    __map
+                        .serialize_entry(
+                            "maxClauseActivityValue",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if !self.restart_algorithms.is_empty() {
+                    __map
+                        .serialize_entry(
+                            "restartAlgorithms",
+                            &::buffa::json_helpers::ClosedEnumSeqJson(
+                                &self.restart_algorithms,
+                            ),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .default_restart_algorithms
+                {
+                    __map.serialize_entry("defaultRestartAlgorithms", __v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.restart_period {
+                    __map
+                        .serialize_entry(
+                            "restartPeriod",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .restart_running_window_size
+                {
+                    __map
+                        .serialize_entry(
+                            "restartRunningWindowSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.restart_dl_average_ratio
+                {
+                    __map
+                        .serialize_entry(
+                            "restartDlAverageRatio",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.restart_lbd_average_ratio
+                {
+                    __map
+                        .serialize_entry(
+                            "restartLbdAverageRatio",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_blocking_restart {
+                    __map.serialize_entry("useBlockingRestart", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .blocking_restart_window_size
+                {
+                    __map
+                        .serialize_entry(
+                            "blockingRestartWindowSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .blocking_restart_multiplier
+                {
+                    __map
+                        .serialize_entry(
+                            "blockingRestartMultiplier",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .num_conflicts_before_strategy_changes
+                {
+                    __map
+                        .serialize_entry(
+                            "numConflictsBeforeStrategyChanges",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .strategy_change_increase_ratio
+                {
+                    __map
+                        .serialize_entry(
+                            "strategyChangeIncreaseRatio",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_time_in_seconds {
+                    __map
+                        .serialize_entry(
+                            "maxTimeInSeconds",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_deterministic_time {
+                    __map
+                        .serialize_entry(
+                            "maxDeterministicTime",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_num_deterministic_batches
+                {
+                    __map
+                        .serialize_entry(
+                            "maxNumDeterministicBatches",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_number_of_conflicts {
+                    __map
+                        .serialize_entry(
+                            "maxNumberOfConflicts",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_memory_in_mb {
+                    __map
+                        .serialize_entry(
+                            "maxMemoryInMb",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.absolute_gap_limit {
+                    __map
+                        .serialize_entry(
+                            "absoluteGapLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.relative_gap_limit {
+                    __map
+                        .serialize_entry(
+                            "relativeGapLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.random_seed {
+                    __map
+                        .serialize_entry(
+                            "randomSeed",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.permute_variable_randomly
+                {
+                    __map.serialize_entry("permuteVariableRandomly", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .permute_presolve_constraint_order
+                {
+                    __map.serialize_entry("permutePresolveConstraintOrder", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_absl_random {
+                    __map.serialize_entry("useAbslRandom", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.log_search_progress {
+                    __map.serialize_entry("logSearchProgress", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.log_subsolver_statistics
+                {
+                    __map.serialize_entry("logSubsolverStatistics", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.log_prefix {
+                    __map.serialize_entry("logPrefix", __v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.log_to_stdout {
+                    __map.serialize_entry("logToStdout", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.log_to_response {
+                    __map.serialize_entry("logToResponse", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_pb_resolution {
+                    __map.serialize_entry("usePbResolution", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .minimize_reduction_during_pb_resolution
+                {
+                    __map.serialize_entry("minimizeReductionDuringPbResolution", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .count_assumption_levels_in_lbd
+                {
+                    __map.serialize_entry("countAssumptionLevelsInLbd", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.presolve_bve_threshold {
+                    __map
+                        .serialize_entry(
+                            "presolveBveThreshold",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .filter_sat_postsolve_clauses
+                {
+                    __map.serialize_entry("filterSatPostsolveClauses", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .presolve_bve_clause_weight
+                {
+                    __map
+                        .serialize_entry(
+                            "presolveBveClauseWeight",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .probing_deterministic_time_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "probingDeterministicTimeLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .presolve_probing_deterministic_time_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "presolveProbingDeterministicTimeLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.presolve_blocked_clause {
+                    __map.serialize_entry("presolveBlockedClause", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.presolve_use_bva {
+                    __map.serialize_entry("presolveUseBva", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.presolve_bva_threshold {
+                    __map
+                        .serialize_entry(
+                            "presolveBvaThreshold",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_presolve_iterations {
+                    __map
+                        .serialize_entry(
+                            "maxPresolveIterations",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.cp_model_presolve {
+                    __map.serialize_entry("cpModelPresolve", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.cp_model_probing_level {
+                    __map
+                        .serialize_entry(
+                            "cpModelProbingLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.cp_model_use_sat_presolve
+                {
+                    __map.serialize_entry("cpModelUseSatPresolve", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .load_at_most_ones_in_sat_presolve
+                {
+                    __map.serialize_entry("loadAtMostOnesInSatPresolve", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .remove_fixed_variables_early
+                {
+                    __map.serialize_entry("removeFixedVariablesEarly", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.detect_table_with_cost {
+                    __map.serialize_entry("detectTableWithCost", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.table_compression_level {
+                    __map
+                        .serialize_entry(
+                            "tableCompressionLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .expand_alldiff_constraints
+                {
+                    __map.serialize_entry("expandAlldiffConstraints", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_alldiff_domain_size {
+                    __map
+                        .serialize_entry(
+                            "maxAlldiffDomainSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .expand_reservoir_constraints
+                {
+                    __map.serialize_entry("expandReservoirConstraints", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_domain_size_for_linear2_expansion
+                {
+                    __map
+                        .serialize_entry(
+                            "maxDomainSizeForLinear2Expansion",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .expand_reservoir_using_circuit
+                {
+                    __map.serialize_entry("expandReservoirUsingCircuit", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .encode_cumulative_as_reservoir
+                {
+                    __map.serialize_entry("encodeCumulativeAsReservoir", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_lin_max_size_for_expansion
+                {
+                    __map
+                        .serialize_entry(
+                            "maxLinMaxSizeForExpansion",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .disable_constraint_expansion
+                {
+                    __map.serialize_entry("disableConstraintExpansion", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .encode_complex_linear_constraint_with_integer
+                {
+                    __map
+                        .serialize_entry(
+                            "encodeComplexLinearConstraintWithInteger",
+                            &__v,
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .merge_no_overlap_work_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "mergeNoOverlapWorkLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .merge_at_most_one_work_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "mergeAtMostOneWorkLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .presolve_substitution_level
+                {
+                    __map
+                        .serialize_entry(
+                            "presolveSubstitutionLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .presolve_extract_integer_enforcement
+                {
+                    __map.serialize_entry("presolveExtractIntegerEnforcement", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .presolve_inclusion_work_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "presolveInclusionWorkLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.ignore_names {
+                    __map.serialize_entry("ignoreNames", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.infer_all_diffs {
+                    __map.serialize_entry("inferAllDiffs", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.find_big_linear_overlap {
+                    __map.serialize_entry("findBigLinearOverlap", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .find_clauses_that_are_exactly_one
+                {
+                    __map.serialize_entry("findClausesThatAreExactlyOne", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_sat_inprocessing {
+                    __map.serialize_entry("useSatInprocessing", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.inprocessing_dtime_ratio
+                {
+                    __map
+                        .serialize_entry(
+                            "inprocessingDtimeRatio",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .inprocessing_probing_dtime
+                {
+                    __map
+                        .serialize_entry(
+                            "inprocessingProbingDtime",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .inprocessing_minimization_dtime
+                {
+                    __map
+                        .serialize_entry(
+                            "inprocessingMinimizationDtime",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .inprocessing_minimization_use_conflict_analysis
+                {
+                    __map
+                        .serialize_entry(
+                            "inprocessingMinimizationUseConflictAnalysis",
+                            &__v,
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .inprocessing_minimization_use_all_orderings
+                {
+                    __map
+                        .serialize_entry(
+                            "inprocessingMinimizationUseAllOrderings",
+                            &__v,
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .inprocessing_use_congruence_closure
+                {
+                    __map.serialize_entry("inprocessingUseCongruenceClosure", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .inprocessing_use_sat_sweeping
+                {
+                    __map.serialize_entry("inprocessingUseSatSweeping", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.num_workers {
+                    __map
+                        .serialize_entry(
+                            "numWorkers",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.num_search_workers {
+                    __map
+                        .serialize_entry(
+                            "numSearchWorkers",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.num_full_subsolvers {
+                    __map
+                        .serialize_entry(
+                            "numFullSubsolvers",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if !self.subsolvers.is_empty() {
+                    __map.serialize_entry("subsolvers", &*self.subsolvers)?;
+                }
+                if !self.extra_subsolvers.is_empty() {
+                    __map.serialize_entry("extraSubsolvers", &*self.extra_subsolvers)?;
+                }
+                if !self.ignore_subsolvers.is_empty() {
+                    __map.serialize_entry("ignoreSubsolvers", &*self.ignore_subsolvers)?;
+                }
+                if !self.filter_subsolvers.is_empty() {
+                    __map.serialize_entry("filterSubsolvers", &*self.filter_subsolvers)?;
+                }
+                if !self.subsolver_params.is_empty() {
+                    __map.serialize_entry("subsolverParams", &*self.subsolver_params)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.interleave_search {
+                    __map.serialize_entry("interleaveSearch", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.interleave_batch_size {
+                    __map
+                        .serialize_entry(
+                            "interleaveBatchSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.share_objective_bounds {
+                    __map.serialize_entry("shareObjectiveBounds", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.share_level_zero_bounds {
+                    __map.serialize_entry("shareLevelZeroBounds", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.share_linear2_bounds {
+                    __map.serialize_entry("shareLinear2Bounds", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.share_binary_clauses {
+                    __map.serialize_entry("shareBinaryClauses", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.share_glue_clauses {
+                    __map.serialize_entry("shareGlueClauses", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.minimize_shared_clauses {
+                    __map.serialize_entry("minimizeSharedClauses", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.share_glue_clauses_dtime
+                {
+                    __map
+                        .serialize_entry(
+                            "shareGlueClausesDtime",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.check_lrat_proof {
+                    __map.serialize_entry("checkLratProof", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.check_merged_lrat_proof {
+                    __map.serialize_entry("checkMergedLratProof", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.output_lrat_proof {
+                    __map.serialize_entry("outputLratProof", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.check_drat_proof {
+                    __map.serialize_entry("checkDratProof", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.output_drat_proof {
+                    __map.serialize_entry("outputDratProof", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_drat_time_in_seconds
+                {
+                    __map
+                        .serialize_entry(
+                            "maxDratTimeInSeconds",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .debug_postsolve_with_full_solver
+                {
+                    __map.serialize_entry("debugPostsolveWithFullSolver", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .debug_max_num_presolve_operations
+                {
+                    __map
+                        .serialize_entry(
+                            "debugMaxNumPresolveOperations",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.debug_crash_on_bad_hint {
+                    __map.serialize_entry("debugCrashOnBadHint", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .debug_crash_if_presolve_breaks_hint
+                {
+                    __map.serialize_entry("debugCrashIfPresolveBreaksHint", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .debug_crash_if_lrat_check_fails
+                {
+                    __map.serialize_entry("debugCrashIfLratCheckFails", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_optimization_hints {
+                    __map.serialize_entry("useOptimizationHints", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.core_minimization_level {
+                    __map
+                        .serialize_entry(
+                            "coreMinimizationLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.find_multiple_cores {
+                    __map.serialize_entry("findMultipleCores", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.cover_optimization {
+                    __map.serialize_entry("coverOptimization", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_sat_assumption_order
+                {
+                    __map
+                        .serialize_entry(
+                            "maxSatAssumptionOrder",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_sat_reverse_assumption_order
+                {
+                    __map.serialize_entry("maxSatReverseAssumptionOrder", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_sat_stratification {
+                    __map
+                        .serialize_entry(
+                            "maxSatStratification",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .propagation_loop_detection_factor
+                {
+                    __map
+                        .serialize_entry(
+                            "propagationLoopDetectionFactor",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_precedences_in_disjunctive_constraint
+                {
+                    __map
+                        .serialize_entry("usePrecedencesInDisjunctiveConstraint", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .transitive_precedences_work_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "transitivePrecedencesWorkLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_size_to_create_precedence_literals_in_disjunctive
+                {
+                    __map
+                        .serialize_entry(
+                            "maxSizeToCreatePrecedenceLiteralsInDisjunctive",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_strong_propagation_in_disjunctive
+                {
+                    __map.serialize_entry("useStrongPropagationInDisjunctive", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_dynamic_precedence_in_disjunctive
+                {
+                    __map.serialize_entry("useDynamicPrecedenceInDisjunctive", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_dynamic_precedence_in_cumulative
+                {
+                    __map.serialize_entry("useDynamicPrecedenceInCumulative", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_overload_checker_in_cumulative
+                {
+                    __map.serialize_entry("useOverloadCheckerInCumulative", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_conservative_scale_overload_checker
+                {
+                    __map.serialize_entry("useConservativeScaleOverloadChecker", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_timetable_edge_finding_in_cumulative
+                {
+                    __map.serialize_entry("useTimetableEdgeFindingInCumulative", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_num_intervals_for_timetable_edge_finding
+                {
+                    __map
+                        .serialize_entry(
+                            "maxNumIntervalsForTimetableEdgeFinding",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_hard_precedences_in_cumulative
+                {
+                    __map.serialize_entry("useHardPrecedencesInCumulative", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.exploit_all_precedences {
+                    __map.serialize_entry("exploitAllPrecedences", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_disjunctive_constraint_in_cumulative
+                {
+                    __map.serialize_entry("useDisjunctiveConstraintInCumulative", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .no_overlap_2d_boolean_relations_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "noOverlap2dBooleanRelationsLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_timetabling_in_no_overlap_2d
+                {
+                    __map.serialize_entry("useTimetablingInNoOverlap2d", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_energetic_reasoning_in_no_overlap_2d
+                {
+                    __map.serialize_entry("useEnergeticReasoningInNoOverlap2d", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_area_energetic_reasoning_in_no_overlap_2d
+                {
+                    __map
+                        .serialize_entry(
+                            "useAreaEnergeticReasoningInNoOverlap2d",
+                            &__v,
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_try_edge_reasoning_in_no_overlap_2d
+                {
+                    __map.serialize_entry("useTryEdgeReasoningInNoOverlap2d", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_pairs_pairwise_reasoning_in_no_overlap_2d
+                {
+                    __map
+                        .serialize_entry(
+                            "maxPairsPairwiseReasoningInNoOverlap2d",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .maximum_regions_to_split_in_disconnected_no_overlap_2d
+                {
+                    __map
+                        .serialize_entry(
+                            "maximumRegionsToSplitInDisconnectedNoOverlap2d",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_linear3_for_no_overlap_2d_precedences
+                {
+                    __map.serialize_entry("useLinear3ForNoOverlap2dPrecedences", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_dual_scheduling_heuristics
+                {
+                    __map.serialize_entry("useDualSchedulingHeuristics", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_all_different_for_circuit
+                {
+                    __map.serialize_entry("useAllDifferentForCircuit", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .routing_cut_subset_size_for_binary_relation_bound
+                {
+                    __map
+                        .serialize_entry(
+                            "routingCutSubsetSizeForBinaryRelationBound",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .routing_cut_subset_size_for_tight_binary_relation_bound
+                {
+                    __map
+                        .serialize_entry(
+                            "routingCutSubsetSizeForTightBinaryRelationBound",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .routing_cut_subset_size_for_exact_binary_relation_bound
+                {
+                    __map
+                        .serialize_entry(
+                            "routingCutSubsetSizeForExactBinaryRelationBound",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .routing_cut_subset_size_for_shortest_paths_bound
+                {
+                    __map
+                        .serialize_entry(
+                            "routingCutSubsetSizeForShortestPathsBound",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.routing_cut_dp_effort {
+                    __map
+                        .serialize_entry(
+                            "routingCutDpEffort",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .routing_cut_max_infeasible_path_length
+                {
+                    __map
+                        .serialize_entry(
+                            "routingCutMaxInfeasiblePathLength",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.search_branching {
+                    __map
+                        .serialize_entry(
+                            "searchBranching",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.hint_conflict_limit {
+                    __map
+                        .serialize_entry(
+                            "hintConflictLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.repair_hint {
+                    __map.serialize_entry("repairHint", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .fix_variables_to_their_hinted_value
+                {
+                    __map.serialize_entry("fixVariablesToTheirHintedValue", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_probing_search {
+                    __map.serialize_entry("useProbingSearch", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_extended_probing {
+                    __map.serialize_entry("useExtendedProbing", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .probing_num_combinations_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "probingNumCombinationsLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shaving_deterministic_time_in_probing_search
+                {
+                    __map
+                        .serialize_entry(
+                            "shavingDeterministicTimeInProbingSearch",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shaving_search_deterministic_time
+                {
+                    __map
+                        .serialize_entry(
+                            "shavingSearchDeterministicTime",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.shaving_search_threshold
+                {
+                    __map
+                        .serialize_entry(
+                            "shavingSearchThreshold",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_objective_lb_search {
+                    __map.serialize_entry("useObjectiveLbSearch", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_objective_shaving_search
+                {
+                    __map.serialize_entry("useObjectiveShavingSearch", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.variables_shaving_level {
+                    __map
+                        .serialize_entry(
+                            "variablesShavingLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .pseudo_cost_reliability_threshold
+                {
+                    __map
+                        .serialize_entry(
+                            "pseudoCostReliabilityThreshold",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.optimize_with_core {
+                    __map.serialize_entry("optimizeWithCore", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .optimize_with_lb_tree_search
+                {
+                    __map.serialize_entry("optimizeWithLbTreeSearch", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .save_lp_basis_in_lb_tree_search
+                {
+                    __map.serialize_entry("saveLpBasisInLbTreeSearch", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .binary_search_num_conflicts
+                {
+                    __map
+                        .serialize_entry(
+                            "binarySearchNumConflicts",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.optimize_with_max_hs {
+                    __map.serialize_entry("optimizeWithMaxHs", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_feasibility_jump {
+                    __map.serialize_entry("useFeasibilityJump", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_ls_only {
+                    __map.serialize_entry("useLsOnly", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.feasibility_jump_decay {
+                    __map
+                        .serialize_entry(
+                            "feasibilityJumpDecay",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .feasibility_jump_linearization_level
+                {
+                    __map
+                        .serialize_entry(
+                            "feasibilityJumpLinearizationLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .feasibility_jump_restart_factor
+                {
+                    __map
+                        .serialize_entry(
+                            "feasibilityJumpRestartFactor",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .feasibility_jump_batch_dtime
+                {
+                    __map
+                        .serialize_entry(
+                            "feasibilityJumpBatchDtime",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .feasibility_jump_var_randomization_probability
+                {
+                    __map
+                        .serialize_entry(
+                            "feasibilityJumpVarRandomizationProbability",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .feasibility_jump_var_perburbation_range_ratio
+                {
+                    __map
+                        .serialize_entry(
+                            "feasibilityJumpVarPerburbationRangeRatio",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .feasibility_jump_enable_restarts
+                {
+                    __map.serialize_entry("feasibilityJumpEnableRestarts", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .feasibility_jump_max_expanded_constraint_size
+                {
+                    __map
+                        .serialize_entry(
+                            "feasibilityJumpMaxExpandedConstraintSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.num_violation_ls {
+                    __map
+                        .serialize_entry(
+                            "numViolationLs",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .violation_ls_perturbation_period
+                {
+                    __map
+                        .serialize_entry(
+                            "violationLsPerturbationPeriod",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .violation_ls_compound_move_probability
+                {
+                    __map
+                        .serialize_entry(
+                            "violationLsCompoundMoveProbability",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.shared_tree_num_workers {
+                    __map
+                        .serialize_entry(
+                            "sharedTreeNumWorkers",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_shared_tree_search {
+                    __map.serialize_entry("useSharedTreeSearch", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shared_tree_worker_min_restarts_per_subtree
+                {
+                    __map
+                        .serialize_entry(
+                            "sharedTreeWorkerMinRestartsPerSubtree",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shared_tree_worker_enable_trail_sharing
+                {
+                    __map.serialize_entry("sharedTreeWorkerEnableTrailSharing", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shared_tree_worker_enable_phase_sharing
+                {
+                    __map.serialize_entry("sharedTreeWorkerEnablePhaseSharing", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shared_tree_open_leaves_per_worker
+                {
+                    __map
+                        .serialize_entry(
+                            "sharedTreeOpenLeavesPerWorker",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shared_tree_max_nodes_per_worker
+                {
+                    __map
+                        .serialize_entry(
+                            "sharedTreeMaxNodesPerWorker",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shared_tree_split_strategy
+                {
+                    __map
+                        .serialize_entry(
+                            "sharedTreeSplitStrategy",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shared_tree_balance_tolerance
+                {
+                    __map
+                        .serialize_entry(
+                            "sharedTreeBalanceTolerance",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .shared_tree_split_min_dtime
+                {
+                    __map
+                        .serialize_entry(
+                            "sharedTreeSplitMinDtime",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.enumerate_all_solutions {
+                    __map.serialize_entry("enumerateAllSolutions", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .keep_all_feasible_solutions_in_presolve
+                {
+                    __map.serialize_entry("keepAllFeasibleSolutionsInPresolve", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .fill_tightened_domains_in_response
+                {
+                    __map.serialize_entry("fillTightenedDomainsInResponse", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .fill_additional_solutions_in_response
+                {
+                    __map.serialize_entry("fillAdditionalSolutionsInResponse", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.instantiate_all_variables
+                {
+                    __map.serialize_entry("instantiateAllVariables", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .auto_detect_greater_than_at_least_one_of
+                {
+                    __map.serialize_entry("autoDetectGreaterThanAtLeastOneOf", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.stop_after_first_solution
+                {
+                    __map.serialize_entry("stopAfterFirstSolution", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.stop_after_presolve {
+                    __map.serialize_entry("stopAfterPresolve", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .stop_after_root_propagation
+                {
+                    __map.serialize_entry("stopAfterRootPropagation", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.lns_initial_difficulty {
+                    __map
+                        .serialize_entry(
+                            "lnsInitialDifficulty",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .lns_initial_deterministic_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "lnsInitialDeterministicLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_lns {
+                    __map.serialize_entry("useLns", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_lns_only {
+                    __map.serialize_entry("useLnsOnly", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.solution_pool_size {
+                    __map
+                        .serialize_entry(
+                            "solutionPoolSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .solution_pool_diversity_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "solutionPoolDiversityLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.alternative_pool_size {
+                    __map
+                        .serialize_entry(
+                            "alternativePoolSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_rins_lns {
+                    __map.serialize_entry("useRinsLns", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_feasibility_pump {
+                    __map.serialize_entry("useFeasibilityPump", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_lb_relax_lns {
+                    __map.serialize_entry("useLbRelaxLns", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .lb_relax_num_workers_threshold
+                {
+                    __map
+                        .serialize_entry(
+                            "lbRelaxNumWorkersThreshold",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.fp_rounding {
+                    __map
+                        .serialize_entry(
+                            "fpRounding",
+                            &::buffa::json_helpers::ClosedEnumJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.diversify_lns_params {
+                    __map.serialize_entry("diversifyLnsParams", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.randomize_search {
+                    __map.serialize_entry("randomizeSearch", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .search_random_variable_pool_size
+                {
+                    __map
+                        .serialize_entry(
+                            "searchRandomVariablePoolSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .push_all_tasks_toward_start
+                {
+                    __map.serialize_entry("pushAllTasksTowardStart", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_optional_variables {
+                    __map.serialize_entry("useOptionalVariables", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_exact_lp_reason {
+                    __map.serialize_entry("useExactLpReason", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_combined_no_overlap {
+                    __map.serialize_entry("useCombinedNoOverlap", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .at_most_one_max_expansion_size
+                {
+                    __map
+                        .serialize_entry(
+                            "atMostOneMaxExpansionSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.catch_sigint_signal {
+                    __map.serialize_entry("catchSigintSignal", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_implied_bounds {
+                    __map.serialize_entry("useImpliedBounds", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.polish_lp_solution {
+                    __map.serialize_entry("polishLpSolution", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.lp_primal_tolerance {
+                    __map
+                        .serialize_entry(
+                            "lpPrimalTolerance",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.lp_dual_tolerance {
+                    __map
+                        .serialize_entry(
+                            "lpDualTolerance",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.convert_intervals {
+                    __map.serialize_entry("convertIntervals", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.symmetry_level {
+                    __map
+                        .serialize_entry(
+                            "symmetryLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.use_symmetry_in_lp {
+                    __map.serialize_entry("useSymmetryInLp", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.keep_symmetry_in_presolve
+                {
+                    __map.serialize_entry("keepSymmetryInPresolve", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .symmetry_detection_deterministic_time_limit
+                {
+                    __map
+                        .serialize_entry(
+                            "symmetryDetectionDeterministicTimeLimit",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.new_linear_propagation {
+                    __map.serialize_entry("newLinearPropagation", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.linear_split_size {
+                    __map
+                        .serialize_entry(
+                            "linearSplitSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.linearization_level {
+                    __map
+                        .serialize_entry(
+                            "linearizationLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.boolean_encoding_level {
+                    __map
+                        .serialize_entry(
+                            "booleanEncodingLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_domain_size_when_encoding_eq_neq_constraints
+                {
+                    __map
+                        .serialize_entry(
+                            "maxDomainSizeWhenEncodingEqNeqConstraints",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_num_cuts {
+                    __map
+                        .serialize_entry(
+                            "maxNumCuts",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.cut_level {
+                    __map
+                        .serialize_entry(
+                            "cutLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .only_add_cuts_at_level_zero
+                {
+                    __map.serialize_entry("onlyAddCutsAtLevelZero", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.add_objective_cut {
+                    __map.serialize_entry("addObjectiveCut", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.add_cg_cuts {
+                    __map.serialize_entry("addCgCuts", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.add_mir_cuts {
+                    __map.serialize_entry("addMirCuts", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.add_zero_half_cuts {
+                    __map.serialize_entry("addZeroHalfCuts", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.add_clique_cuts {
+                    __map.serialize_entry("addCliqueCuts", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.add_rlt_cuts {
+                    __map.serialize_entry("addRltCuts", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.max_all_diff_cut_size {
+                    __map
+                        .serialize_entry(
+                            "maxAllDiffCutSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.add_lin_max_cuts {
+                    __map.serialize_entry("addLinMaxCuts", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_integer_rounding_scaling
+                {
+                    __map
+                        .serialize_entry(
+                            "maxIntegerRoundingScaling",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.add_lp_constraints_lazily
+                {
+                    __map.serialize_entry("addLpConstraintsLazily", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.root_lp_iterations {
+                    __map
+                        .serialize_entry(
+                            "rootLpIterations",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .min_orthogonality_for_lp_constraints
+                {
+                    __map
+                        .serialize_entry(
+                            "minOrthogonalityForLpConstraints",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_cut_rounds_at_level_zero
+                {
+                    __map
+                        .serialize_entry(
+                            "maxCutRoundsAtLevelZero",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .max_consecutive_inactive_count
+                {
+                    __map
+                        .serialize_entry(
+                            "maxConsecutiveInactiveCount",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .cut_max_active_count_value
+                {
+                    __map
+                        .serialize_entry(
+                            "cutMaxActiveCountValue",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.cut_active_count_decay {
+                    __map
+                        .serialize_entry(
+                            "cutActiveCountDecay",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.cut_cleanup_target {
+                    __map
+                        .serialize_entry(
+                            "cutCleanupTarget",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .new_constraints_batch_size
+                {
+                    __map
+                        .serialize_entry(
+                            "newConstraintsBatchSize",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .exploit_integer_lp_solution
+                {
+                    __map.serialize_entry("exploitIntegerLpSolution", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.exploit_all_lp_solution {
+                    __map.serialize_entry("exploitAllLpSolution", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.exploit_best_solution {
+                    __map.serialize_entry("exploitBestSolution", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .exploit_relaxation_solution
+                {
+                    __map.serialize_entry("exploitRelaxationSolution", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.exploit_objective {
+                    __map.serialize_entry("exploitObjective", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.detect_linearized_product
+                {
+                    __map.serialize_entry("detectLinearizedProduct", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .use_new_integer_conflict_resolution
+                {
+                    __map.serialize_entry("useNewIntegerConflictResolution", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .create_1uip_boolean_during_icr
+                {
+                    __map.serialize_entry("create1uipBooleanDuringIcr", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.mip_max_bound {
+                    __map
+                        .serialize_entry(
+                            "mipMaxBound",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.mip_var_scaling {
+                    __map
+                        .serialize_entry(
+                            "mipVarScaling",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.mip_scale_large_domain {
+                    __map.serialize_entry("mipScaleLargeDomain", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .mip_automatically_scale_variables
+                {
+                    __map.serialize_entry("mipAutomaticallyScaleVariables", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.only_solve_ip {
+                    __map.serialize_entry("onlySolveIp", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.mip_wanted_precision {
+                    __map
+                        .serialize_entry(
+                            "mipWantedPrecision",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.mip_max_activity_exponent
+                {
+                    __map
+                        .serialize_entry(
+                            "mipMaxActivityExponent",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.mip_check_precision {
+                    __map
+                        .serialize_entry(
+                            "mipCheckPrecision",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .mip_compute_true_objective_bound
+                {
+                    __map.serialize_entry("mipComputeTrueObjectiveBound", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.mip_max_valid_magnitude {
+                    __map
+                        .serialize_entry(
+                            "mipMaxValidMagnitude",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self
+                    .mip_treat_high_magnitude_bounds_as_infinity
+                {
+                    __map
+                        .serialize_entry("mipTreatHighMagnitudeBoundsAsInfinity", &__v)?;
+                }
+                if let ::core::option::Option::Some(__v) = self.mip_drop_tolerance {
+                    __map
+                        .serialize_entry(
+                            "mipDropTolerance",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                if let ::core::option::Option::Some(__v) = self.mip_presolve_level {
+                    __map
+                        .serialize_entry(
+                            "mipPresolveLevel",
+                            &::buffa::json_helpers::ProtoJson(&__v),
+                        )?;
+                }
+                __map.end()
+            }
+        }
         impl<'a> ::buffa::MessageName for SatParametersView<'a> {
             const PACKAGE: &'static str = "operations_research.sat";
             const NAME: &'static str = "SatParameters";
@@ -43734,6 +59015,15 @@ pub mod __buffa {
             type View<'a> = SatParametersView<'a>;
             type ViewHandle = SatParametersOwnedView;
         }
+        #[cfg(feature = "json")]
+        impl ::serde::Serialize for SatParametersOwnedView {
+            fn serialize<__S: ::serde::Serializer>(
+                &self,
+                __s: __S,
+            ) -> ::core::result::Result<__S::Ok, __S::Error> {
+                ::serde::Serialize::serialize(&self.0, __s)
+            }
+        }
         pub mod oneof {
             #[allow(unused_imports)]
             use super::*;
@@ -44165,126 +59455,398 @@ pub mod __buffa {
                     Self::Some(Constraint::from(v))
                 }
             }
+            #[cfg(feature = "json")]
+            impl ::serde::Serialize for Constraint {
+                fn serialize<S: ::serde::Serializer>(
+                    &self,
+                    s: S,
+                ) -> ::core::result::Result<S::Ok, S::Error> {
+                    use ::serde::ser::SerializeMap;
+                    let mut map = s.serialize_map(Some(1))?;
+                    match self {
+                        Self::BoolOr(v) => {
+                            map.serialize_entry("boolOr", &**v)?;
+                        }
+                        Self::BoolAnd(v) => {
+                            map.serialize_entry("boolAnd", &**v)?;
+                        }
+                        Self::AtMostOne(v) => {
+                            map.serialize_entry("atMostOne", &**v)?;
+                        }
+                        Self::ExactlyOne(v) => {
+                            map.serialize_entry("exactlyOne", &**v)?;
+                        }
+                        Self::BoolXor(v) => {
+                            map.serialize_entry("boolXor", &**v)?;
+                        }
+                        Self::IntDiv(v) => {
+                            map.serialize_entry("intDiv", &**v)?;
+                        }
+                        Self::IntMod(v) => {
+                            map.serialize_entry("intMod", &**v)?;
+                        }
+                        Self::IntProd(v) => {
+                            map.serialize_entry("intProd", &**v)?;
+                        }
+                        Self::LinMax(v) => {
+                            map.serialize_entry("linMax", &**v)?;
+                        }
+                        Self::Linear(v) => {
+                            map.serialize_entry("linear", &**v)?;
+                        }
+                        Self::AllDiff(v) => {
+                            map.serialize_entry("allDiff", &**v)?;
+                        }
+                        Self::Element(v) => {
+                            map.serialize_entry("element", &**v)?;
+                        }
+                        Self::Circuit(v) => {
+                            map.serialize_entry("circuit", &**v)?;
+                        }
+                        Self::Routes(v) => {
+                            map.serialize_entry("routes", &**v)?;
+                        }
+                        Self::Table(v) => {
+                            map.serialize_entry("table", &**v)?;
+                        }
+                        Self::Automaton(v) => {
+                            map.serialize_entry("automaton", &**v)?;
+                        }
+                        Self::Inverse(v) => {
+                            map.serialize_entry("inverse", &**v)?;
+                        }
+                        Self::Reservoir(v) => {
+                            map.serialize_entry("reservoir", &**v)?;
+                        }
+                        Self::Interval(v) => {
+                            map.serialize_entry("interval", &**v)?;
+                        }
+                        Self::NoOverlap(v) => {
+                            map.serialize_entry("noOverlap", &**v)?;
+                        }
+                        Self::NoOverlap2d(v) => {
+                            map.serialize_entry("noOverlap2d", &**v)?;
+                        }
+                        Self::Cumulative(v) => {
+                            map.serialize_entry("cumulative", &**v)?;
+                        }
+                        Self::DummyConstraint(v) => {
+                            map.serialize_entry("dummyConstraint", &**v)?;
+                        }
+                    }
+                    map.end()
+                }
+            }
         }
     }
+    #[cfg(any(feature = "json", feature = "text"))]
+    /// Register this package's `Any` type entries and extension entries.
+    #[allow(unused_variables)]
+    pub fn register_types(reg: &mut ::buffa::type_registry::TypeRegistry) {
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__INTEGER_VARIABLE_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__BOOL_ARGUMENT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__LINEAR_EXPRESSION_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__LINEAR_ARGUMENT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__ALL_DIFFERENT_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__LINEAR_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__ELEMENT_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__INTERVAL_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__NO_OVERLAP_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__NO_OVERLAP2D_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__CUMULATIVE_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__RESERVOIR_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__CIRCUIT_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__ROUTES_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(
+            super::routes_constraint_proto::__NODE_EXPRESSIONS_JSON_ANY,
+        );
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__TABLE_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__INVERSE_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__AUTOMATON_CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__LIST_OF_VARIABLES_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__CONSTRAINT_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__CP_OBJECTIVE_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__FLOAT_OBJECTIVE_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__DECISION_STRATEGY_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__PARTIAL_VARIABLE_ASSIGNMENT_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__SPARSE_PERMUTATION_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__DENSE_MATRIX_PROTO_JSON_ANY);
+        #[cfg(feature = "json")] reg.register_json_any(super::__SYMMETRY_PROTO_JSON_ANY);
+        #[cfg(feature = "json")] reg.register_json_any(super::__CP_MODEL_PROTO_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__CP_SOLVER_SOLUTION_JSON_ANY);
+        #[cfg(feature = "json")]
+        reg.register_json_any(super::__CP_SOLVER_RESPONSE_JSON_ANY);
+        #[cfg(feature = "json")] reg.register_json_any(super::__SAT_PARAMETERS_JSON_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__INTEGER_VARIABLE_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__BOOL_ARGUMENT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__LINEAR_EXPRESSION_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__LINEAR_ARGUMENT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__ALL_DIFFERENT_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__LINEAR_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__ELEMENT_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__INTERVAL_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__NO_OVERLAP_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__NO_OVERLAP2D_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__CUMULATIVE_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__RESERVOIR_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__CIRCUIT_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__ROUTES_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(
+            super::routes_constraint_proto::__NODE_EXPRESSIONS_TEXT_ANY,
+        );
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__TABLE_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__INVERSE_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__AUTOMATON_CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__LIST_OF_VARIABLES_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__CONSTRAINT_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__CP_OBJECTIVE_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__FLOAT_OBJECTIVE_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__DECISION_STRATEGY_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__PARTIAL_VARIABLE_ASSIGNMENT_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__SPARSE_PERMUTATION_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__DENSE_MATRIX_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")] reg.register_text_any(super::__SYMMETRY_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")] reg.register_text_any(super::__CP_MODEL_PROTO_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__CP_SOLVER_SOLUTION_TEXT_ANY);
+        #[cfg(feature = "text")]
+        reg.register_text_any(super::__CP_SOLVER_RESPONSE_TEXT_ANY);
+        #[cfg(feature = "text")] reg.register_text_any(super::__SAT_PARAMETERS_TEXT_ANY);
+    }
 }
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::IntegerVariableProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::IntegerVariableProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::BoolArgumentProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::BoolArgumentProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::LinearExpressionProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::LinearExpressionProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::LinearArgumentProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::LinearArgumentProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::AllDifferentConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::AllDifferentConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::LinearConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::LinearConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::ElementConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::ElementConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::IntervalConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::IntervalConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::NoOverlapConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::NoOverlapConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::NoOverlap2DConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::NoOverlap2DConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CumulativeConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CumulativeConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::ReservoirConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::ReservoirConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CircuitConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CircuitConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::RoutesConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::RoutesConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::TableConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::TableConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::InverseConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::InverseConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::AutomatonConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::AutomatonConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::ListOfVariablesProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::ListOfVariablesProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::ConstraintProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::ConstraintProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CpObjectiveProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CpObjectiveProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::FloatObjectiveProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::FloatObjectiveProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::DecisionStrategyProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::DecisionStrategyProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::PartialVariableAssignmentView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::PartialVariableAssignmentOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::SparsePermutationProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::SparsePermutationProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::DenseMatrixProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::DenseMatrixProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::SymmetryProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::SymmetryProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CpModelProtoView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CpModelProtoOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CpSolverSolutionView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CpSolverSolutionOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CpSolverResponseView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::CpSolverResponseOwnedView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::SatParametersView;
+#[cfg(feature = "views")]
 #[doc(inline)]
 pub use self::__buffa::view::SatParametersOwnedView;
+#[cfg(any(feature = "json", feature = "text"))]
+#[doc(inline)]
+pub use self::__buffa::register_types;

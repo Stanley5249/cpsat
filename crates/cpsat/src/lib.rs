@@ -27,7 +27,11 @@
 //! OR-Tools aborts the process on an internal `CHECK` failure, which Rust
 //! cannot catch. [`validate_model`] reports invalid models without solving.
 
+#[cfg(not(feature = "views"))]
+compile_error!("the `views` feature is required, because solution events are Buffa views");
+
 mod diagnostics;
+mod domain;
 mod error;
 mod model;
 mod native;
@@ -44,7 +48,8 @@ mod solver;
 
 /// The Protobuf runtime, re-exported so callers use the same `Message` trait.
 pub use buffa;
-pub use diagnostics::{model_stats, response_stats, validate_model};
+pub use diagnostics::{default_parameters, model_stats, response_stats, validate_model};
+pub use domain::Domain;
 pub use error::{Error, Result};
 pub use model::not;
 pub use solver::{Event, EventSet, NoEvents, Solver, StopHandle, solve};
