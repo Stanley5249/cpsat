@@ -7,6 +7,8 @@
 #include <mutex>
 #include <string>
 
+#include "google/protobuf/descriptor.h"
+#include "google/protobuf/message.h"
 #include "ortools/sat/cp_model.pb.h"
 #include "ortools/sat/sat_parameters.pb.h"
 #include "ortools/sat/swig_helper.h"
@@ -35,18 +37,63 @@ void Fill(CpsatBuffer* out, const std::string& bytes) {
 
 // Serializes straight into the bridge-owned buffer, without an intermediate
 // std::string.
-void FillResponse(CpsatBuffer* out, const CpSolverResponse& message) {
+void FillMessage(CpsatBuffer* out, const google::protobuf::Message& message) {
   const size_t size = message.ByteSizeLong();
+  const std::string name(message.GetTypeName());
   out->data = nullptr;
   out->len = size;
   if (size == 0) return;
-  if (size > static_cast<size_t>(INT_MAX)) {
-    throw Error{"CpSolverResponse exceeds 2 GiB"};
-  }
+  if (size > static_cast<size_t>(INT_MAX)) throw Error{name + " exceeds 2 GiB"};
   out->data = static_cast<uint8_t*>(std::malloc(size));
   if (out->data == nullptr) throw std::bad_alloc();
   if (!message.SerializeToArray(out->data, static_cast<int>(size))) {
-    throw Error{"failed to serialize CpSolverResponse"};
+    throw Error{"failed to serialize " + name};
+  }
+}
+
+// Sets every singular field to its schema default, so the serialized message
+// carries the defaults that unset proto2 fields otherwise hide.
+void SetDefaults(google::protobuf::Message& message) {
+  using google::protobuf::FieldDescriptor;
+  const auto* descriptor = message.GetDescriptor();
+  const auto* reflection = message.GetReflection();
+  for (int i = 0; i < descriptor->field_count(); ++i) {
+    const FieldDescriptor* f = descriptor->field(i);
+    if (f->is_repeated() || f->real_containing_oneof() != nullptr) continue;
+    switch (f->cpp_type()) {
+      case FieldDescriptor::CPPTYPE_INT32:
+        reflection->SetInt32(&message, f, f->default_value_int32());
+        break;
+      case FieldDescriptor::CPPTYPE_INT64:
+        reflection->SetInt64(&message, f, f->default_value_int64());
+        break;
+      case FieldDescriptor::CPPTYPE_UINT32:
+        reflection->SetUInt32(&message, f, f->default_value_uint32());
+        break;
+      case FieldDescriptor::CPPTYPE_UINT64:
+        reflection->SetUInt64(&message, f, f->default_value_uint64());
+        break;
+      case FieldDescriptor::CPPTYPE_DOUBLE:
+        reflection->SetDouble(&message, f, f->default_value_double());
+        break;
+      case FieldDescriptor::CPPTYPE_FLOAT:
+        reflection->SetFloat(&message, f, f->default_value_float());
+        break;
+      case FieldDescriptor::CPPTYPE_BOOL:
+        reflection->SetBool(&message, f, f->default_value_bool());
+        break;
+      case FieldDescriptor::CPPTYPE_ENUM:
+        reflection->SetEnumValue(&message, f,
+                                 f->default_value_enum()->number());
+        break;
+      case FieldDescriptor::CPPTYPE_STRING:
+        reflection->SetString(&message, f,
+                              std::string(f->default_value_string()));
+        break;
+      case FieldDescriptor::CPPTYPE_MESSAGE:
+        // A nested message has no schema default.
+        break;
+    }
   }
 }
 
@@ -192,7 +239,7 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
 
     // Solve joins its worker threads before it returns, so every event
     // callback happens before the caller reads its callback state.
-    FillResponse(response, wrapper.Solve(model_proto));
+    FillMessage(response, wrapper.Solve(model_proto));
   });
 }
 
@@ -226,6 +273,16 @@ int32_t cpsat_response_stats(const uint8_t* response, size_t response_len,
     CpSolverResponse response_proto;
     Parse(response_proto, response, response_len, "CpSolverResponse");
     Fill(stats, CpSatHelper::SolverResponseStats(response_proto));
+  });
+}
+
+int32_t cpsat_default_parameters(CpsatBuffer* params, CpsatBuffer* error) {
+  params->data = nullptr;
+  params->len = 0;
+  return Guard(error, [&] {
+    SatParameters parameters;
+    SetDefaults(parameters);
+    FillMessage(params, parameters);
   });
 }
 

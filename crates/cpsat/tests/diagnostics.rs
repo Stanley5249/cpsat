@@ -34,3 +34,19 @@ fn describes_model_and_response() {
     let stats = cpsat::response_stats(&response).unwrap();
     assert!(stats.contains("status: OPTIMAL"), "{stats}");
 }
+
+#[test]
+fn reads_parameter_defaults_from_or_tools() {
+    let params = cpsat::default_parameters().unwrap();
+    // Values from the [default = X] annotations in sat_parameters.proto.
+    assert_eq!(params.num_workers, Some(0));
+    assert_eq!(params.cp_model_presolve, Some(true));
+    assert_eq!(params.log_search_progress, Some(false));
+    assert_eq!(params.max_time_in_seconds, Some(f64::INFINITY));
+    // Solving with every default spelled out matches solving with none.
+    let mut model = CpModelProto::default();
+    let x = model.add_int_var(0, 3);
+    model.maximize(&[(x, 1)]);
+    let response = cpsat::solve(&model, &params).unwrap();
+    assert_eq!(response.value(x), Some(3));
+}

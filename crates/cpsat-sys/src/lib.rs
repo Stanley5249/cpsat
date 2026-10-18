@@ -81,5 +81,6 @@ unsafe extern "C" {
         stats: *mut CpsatBuffer,
         error: *mut CpsatBuffer,
     ) -> i32;
+    pub fn cpsat_default_parameters(params: *mut CpsatBuffer, error: *mut CpsatBuffer) -> i32;
     pub fn cpsat_buffer_free(buffer: *mut CpsatBuffer);
 }
