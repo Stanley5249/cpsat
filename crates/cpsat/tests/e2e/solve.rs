@@ -112,14 +112,14 @@ fn first_solution_follows_the_hint() {
     model.add((x + y).eq(10));
     // Presolve solves this model outright and skips the hint, in Python too,
     // so it is off here.
-    let params = single_worker()
+    let parameters = single_worker()
         .with_stop_after_first_solution(true)
         .with_cp_model_presolve(false);
-    assert_ne!(model.solve(&params).unwrap().solution, [7, 3]);
+    assert_ne!(model.solve(&parameters).unwrap().solution, [7, 3]);
 
     model.add_hint(x, 7);
     model.add_hint(y, 3);
-    assert_eq!(model.solve(&params).unwrap().solution, [7, 3]);
+    assert_eq!(model.solve(&parameters).unwrap().solution, [7, 3]);
 
     model.clear_hints();
     assert!(model.proto().solution_hint.is_unset());
@@ -127,8 +127,8 @@ fn first_solution_follows_the_hint() {
 
 #[test]
 fn honors_time_limit() {
-    let params = SatParameters::default().with_max_time_in_seconds(0.5);
-    let response = crate::common::hard_model().solve(&params).unwrap();
+    let parameters = SatParameters::default().with_max_time_in_seconds(0.5);
+    let response = crate::common::hard_model().solve(&parameters).unwrap();
     assert_ne!(response.status(), CpSolverStatus::OPTIMAL);
     assert!(
         response.wall_time < 30.0,
@@ -141,11 +141,11 @@ fn honors_time_limit() {
 fn fills_additional_solutions_when_asked() {
     let mut model = Model::new();
     model.int_var(0..=2);
-    let params = single_worker()
+    let parameters = single_worker()
         .with_enumerate_all_solutions(true)
         .with_fill_additional_solutions_in_response(true)
         .with_solution_pool_size(10);
-    let response = model.solve(&params).unwrap();
+    let response = model.solve(&parameters).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     let mut values: Vec<i64> = response
         .additional_solutions

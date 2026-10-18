@@ -37,16 +37,16 @@ fn describes_model_and_response() {
 
 #[test]
 fn reads_parameter_defaults_from_or_tools() {
-    let params = cpsat::default_parameters().unwrap();
+    let parameters = cpsat::default_parameters().unwrap();
     // Values from the [default = X] annotations in sat_parameters.proto.
-    assert_eq!(params.num_workers, Some(0));
-    assert_eq!(params.cp_model_presolve, Some(true));
-    assert_eq!(params.log_search_progress, Some(false));
-    assert_eq!(params.max_time_in_seconds, Some(f64::INFINITY));
+    assert_eq!(parameters.num_workers, Some(0));
+    assert_eq!(parameters.cp_model_presolve, Some(true));
+    assert_eq!(parameters.log_search_progress, Some(false));
+    assert_eq!(parameters.max_time_in_seconds, Some(f64::INFINITY));
     // Solving with every default spelled out matches solving with none.
     let mut model = Model::new();
     let x = model.int_var(0..=3);
     model.maximize(x);
-    let response = model.solve(&params).unwrap();
+    let response = model.solve(&parameters).unwrap();
     assert_eq!(response.value(x), Some(3));
 }

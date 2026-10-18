@@ -24,7 +24,7 @@ pub fn hard_model() -> CpModelProto {
 }
 
 /// Parameters that would let `hard_model` run for a minute without a stop.
-pub fn long_params() -> SatParameters {
+pub fn long_parameters() -> SatParameters {
     SatParameters::default()
         .with_max_time_in_seconds(60.0)
         .with_num_workers(2)

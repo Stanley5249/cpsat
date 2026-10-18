@@ -18,11 +18,11 @@ fn three_vars(model: &mut Model) -> [IntVar; 3] {
 /// Every solution of `model`, as the values of `exprs`, in the order found.
 fn all_solutions<const N: usize>(
     model: &Model,
-    params: SatParameters,
+    parameters: SatParameters,
     exprs: &[LinearExpr; N],
 ) -> Vec<[i64; N]> {
     let mut solutions = Vec::new();
-    let response = Solver::new(&params.with_enumerate_all_solutions(true))
+    let response = Solver::new(&parameters.with_enumerate_all_solutions(true))
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 solutions.push(exprs.each_ref().map(|expr| view.value(expr).unwrap()));
@@ -94,10 +94,10 @@ fn search_for_all_solutions() {
     let mut model = Model::new();
     let [x, y, _] = three_vars(&mut model);
     model.add(x.ne(y));
-    let params = SatParameters::default().with_enumerate_all_solutions(true);
+    let parameters = SatParameters::default().with_enumerate_all_solutions(true);
 
     let mut solutions = Vec::new();
-    let response = Solver::new(&params)
+    let response = Solver::new(&parameters)
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 solutions.push(view.solution.to_vec());
@@ -118,10 +118,10 @@ fn search_for_all_solutions() {
 fn stop_after_n_solutions() {
     let mut model = Model::new();
     three_vars(&mut model);
-    let params = SatParameters::default().with_enumerate_all_solutions(true);
+    let parameters = SatParameters::default().with_enumerate_all_solutions(true);
 
     let mut count = 0;
-    let response = Solver::new(&params)
+    let response = Solver::new(&parameters)
         .on_event(EventSet::SOLUTION, |_| {
             count += 1;
             if count >= 5 {
@@ -218,9 +218,9 @@ fn channeling() {
         VariableSelectionStrategy::CHOOSE_FIRST,
         DomainReductionStrategy::SELECT_MIN_VALUE,
     );
-    let params = SatParameters::default().with_search_branching(SearchBranching::FIXED_SEARCH);
+    let parameters = SatParameters::default().with_search_branching(SearchBranching::FIXED_SEARCH);
 
-    let solutions = all_solutions(&model, params, &[x.into(), y.into(), b.into()]);
+    let solutions = all_solutions(&model, parameters, &[x.into(), y.into(), b.into()]);
     let expected: Vec<[i64; 3]> = (0..=10)
         .map(|x| if x < 5 { [x, 0, 0] } else { [x, 10 - x, 1] })
         .collect();
@@ -254,9 +254,9 @@ fn step_function() {
         VariableSelectionStrategy::CHOOSE_FIRST,
         DomainReductionStrategy::SELECT_MIN_VALUE,
     );
-    let params = SatParameters::default().with_search_branching(SearchBranching::FIXED_SEARCH);
+    let parameters = SatParameters::default().with_search_branching(SearchBranching::FIXED_SEARCH);
 
-    let solutions = all_solutions(&model, params, &[x.into(), expr.into()]);
+    let solutions = all_solutions(&model, parameters, &[x.into(), expr.into()]);
     let step = |x| match x {
         5 | 6 | 8..=10 => 0,
         7 => 3,

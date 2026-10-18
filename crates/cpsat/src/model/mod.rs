@@ -94,8 +94,8 @@ impl Model {
     /// # Errors
     ///
     /// Returns an error if the native bridge fails.
-    pub fn solve(&self, params: &SatParameters) -> Result<CpSolverResponse> {
-        self.0.solve(params)
+    pub fn solve(&self, parameters: &SatParameters) -> Result<CpSolverResponse> {
+        self.0.solve(parameters)
     }
 
     /// Validates the model, like Python's `validate`. See

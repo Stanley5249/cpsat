@@ -5,12 +5,12 @@ use cpsat::proto::{CpSolverStatus, SatParameters, sat_parameters};
 
 #[test]
 fn proto2_presence_survives_round_trip() {
-    let params = SatParameters {
+    let parameters = SatParameters {
         num_workers: Some(8),
         cp_model_presolve: Some(false),
         ..Default::default()
     };
-    let decoded = SatParameters::decode_from_slice(&params.encode_to_vec()).unwrap();
+    let decoded = SatParameters::decode_from_slice(&parameters.encode_to_vec()).unwrap();
     assert_eq!(decoded.num_workers, Some(8));
     // An explicit false is present, unlike an unset field.
     assert_eq!(decoded.cp_model_presolve, Some(false));
@@ -24,20 +24,20 @@ fn unset_parameters_encode_to_nothing() {
 
 #[test]
 fn proto2_enum_values_match_schema() {
-    let params = SatParameters {
+    let parameters = SatParameters {
         search_branching: Some(sat_parameters::SearchBranching::FIXED_SEARCH),
         ..Default::default()
     };
     // Field 82 `search_branching`, varint FIXED_SEARCH = 1.
-    assert_eq!(params.encode_to_vec(), [0x90, 0x05, 0x01]);
+    assert_eq!(parameters.encode_to_vec(), [0x90, 0x05, 0x01]);
 }
 
 #[test]
 fn preserves_unknown_fields() {
     // Field 100000, varint 7, from a newer schema.
     let bytes = [0x80, 0xea, 0x30, 0x07];
-    let params = SatParameters::decode_from_slice(&bytes).unwrap();
-    assert_eq!(params.encode_to_vec(), bytes);
+    let parameters = SatParameters::decode_from_slice(&bytes).unwrap();
+    assert_eq!(parameters.encode_to_vec(), bytes);
 }
 
 #[test]

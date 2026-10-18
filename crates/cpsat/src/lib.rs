@@ -16,8 +16,8 @@
 //! model.add((x + y).le(4));
 //! model.maximize(2 * x + 3 * y);
 //!
-//! let params = SatParameters::default().with_num_workers(8);
-//! let response = model.solve(&params)?;
+//! let parameters = SatParameters::default().with_num_workers(8);
+//! let response = model.solve(&parameters)?;
 //! println!("{}: x = {:?}", response.status(), response.value(x));
 //! # Ok::<(), cpsat::Error>(())
 //! ```

@@ -79,11 +79,11 @@ impl CpSolverResponse {
 ///
 /// Returns an error if the native call fails or its output does not decode.
 pub fn default_parameters() -> Result<SatParameters> {
-    let mut params = Buffer::new();
+    let mut parameters = Buffer::new();
     let mut error = Buffer::new();
     // SAFETY: both buffers are empty bridge buffers.
     let code =
-        unsafe { cpsat_sys::cpsat_default_parameters(params.as_mut_ptr(), error.as_mut_ptr()) };
+        unsafe { cpsat_sys::cpsat_default_parameters(parameters.as_mut_ptr(), error.as_mut_ptr()) };
     crate::native::check(code, &error)?;
-    Ok(SatParameters::decode_from_slice(params.bytes())?)
+    Ok(SatParameters::decode_from_slice(parameters.bytes())?)
 }

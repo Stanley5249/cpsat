@@ -10,10 +10,10 @@ use buffa::MessageView;
 use cpsat::prelude::*;
 use cpsat::proto::CpModelProto;
 
-use crate::common::{hard_model, long_params};
+use crate::common::{hard_model, long_parameters};
 
 /// Generous, because CI runners are slow and run tests in parallel. A stop
-/// that fails runs for the full 60 seconds of `long_params`.
+/// that fails runs for the full 60 seconds of `long_parameters`.
 const STOPPED_WITHIN: Duration = Duration::from_secs(30);
 
 /// `x` in `[0, 3]` maximized, with `x` at index 0.
@@ -59,10 +59,10 @@ fn reports_best_bounds() {
     let mut bounds = Vec::new();
     // A busy machine reports bounds late, so stop after two instead of
     // after a fixed time.
-    let params = SatParameters::default()
+    let parameters = SatParameters::default()
         .with_max_time_in_seconds(30.0)
         .with_num_workers(8);
-    Solver::new(&params)
+    Solver::new(&parameters)
         .on_event(EventSet::BEST_BOUND, |event| {
             if let Event::BestBound(bound) = event {
                 bounds.push(bound);
@@ -82,19 +82,19 @@ fn reports_best_bounds() {
 
 #[test]
 fn forwards_logs_and_parameters() {
-    let params = SatParameters::default()
+    let parameters = SatParameters::default()
         .with_log_search_progress(true)
         .with_log_to_stdout(false)
         .with_num_workers(3);
     let mut log = String::new();
-    let mut solver = Solver::new(&params).on_event(EventSet::LOG, |event| {
+    let mut solver = Solver::new(&parameters).on_event(EventSet::LOG, |event| {
         if let Event::Log(line) = event {
             log.push_str(line);
             log.push('\n');
         }
         ControlFlow::Continue(())
     });
-    assert_eq!(solver.params().num_workers, Some(3));
+    assert_eq!(solver.parameters().num_workers, Some(3));
     solver.solve(tiny_model()).unwrap();
     // OR-Tools 9.15 echoes non-default parameters, which proves they reached
     // C++. The wording may change with the pinned version.
@@ -104,7 +104,7 @@ fn forwards_logs_and_parameters() {
 #[test]
 fn callback_break_stops_search() {
     let start = Instant::now();
-    let response = Solver::new(&long_params())
+    let response = Solver::new(&long_parameters())
         .on_event(EventSet::SOLUTION, |_| ControlFlow::Break(()))
         .solve(hard_model())
         .unwrap();
@@ -115,7 +115,7 @@ fn callback_break_stops_search() {
 #[test]
 fn stop_handle_works_inside_callback() {
     let stop = StopHandle::new();
-    let response = Solver::new(&long_params())
+    let response = Solver::new(&long_parameters())
         .on_event(EventSet::SOLUTION, |_| {
             stop.stop();
             ControlFlow::Continue(())
@@ -135,7 +135,7 @@ fn stops_from_another_thread() {
             thread::sleep(Duration::from_millis(500));
             stop.stop();
         });
-        Solver::new(&long_params())
+        Solver::new(&long_parameters())
             .with_stop_handle(&stop)
             .solve(hard_model())
             .unwrap()
@@ -152,7 +152,7 @@ fn one_handle_stops_concurrent_solves() {
         let solves: Vec<_> = (0..2)
             .map(|_| {
                 scope.spawn(|| {
-                    Solver::new(&long_params())
+                    Solver::new(&long_parameters())
                         .with_stop_handle(&stop)
                         .solve(hard_model())
                         .unwrap()
@@ -178,7 +178,7 @@ fn stopped_handle_stops_every_later_solve() {
     for _ in 0..2 {
         let mut solutions = 0;
         let start = Instant::now();
-        Solver::new(&long_params())
+        Solver::new(&long_parameters())
             .on_event(EventSet::SOLUTION, |_| {
                 solutions += 1;
                 ControlFlow::Continue(())
@@ -205,7 +205,7 @@ fn callback_panic_stops_and_resumes_after_solve() {
     let start = Instant::now();
     let mut calls = 0;
     let panic = catch_unwind(AssertUnwindSafe(|| {
-        Solver::new(&long_params())
+        Solver::new(&long_parameters())
             .on_event(EventSet::SOLUTION, |_| {
                 calls += 1;
                 panic!("user callback failed");

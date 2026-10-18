@@ -23,8 +23,8 @@ impl CpModelProto {
     ///
     /// Returns an error if the native bridge fails. An invalid model is not an
     /// error; the response status is `MODEL_INVALID`.
-    pub fn solve(&self, params: &SatParameters) -> Result<CpSolverResponse> {
-        run(self, params, EventSet::NONE, None, |_| {
+    pub fn solve(&self, parameters: &SatParameters) -> Result<CpSolverResponse> {
+        run(self, parameters, EventSet::NONE, None, |_| {
             ControlFlow::Continue(())
         })
     }
@@ -39,8 +39,8 @@ impl CpModelProto {
 /// use cpsat::{Event, EventSet, Solver};
 ///
 /// let model = CpModelProto::default();
-/// let params = SatParameters::default().with_num_workers(8);
-/// let response = Solver::new(&params)
+/// let parameters = SatParameters::default().with_num_workers(8);
+/// let response = Solver::new(&parameters)
 ///     .on_event(EventSet::SOLUTION, |event| {
 ///         if let Event::Solution(view) = event {
 ///             println!("objective {}", view.objective_value);
@@ -52,20 +52,20 @@ impl CpModelProto {
 /// ```
 #[derive(Debug)]
 pub struct Solver<'a, F = NoEvents> {
-    params: &'a SatParameters,
+    parameters: &'a SatParameters,
     events: EventSet,
     stop: Option<&'a StopHandle>,
     on_event: F,
 }
 
 impl<'a> Solver<'a> {
-    /// A solver that borrows `params`, like [`CpModelProto::solve`] does. Build a new solver
+    /// A solver that borrows `parameters`, like [`CpModelProto::solve`] does. Build a new solver
     /// to solve with other parameters, and bind the parameters to a variable
     /// first to keep the solver for several solves.
     #[must_use]
-    pub fn new(params: &'a SatParameters) -> Self {
+    pub fn new(parameters: &'a SatParameters) -> Self {
         Self {
-            params,
+            parameters,
             events: EventSet::NONE,
             stop: None,
             on_event: |_| ControlFlow::Continue(()),
@@ -83,8 +83,8 @@ impl Default for Solver<'_> {
 impl<'a, F> Solver<'a, F> {
     /// The parameters, like Python's `solver.parameters`.
     #[must_use]
-    pub fn params(&self) -> &'a SatParameters {
-        self.params
+    pub fn parameters(&self) -> &'a SatParameters {
+        self.parameters
     }
 
     /// Reports `events` to `on_event`, which runs on a solver thread, one
@@ -97,7 +97,7 @@ impl<'a, F> Solver<'a, F> {
         G: FnMut(Event<'_>) -> ControlFlow<()> + Send,
     {
         Solver {
-            params: self.params,
+            parameters: self.parameters,
             events,
             stop: self.stop,
             on_event,
@@ -128,7 +128,7 @@ impl<'a, F> Solver<'a, F> {
     {
         run(
             model.as_ref(),
-            self.params,
+            self.parameters,
             self.events,
             self.stop,
             &mut self.on_event,
@@ -138,7 +138,7 @@ impl<'a, F> Solver<'a, F> {
 
 fn run<F>(
     model: &CpModelProto,
-    params: &SatParameters,
+    parameters: &SatParameters,
     events: EventSet,
     stop: Option<&StopHandle>,
     on_event: F,
@@ -147,7 +147,7 @@ where
     F: FnMut(Event<'_>) -> ControlFlow<()> + Send,
 {
     let model = model.encode_to_vec();
-    let params = params.encode_to_vec();
+    let parameters = parameters.encode_to_vec();
     let session = Session::new()?;
     // SAFETY: the guard drops at the end of this scope, before the session.
     let _attached = stop.map(|stop| unsafe { crate::solver::stop::attach(stop, session.as_ptr()) });
@@ -165,8 +165,8 @@ where
             session.as_ptr(),
             model.as_ptr(),
             model.len(),
-            params.as_ptr(),
-            params.len(),
+            parameters.as_ptr(),
+            parameters.len(),
             events.bits(),
             Some(trampoline::<F>),
             (&raw mut state).cast::<c_void>(),

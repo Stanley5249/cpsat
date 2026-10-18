@@ -51,10 +51,10 @@ fn text_format_round_trips() {
     assert_eq!(decoded, expected());
 
     // Python's text form of SatParameters(num_workers=8, log_search_progress=True).
-    let params: SatParameters =
+    let parameters: SatParameters =
         buffa::text::decode_from_str("log_search_progress: true\nnum_workers: 8\n").unwrap();
-    assert_eq!(params.num_workers, Some(8));
-    assert_eq!(params.log_search_progress, Some(true));
+    assert_eq!(parameters.num_workers, Some(8));
+    assert_eq!(parameters.log_search_progress, Some(true));
 }
 
 #[cfg(feature = "json")]
