@@ -1,7 +1,8 @@
 //! Text format and JSON, read from what Python OR-Tools 9.15 writes:
 //! `CpModel.export_to_file("model.txt")` and `json_format.MessageToJson`.
 
-use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
+use cpsat::prelude::*;
+use cpsat::proto::CpModelProto;
 
 /// x + y <= 4, maximize 2x + 3y over x, y in [0, 10]. The optimum is 12.
 const MODEL_TEXT: &str = r#"variables { name: "x" domain: [0, 10] }
@@ -21,14 +22,14 @@ objective {
 "#;
 
 fn expected() -> CpModelProto {
-    let mut model = CpModelProto::default();
-    let x = model.add_int_var(0, 10);
-    let y = model.add_int_var(0, 10);
-    model.variables[0].name = "x".into();
-    model.variables[1].name = "y".into();
-    model.add_linear(&[(x, 1), (y, 1)], i64::MIN, 4);
-    model.maximize(&[(x, 2), (y, 3)]);
-    model
+    let mut model = Model::new();
+    let x = model.int_var(0..=10);
+    let y = model.int_var(0..=10);
+    model[x].name = "x".into();
+    model[y].name = "y".into();
+    model.add((x + y).le(4));
+    model.maximize(2 * x + 3 * y);
+    model.into_proto()
 }
 
 #[cfg(feature = "text")]
@@ -36,7 +37,7 @@ fn expected() -> CpModelProto {
 fn reads_python_text_format() {
     let model: CpModelProto = buffa::text::decode_from_str(MODEL_TEXT).unwrap();
     assert_eq!(model, expected());
-    let response = cpsat::solve(&model, &SatParameters::default()).unwrap();
+    let response = solve(&model, &SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert!((response.objective_value - 12.0).abs() < 1e-9);
 }

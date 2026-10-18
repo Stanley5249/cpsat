@@ -5,17 +5,18 @@
 mod common;
 
 use buffa::Message;
-use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
+use cpsat::prelude::*;
+use cpsat::proto::CpModelProto;
 
 /// max 2x + 3y subject to x + y <= 4, x + 3y <= 6, x, y in [0, 10].
 /// The optimum is x = 3, y = 1 with objective 9.
-fn small_model() -> (CpModelProto, i32, i32) {
-    let mut model = CpModelProto::default();
-    let x = model.add_int_var(0, 10);
-    let y = model.add_int_var(0, 10);
-    model.add_linear(&[(x, 1), (y, 1)], i64::MIN, 4);
-    model.add_linear(&[(x, 1), (y, 3)], i64::MIN, 6);
-    model.maximize(&[(x, 2), (y, 3)]);
+fn small_model() -> (Model, IntVar, IntVar) {
+    let mut model = Model::new();
+    let x = model.int_var(0..=10);
+    let y = model.int_var(0..=10);
+    model.add((x + y).le(4));
+    model.add((x + 3 * y).le(6));
+    model.maximize(2 * x + 3 * y);
     (model, x, y)
 }
 
@@ -26,25 +27,31 @@ fn single_worker() -> SatParameters {
 #[test]
 fn solves_to_optimality() {
     let (model, x, y) = small_model();
-    let response = cpsat::solve(&model, &SatParameters::default()).unwrap();
+    let response = solve(model.proto(), &SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_eq!((response.value(x), response.value(y)), (Some(3), Some(1)));
+    assert_eq!(response.value(2 * x + 3 * y - 1), Some(8));
     assert!((response.objective_value - 9.0).abs() < 1e-9);
     assert!((response.best_objective_bound - 9.0).abs() < 1e-9);
 }
 
 #[test]
-fn reads_negated_references() {
-    let mut model = CpModelProto::default();
-    let x = model.add_int_var(4, 4);
-    let b = model.add_bool_var();
-    model.add_linear(&[(b, 1)], 1, 1);
-    let response = cpsat::solve(&model, &SatParameters::default()).unwrap();
-    assert_eq!(response.value(cpsat::not(x)), Some(-4));
+fn reads_negated_literals_and_expressions() {
+    let mut model = Model::new();
+    let x = model.constant(4);
+    let b = model.bool_var();
+    model.add(b.eq(1));
+    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    assert_eq!(response.value(-x), Some(-4));
+    assert_eq!(response.value(7), Some(7));
     assert_eq!(response.boolean_value(b), Some(true));
-    assert_eq!(response.boolean_value(cpsat::not(b)), Some(false));
-    assert_eq!(response.value(7), None);
-    assert_eq!(response.value(i32::MIN), None);
+    assert_eq!(response.boolean_value(!b), Some(false));
+    assert_eq!(response.value(!b), Some(0));
+
+    // A handle from a larger model is out of range here.
+    let mut larger = Model::new();
+    let far = [(); 3].map(|()| larger.int_var(0..=1))[2];
+    assert_eq!(response.value(far), None);
 }
 
 #[test]
@@ -56,19 +63,19 @@ fn displays_status_like_python() {
 
 #[test]
 fn reports_infeasible() {
-    let mut model = CpModelProto::default();
-    let x = model.add_int_var(0, 3);
-    model.add_linear(&[(x, 1)], 5, 10);
-    let response = cpsat::solve(&model, &SatParameters::default()).unwrap();
+    let mut model = Model::new();
+    let x = model.int_var(0..=3);
+    model.add(x.in_domain(5..=10));
+    let response = solve(model.proto(), &SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::INFEASIBLE);
     assert_eq!(response.value(x), None);
 }
 
 #[test]
 fn reports_model_invalid_as_status() {
-    let mut model = CpModelProto::default();
-    model.add_int_var(5, 1);
-    let response = cpsat::solve(&model, &SatParameters::default()).unwrap();
+    let mut model = Model::new();
+    model.int_var(Domain::new(5, 1));
+    let response = solve(model.proto(), &SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::MODEL_INVALID);
 }
 
@@ -76,31 +83,31 @@ fn reports_model_invalid_as_status() {
 fn resolves_after_model_change() {
     let (mut model, x, y) = small_model();
     assert_eq!(
-        cpsat::solve(&model, &single_worker()).unwrap().solution,
+        solve(model.proto(), &single_worker()).unwrap().solution,
         [3, 1]
     );
 
     // Tighten x <= 1 through its domain.
-    model.variables[usize::try_from(x).unwrap()].domain = vec![0, 1];
+    model[x].domain = vec![0, 1];
     assert_eq!(
-        cpsat::solve(&model, &single_worker()).unwrap().solution,
+        solve(model.proto(), &single_worker()).unwrap().solution,
         [0, 2]
     );
 
     // Replace the objective, then remove the second constraint, so y is
     // bounded only by x + y <= 4.
-    model.maximize(&[(y, 1)]);
-    model.constraints.truncate(1);
-    let response = cpsat::solve(&model, &single_worker()).unwrap();
+    model.maximize(y);
+    model.proto_mut().constraints.truncate(1);
+    let response = solve(model.proto(), &single_worker()).unwrap();
     assert_eq!(response.value(y), Some(4));
 }
 
 #[test]
 fn clone_and_serialize_round_trip() {
     let (model, ..) = small_model();
-    let decoded = CpModelProto::decode_from_slice(&model.encode_to_vec()).unwrap();
-    assert_eq!(model.clone(), decoded);
-    let response = cpsat::solve(&decoded, &SatParameters::default()).unwrap();
+    let decoded = CpModelProto::decode_from_slice(&model.proto().encode_to_vec()).unwrap();
+    assert_eq!(model.clone(), Model::from(decoded.clone()));
+    let response = solve(&decoded, &SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
 }
 
@@ -108,29 +115,29 @@ fn clone_and_serialize_round_trip() {
 fn first_solution_follows_the_hint() {
     // x + y == 10 has eleven solutions; without the hint the first one found
     // is not (7, 3).
-    let mut model = CpModelProto::default();
-    let x = model.add_int_var(0, 10);
-    let y = model.add_int_var(0, 10);
-    model.add_linear(&[(x, 1), (y, 1)], 10, 10);
+    let mut model = Model::new();
+    let x = model.int_var(0..=10);
+    let y = model.int_var(0..=10);
+    model.add((x + y).eq(10));
     // Presolve solves this model outright and skips the hint, in Python too,
     // so it is off here.
     let params = single_worker()
         .with_stop_after_first_solution(true)
         .with_cp_model_presolve(false);
-    assert_ne!(cpsat::solve(&model, &params).unwrap().solution, [7, 3]);
+    assert_ne!(solve(model.proto(), &params).unwrap().solution, [7, 3]);
 
     model.add_hint(x, 7);
     model.add_hint(y, 3);
-    assert_eq!(cpsat::solve(&model, &params).unwrap().solution, [7, 3]);
+    assert_eq!(solve(model.proto(), &params).unwrap().solution, [7, 3]);
 
     model.clear_hints();
-    assert!(model.solution_hint.is_unset());
+    assert!(model.proto().solution_hint.is_unset());
 }
 
 #[test]
 fn honors_time_limit() {
     let params = SatParameters::default().with_max_time_in_seconds(0.5);
-    let response = cpsat::solve(&common::hard_model(), &params).unwrap();
+    let response = solve(&common::hard_model(), &params).unwrap();
     assert_ne!(response.status(), CpSolverStatus::OPTIMAL);
     assert!(
         response.wall_time < 30.0,
@@ -141,13 +148,13 @@ fn honors_time_limit() {
 
 #[test]
 fn fills_additional_solutions_when_asked() {
-    let mut model = CpModelProto::default();
-    model.add_int_var(0, 2);
+    let mut model = Model::new();
+    model.int_var(0..=2);
     let params = single_worker()
         .with_enumerate_all_solutions(true)
         .with_fill_additional_solutions_in_response(true)
         .with_solution_pool_size(10);
-    let response = cpsat::solve(&model, &params).unwrap();
+    let response = solve(model.proto(), &params).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     let mut values: Vec<i64> = response
         .additional_solutions

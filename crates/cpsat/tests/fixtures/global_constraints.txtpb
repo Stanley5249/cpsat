@@ -1,0 +1,135 @@
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 1
+}
+variables {
+  domain: 0
+  domain: 1
+}
+constraints {
+  all_diff {
+    exprs {
+      vars: 0
+      coeffs: 1
+    }
+    exprs {
+      vars: 1
+      coeffs: 1
+      offset: 1
+    }
+    exprs {
+      vars: 2
+      coeffs: 2
+    }
+  }
+}
+constraints {
+  element {
+    linear_index {
+      vars: 0
+      coeffs: 1
+    }
+    linear_target {
+      offset: 2
+    }
+    exprs {
+      vars: 1
+      coeffs: 1
+    }
+    exprs {
+      offset: 3
+    }
+    exprs {
+      vars: 2
+      coeffs: 1
+    }
+  }
+}
+constraints {
+  inverse {
+    f_direct: 0
+    f_direct: 1
+    f_inverse: 1
+    f_inverse: 0
+  }
+}
+constraints {
+  table {
+    values: 1
+    values: 2
+    values: 3
+    values: 4
+    exprs {
+      vars: 0
+      coeffs: 1
+    }
+    exprs {
+      vars: 1
+      coeffs: 1
+      offset: 1
+    }
+  }
+}
+constraints {
+  table {
+    values: 1
+    values: 2
+    negated: true
+    exprs {
+      vars: 0
+      coeffs: 1
+    }
+    exprs {
+      vars: 1
+      coeffs: 1
+    }
+  }
+}
+constraints {
+  automaton {
+    final_states: 1
+    final_states: 2
+    transition_tail: 0
+    transition_tail: 1
+    transition_head: 1
+    transition_head: 2
+    transition_label: 1
+    transition_label: 2
+    exprs {
+      vars: 0
+      coeffs: 1
+    }
+    exprs {
+      vars: 1
+      coeffs: 1
+    }
+  }
+}
+constraints {
+  circuit {
+    tails: 0
+    tails: 1
+    heads: 1
+    heads: 0
+    literals: 2
+    literals: -4
+  }
+}
+constraints {
+  routes {
+    tails: 0
+    tails: 1
+    heads: 1
+    heads: 0
+    literals: 2
+    literals: 3
+  }
+}

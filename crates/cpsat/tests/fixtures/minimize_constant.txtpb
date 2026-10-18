@@ -1,0 +1,20 @@
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 1
+}
+variables {
+  domain: 0
+  domain: 1
+}
+objective {
+  offset: 5
+  scaling_factor: 1
+}

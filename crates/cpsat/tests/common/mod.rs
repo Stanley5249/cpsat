@@ -1,6 +1,7 @@
 //! Models shared by the integration tests.
 
-use cpsat::proto::{CpModelProto, SatParameters};
+use cpsat::prelude::*;
+use cpsat::proto::CpModelProto;
 
 /// A pseudo-random multi-dimensional knapsack that CP-SAT cannot prove
 /// optimal within seconds, for testing stops.
@@ -12,15 +13,14 @@ pub fn hard_model() -> CpModelProto {
             .wrapping_add(1_442_695_040_888_963_407);
         i64::try_from(state >> 33).expect("33-bit shift fits in i64") % range + 1
     };
-    let mut model = CpModelProto::default();
-    let vars: Vec<i32> = (0..120).map(|_| model.add_int_var(0, 20)).collect();
+    let mut model = Model::new();
+    let vars: Vec<IntVar> = (0..120).map(|_| model.int_var(0..=20)).collect();
     for _ in 0..40 {
-        let terms: Vec<(i32, i64)> = vars.iter().map(|&v| (v, next(50))).collect();
-        model.add_linear(&terms, 0, 5_000);
+        let load: LinearExpr = vars.iter().map(|&var| var * next(50)).sum();
+        model.add(load.in_domain(0..=5_000));
     }
-    let objective: Vec<(i32, i64)> = vars.iter().map(|&v| (v, next(100))).collect();
-    model.maximize(&objective);
-    model
+    model.maximize(vars.iter().map(|&var| var * next(100)).sum::<LinearExpr>());
+    model.into_proto()
 }
 
 /// Parameters that would let `hard_model` run for a minute without a stop.

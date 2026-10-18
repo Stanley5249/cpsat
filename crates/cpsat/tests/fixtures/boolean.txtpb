@@ -1,0 +1,53 @@
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 1
+}
+variables {
+  domain: 0
+  domain: 1
+}
+constraints {
+  bool_or {
+    literals: 2
+    literals: -4
+  }
+}
+constraints {
+  enforcement_literal: -3
+  bool_and {
+    literals: 2
+    literals: -4
+  }
+}
+constraints {
+  at_most_one {
+    literals: 2
+    literals: -4
+  }
+}
+constraints {
+  exactly_one {
+    literals: 2
+    literals: 3
+  }
+}
+constraints {
+  bool_xor {
+    literals: 2
+    literals: 3
+  }
+}
+constraints {
+  enforcement_literal: 2
+  bool_and {
+    literals: 3
+  }
+}

@@ -10,18 +10,19 @@ use std::time::{Duration, Instant};
 
 use buffa::MessageView;
 use common::{hard_model, long_params};
-use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
-use cpsat::{Event, EventSet, Solver, StopHandle};
+use cpsat::prelude::*;
+use cpsat::proto::CpModelProto;
 
 /// Generous, because CI runners are slow and run tests in parallel. A stop
 /// that fails runs for the full 60 seconds of `long_params`.
 const STOPPED_WITHIN: Duration = Duration::from_secs(30);
 
+/// `x` in `[0, 3]` maximized, with `x` at index 0.
 fn tiny_model() -> CpModelProto {
-    let mut model = CpModelProto::default();
-    let x = model.add_int_var(0, 3);
-    model.maximize(&[(x, 1)]);
-    model
+    let mut model = Model::new();
+    let x = model.int_var(0..=3);
+    model.maximize(x);
+    model.into_proto()
 }
 
 #[test]
@@ -36,20 +37,22 @@ fn event_set_combines_kinds() {
 
 #[test]
 fn solution_view_reads_values_and_converts_to_owned() {
+    let model = Model::from(tiny_model());
+    let x = model.int_var_from_index(0).unwrap();
     let mut owned = None;
     let mut seen = None;
     Solver::default()
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
-                seen = view.value(0);
+                seen = view.value(x);
                 owned = Some(view.to_owned_message().unwrap());
             }
             ControlFlow::Continue(())
         })
-        .solve(&tiny_model())
+        .solve(model.proto())
         .unwrap();
     assert_eq!(seen, Some(3));
-    assert_eq!(owned.unwrap().value(0), Some(3));
+    assert_eq!(owned.unwrap().value(x), Some(3));
 }
 
 #[test]

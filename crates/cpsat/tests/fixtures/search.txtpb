@@ -1,0 +1,43 @@
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 1
+}
+variables {
+  domain: 0
+  domain: 1
+}
+objective {
+  vars: 0
+  vars: 1
+  offset: -1
+  scaling_factor: -1
+  coeffs: -1
+  coeffs: -2
+}
+search_strategy {
+  exprs {
+    vars: 0
+    coeffs: 1
+  }
+  exprs {
+    vars: 2
+    coeffs: -1
+    offset: 1
+  }
+}
+solution_hint {
+  vars: 0
+  vars: 2
+  values: 3
+  values: 0
+}
+assumptions: -4
+assumptions: 2

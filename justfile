@@ -48,6 +48,10 @@ proto-gen *args:
 proto-check: proto-gen
     git diff --exit-code -- crates/cpsat/src/proto
 
+# Regenerate the Python models that tests/equivalence.rs compares against
+fixtures:
+    uv run --quiet --with ortools==9.15.6755 python -I crates/cpsat/tests/fixtures/generate.py
+
 _fmt-cargo *args:
     cargo fmt --all {{ args }}
 

@@ -1,22 +1,23 @@
 //! Rust binding for the OR-Tools CP-SAT solver.
 //!
-//! Models, parameters, and responses are the Buffa types in [`proto`], so every
-//! schema field is available and a model stays plain, mutable data between
-//! solves. A few helpers cover the common cases of Python's `CpModel` and
-//! `CpSolver` without a modeling language. The solver runs in native OR-Tools
-//! behind a small C ABI.
+//! [`Model`] builds a model with typed variables, linear expressions, and
+//! constraints, like Python's `CpModel`. It stores the model as the Buffa
+//! type `CpModelProto` from [`proto`], so every schema field stays available
+//! and a model stays plain, mutable data between solves. Parameters and
+//! responses are Buffa types too. The solver runs in native OR-Tools behind a
+//! small C ABI.
 //!
 //! ```no_run
-//! use cpsat::proto::{CpModelProto, SatParameters};
+//! use cpsat::prelude::*;
 //!
-//! let mut model = CpModelProto::default();
-//! let x = model.add_int_var(0, 10);
-//! let y = model.add_int_var(0, 10);
-//! model.add_linear(&[(x, 1), (y, 1)], i64::MIN, 4);
-//! model.maximize(&[(x, 2), (y, 3)]);
+//! let mut model = Model::new();
+//! let x = model.int_var(0..=10);
+//! let y = model.int_var(0..=10);
+//! model.add((x + y).le(4));
+//! model.maximize(2 * x + 3 * y);
 //!
 //! let params = SatParameters::default().with_num_workers(8);
-//! let response = cpsat::solve(&model, &params)?;
+//! let response = cpsat::solve(model.proto(), &params)?;
 //! println!("{}: x = {:?}", response.status(), response.value(x));
 //! # Ok::<(), cpsat::Error>(())
 //! ```
@@ -30,11 +31,14 @@
 #[cfg(not(feature = "views"))]
 compile_error!("the `views` feature is required, because solution events are Buffa views");
 
+pub mod constraint;
 mod diagnostics;
 mod domain;
 mod error;
+mod expr;
 mod model;
 mod native;
+pub mod prelude;
 #[expect(
     clippy::all,
     clippy::pedantic,
@@ -45,11 +49,15 @@ mod native;
 pub mod proto;
 mod response;
 mod solver;
+mod variable;
 
 /// The Protobuf runtime, re-exported so callers use the same `Message` trait.
 pub use buffa;
+pub use constraint::{Constraint, ConstraintRef};
 pub use diagnostics::{default_parameters, model_stats, response_stats, validate_model};
 pub use domain::Domain;
 pub use error::{Error, Result};
-pub use model::not;
+pub use expr::LinearExpr;
+pub use model::Model;
 pub use solver::{Event, EventSet, NoEvents, Solver, StopHandle, solve};
+pub use variable::{BoolVar, IntVar, IntervalVar};

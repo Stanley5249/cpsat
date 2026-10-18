@@ -1,5 +1,7 @@
 //! A set of integers in the interval form that the schema uses.
 
+use std::ops::RangeInclusive;
+
 /// A set of integers as sorted, disjoint, non-adjacent closed intervals, like
 /// OR-Tools' `Domain`.
 ///
@@ -134,5 +136,13 @@ impl From<Domain> for Vec<i64> {
 impl FromIterator<i64> for Domain {
     fn from_iter<I: IntoIterator<Item = i64>>(values: I) -> Self {
         Self::from_values(values)
+    }
+}
+
+impl From<RangeInclusive<i64>> for Domain {
+    /// The interval `[start, end]`, so `model.int_var(0..=10)` reads like
+    /// Rust.
+    fn from(range: RangeInclusive<i64>) -> Self {
+        Self::new(*range.start(), *range.end())
     }
 }
