@@ -15,9 +15,9 @@ use crate::variable::{BoolVar, IntVar};
 /// literal `!b` counts as `1 - b`.
 ///
 /// The arithmetic panics when a coefficient or the offset overflows `i64`,
-/// like Python raises an error. `eq`, `lt`, and `le` panic on a constant
+/// where Python wraps silently. `eq`, `lt`, and `le` panic on a constant
 /// `i64::MIN`, and `eq`, `ge`, and `gt` on a constant `i64::MAX`, because
-/// domains read these limits as infinity. Python raises there too.
+/// domains read these limits as infinity. Python raises on these limits too.
 ///
 /// ```
 /// use cpsat::prelude::*;
