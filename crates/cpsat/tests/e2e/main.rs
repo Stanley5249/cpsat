@@ -7,6 +7,7 @@ mod diagnostics;
 mod domain;
 mod equivalence;
 mod events;
+#[cfg(any(feature = "text", feature = "json"))]
 mod formats;
 mod model;
 mod protobuf;

@@ -5,6 +5,7 @@ use cpsat::prelude::*;
 use cpsat::proto::CpModelProto;
 
 /// x + y <= 4, maximize 2x + 3y over x, y in [0, 10]. The optimum is 12.
+#[cfg(feature = "text")]
 const MODEL_TEXT: &str = r#"variables { name: "x" domain: [0, 10] }
 variables { name: "y" domain: [0, 10] }
 constraints {
