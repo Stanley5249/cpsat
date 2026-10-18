@@ -1,85 +1,55 @@
 //! Circuit and multiple-circuit constraints over a graph of literal arcs.
 
-use super::Constraint;
+use super::{Constraint, literals};
 use crate::proto::{CircuitConstraintProto, RoutesConstraintProto};
 use crate::variable::BoolVar;
 
-/// A Hamiltonian circuit through the arcs whose literals are true, like
-/// Python's `add_circuit`. A node outside the circuit needs a true self-loop.
-///
-/// ```
-/// use cpsat::prelude::*;
-///
-/// let mut model = Model::new();
-/// let [a, b, c] = [(); 3].map(|()| model.bool_var());
-/// model.add(Circuit::new().arc(0, 1, a).arc(1, 2, b).arc(2, 0, c));
-/// ```
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct Circuit(CircuitConstraintProto);
+/// Splits `(tail, head, literal)` arcs into the schema's parallel lists.
+fn arcs(arcs: impl IntoIterator<Item = (i32, i32, BoolVar)>) -> (Vec<i32>, Vec<i32>, Vec<i32>) {
+    let mut tails = Vec::new();
+    let mut heads = Vec::new();
+    let mut selected = Vec::new();
+    for (tail, head, literal) in arcs {
+        tails.push(tail);
+        heads.push(head);
+        selected.push(literal);
+    }
+    (tails, heads, literals(selected))
+}
 
-impl Circuit {
+impl Constraint {
+    /// A Hamiltonian circuit through the arcs whose literals are true, like
+    /// Python's `add_circuit`. Each arc is `(tail, head, literal)`, and a node
+    /// outside the circuit needs a true self-loop.
+    ///
+    /// ```
+    /// use cpsat::prelude::*;
+    ///
+    /// let mut model = Model::new();
+    /// let [a, b, c] = [(); 3].map(|()| model.bool_var());
+    /// model.add(Constraint::circuit([(0, 1, a), (1, 2, b), (2, 0, c)]));
+    /// ```
     #[must_use]
-    pub fn new() -> Self {
-        Self::default()
+    pub fn circuit(arcs: impl IntoIterator<Item = (i32, i32, BoolVar)>) -> Self {
+        let (tails, heads, literals) = self::arcs(arcs);
+        Self::of(CircuitConstraintProto {
+            tails,
+            heads,
+            literals,
+            ..Default::default()
+        })
     }
 
-    /// The arc `tail -> head`, selected when `literal` is true.
+    /// Circuits that all pass through node 0, like Python's
+    /// `add_multiple_circuit`, also called the vehicle routing constraint.
     #[must_use]
-    pub fn arc(mut self, tail: i32, head: i32, literal: BoolVar) -> Self {
-        self.0.tails.push(tail);
-        self.0.heads.push(head);
-        self.0.literals.push(literal.0);
-        self
-    }
-}
-
-impl FromIterator<(i32, i32, BoolVar)> for Circuit {
-    fn from_iter<I: IntoIterator<Item = (i32, i32, BoolVar)>>(arcs: I) -> Self {
-        arcs.into_iter()
-            .fold(Self::new(), |circuit, (tail, head, literal)| {
-                circuit.arc(tail, head, literal)
-            })
-    }
-}
-
-impl From<Circuit> for Constraint {
-    fn from(circuit: Circuit) -> Self {
-        Self::of(circuit.0)
-    }
-}
-
-/// Circuits that all pass through node 0, like Python's
-/// `add_multiple_circuit`, also called the vehicle routing constraint.
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct MultipleCircuit(RoutesConstraintProto);
-
-impl MultipleCircuit {
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// The arc `tail -> head`, selected when `literal` is true.
-    #[must_use]
-    pub fn arc(mut self, tail: i32, head: i32, literal: BoolVar) -> Self {
-        self.0.tails.push(tail);
-        self.0.heads.push(head);
-        self.0.literals.push(literal.0);
-        self
-    }
-}
-
-impl FromIterator<(i32, i32, BoolVar)> for MultipleCircuit {
-    fn from_iter<I: IntoIterator<Item = (i32, i32, BoolVar)>>(arcs: I) -> Self {
-        arcs.into_iter()
-            .fold(Self::new(), |circuit, (tail, head, literal)| {
-                circuit.arc(tail, head, literal)
-            })
-    }
-}
-
-impl From<MultipleCircuit> for Constraint {
-    fn from(circuit: MultipleCircuit) -> Self {
-        Self::of(circuit.0)
+    pub fn multiple_circuit(arcs: impl IntoIterator<Item = (i32, i32, BoolVar)>) -> Self {
+        let (tails, heads, literals) = self::arcs(arcs);
+        Self::of(RoutesConstraintProto {
+            tails,
+            heads,
+            literals,
+            ..Default::default()
+        })
     }
 }

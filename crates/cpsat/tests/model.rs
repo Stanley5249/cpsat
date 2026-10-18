@@ -91,12 +91,11 @@ fn constants_and_true_literals_solve_to_their_values() {
     let no = model.bool_constant(false);
     let x = model.int_var(0..=10);
     model.add(x.eq(seven + 1));
-    // The schema needs an active literal for every event or none.
-    model.add(
-        Reservoir::new(0, 5)
-            .active_event(x, 2, yes)
-            .active_event(seven, -2, no),
-    );
+    model.add(Constraint::reservoir_with_active(
+        0,
+        5,
+        [(x, 2, yes), (seven, -2, no)],
+    ));
     let response = solve(model.proto(), &SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_eq!(response.value(x), Some(8));
@@ -127,11 +126,11 @@ fn expressions_merge_terms_like_python() {
 }
 
 #[test]
-fn circuit_collects_arcs_from_an_iterator() {
+fn circuit_takes_arcs_from_an_iterator() {
     let mut model = Model::new();
     let arcs: Vec<(i32, i32, BoolVar)> =
         (0..3).map(|i| (i, (i + 1) % 3, model.bool_var())).collect();
-    model.add(arcs.into_iter().collect::<Circuit>());
+    model.add(Constraint::circuit(arcs));
     let response = solve(model.proto(), &SatParameters::default()).unwrap();
     assert_eq!(response.solution, [1, 1, 1]);
 }

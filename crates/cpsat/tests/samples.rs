@@ -454,31 +454,31 @@ fn ranking_circuit() {
     }
     model.add(Constraint::no_overlap(intervals));
 
-    let mut circuit = Circuit::new();
+    let mut arcs = Vec::new();
     for (i, node) in (1..=4).enumerate() {
         let first = model.bool_var();
-        circuit = circuit.arc(0, node, first);
+        arcs.push((0, node, first));
         model.add(ranks[i].eq(0).only_if(first));
         model.add(starts[i].eq(0).only_if(first));
-        circuit = circuit.arc(node, 0, model.bool_var());
+        arcs.push((node, 0, model.bool_var()));
         for (j, next) in (1..=4).enumerate() {
             if i == j {
-                circuit = circuit.arc(node, node, !presences[i]);
+                arcs.push((node, node, !presences[i]));
                 model.add(ranks[i].eq(-1).only_if(!presences[i]));
             } else {
                 let literal = model.bool_var();
-                circuit = circuit.arc(node, next, literal);
+                arcs.push((node, next, literal));
                 model.add(ranks[j].eq(ranks[i] + 1).only_if(literal));
                 model.add(starts[j].ge(starts[i] + durations[i]).only_if(literal));
             }
         }
     }
     let empty = model.bool_var();
-    circuit = circuit.arc(0, 0, empty);
+    arcs.push((0, 0, empty));
     for &presence in &presences {
         model.add(Constraint::implication(empty, !presence));
     }
-    model.add(circuit);
+    model.add(Constraint::circuit(arcs));
     model.add(ranks[0].lt(ranks[1]));
 
     let makespan = model.int_var(0..=horizon);

@@ -1,20 +1,24 @@
 //! Constraints, built before [`Model::add`](crate::Model::add) inserts them.
 //!
 //! Every constraint is a [`Constraint`], which owns its `ConstraintProto`, so
-//! inserting it moves the message into the model. Families that take all their
-//! arguments at once are constructors on [`Constraint`], such as
-//! [`Constraint::all_different`]. Families that grow one entry at a time are
-//! builders that convert into a [`Constraint`], such as [`Circuit`].
+//! inserting it moves the message into the model. Each family is a
+//! constructor named after Python's `add_*` method without the prefix, such
+//! as [`Constraint::all_different`] for `add_all_different`. A family with many
+//! entries, such as the arcs of [`Constraint::circuit`], takes an iterator of
+//! tuples.
+
+// Alternative if constructors stop scaling: one type per family, such as
+// `AllDifferent::new(exprs)` or `Circuit::new().arc(0, 1, a)`, each wrapping
+// its message and converting into `Constraint`. It would cost about 25 public
+// types, `only_if` and `with_name` on each of them, and wrappers around the
+// shared `BoolArgumentProto` and `LinearArgumentProto`. Prefer it only when a
+// family needs state that a tuple cannot express.
 
 mod arithmetic;
 mod boolean;
 mod circuit;
 mod global;
 mod scheduling;
-
-pub use circuit::{Circuit, MultipleCircuit};
-pub use global::{Automaton, Table};
-pub use scheduling::{Cumulative, Reservoir};
 
 use crate::domain::Domain;
 use crate::expr::LinearExpr;

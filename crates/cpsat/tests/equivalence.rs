@@ -88,19 +88,19 @@ fn global_constraints() {
         2,
     ));
     model.add(Constraint::inverse([x, y], [y, x]));
-    model.add(Table::allowed([x.into(), y + 1]).row([1, 2]).row([3, 4]));
-    model.add(Table::forbidden([x, y]).row([1, 2]));
-    model.add(
-        Automaton::new([x, y], 0, [1, 2])
-            .transition(0, 1, 1)
-            .transition(1, 2, 2),
-    );
-    model.add(Circuit::new().arc(0, 1, b).arc(1, 0, !c));
-    model.add(
-        [(0, 1, b), (1, 0, c)]
-            .into_iter()
-            .collect::<MultipleCircuit>(),
-    );
+    model.add(Constraint::allowed_assignments(
+        [x.into(), y + 1],
+        [[1, 2], [3, 4]],
+    ));
+    model.add(Constraint::forbidden_assignments([x, y], [[1, 2]]));
+    model.add(Constraint::automaton(
+        [x, y],
+        0,
+        [1, 2],
+        [(0, 1, 1), (1, 2, 2)],
+    ));
+    model.add(Constraint::circuit([(0, 1, b), (1, 0, !c)]));
+    model.add(Constraint::multiple_circuit([(0, 1, b), (1, 0, c)]));
     assert_matches_python(&model, "global_constraints");
 }
 
@@ -140,14 +140,17 @@ fn scheduling() {
     let l = model.optional_fixed_size_interval_var(y, 4, !c);
     model.add(Constraint::no_overlap([i, j]));
     model.add(Constraint::no_overlap_2d([(i, k), (j, l)]));
-    model.add(Cumulative::new(5).task(i, 2).task(j, x));
-    model.add(Cumulative::new(y + 1).task(i, 1));
-    model.add(Reservoir::new(0, 5).event(x, 2).event(y + 1, -2));
-    model.add(
-        Reservoir::new(-1, 3)
-            .active_event(x, 1, b)
-            .active_event(y, -1, !c),
-    );
+    model.add(Constraint::cumulative(
+        5,
+        [(i, LinearExpr::constant(2)), (j, x.into())],
+    ));
+    model.add(Constraint::cumulative(y + 1, [(i, 1)]));
+    model.add(Constraint::reservoir(0, 5, [(x.into(), 2), (y + 1, -2)]));
+    model.add(Constraint::reservoir_with_active(
+        -1,
+        3,
+        [(x, 1, b), (y, -1, !c)],
+    ));
     assert_matches_python(&model, "scheduling");
 }
 

@@ -50,101 +50,77 @@ impl Constraint {
             ..Default::default()
         })
     }
-}
 
-/// The expressions must equal one of the rows, or none of them, like Python's
-/// `add_allowed_assignments` and `add_forbidden_assignments`.
-///
-/// ```
-/// use cpsat::prelude::*;
-///
-/// let mut model = Model::new();
-/// let x = model.int_var(0..=5);
-/// let y = model.int_var(0..=5);
-/// model.add(Table::allowed([x, y]).row([1, 2]).row([3, 4]));
-/// ```
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct Table(TableConstraintProto);
-
-impl Table {
+    /// The expressions equal one of the rows, like Python's
+    /// `add_allowed_assignments`. Each row lists one value per expression, and
+    /// the validator rejects a row of the wrong length.
+    ///
+    /// ```
+    /// use cpsat::prelude::*;
+    ///
+    /// let mut model = Model::new();
+    /// let x = model.int_var(0..=5);
+    /// let y = model.int_var(0..=5);
+    /// model.add(Constraint::allowed_assignments([x, y], [[1, 2], [3, 4]]));
+    /// ```
     #[must_use]
-    pub fn allowed(exprs: impl IntoIterator<Item = impl Into<LinearExpr>>) -> Self {
-        Self(TableConstraintProto {
+    pub fn allowed_assignments(
+        exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
+        rows: impl IntoIterator<Item = impl IntoIterator<Item = i64>>,
+    ) -> Self {
+        Self::of(TableConstraintProto {
             exprs: self::exprs(exprs),
+            values: rows.into_iter().flatten().collect(),
             ..Default::default()
         })
     }
 
+    /// The expressions equal none of the rows, like Python's
+    /// `add_forbidden_assignments`.
     #[must_use]
-    pub fn forbidden(exprs: impl IntoIterator<Item = impl Into<LinearExpr>>) -> Self {
-        Self(TableConstraintProto {
+    pub fn forbidden_assignments(
+        exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
+        rows: impl IntoIterator<Item = impl IntoIterator<Item = i64>>,
+    ) -> Self {
+        Self::of(TableConstraintProto {
+            exprs: self::exprs(exprs),
+            values: rows.into_iter().flatten().collect(),
             negated: true,
-            ..Self::allowed(exprs).0
+            ..Default::default()
         })
     }
 
-    /// One tuple of values, in the order of the expressions. The validator
-    /// rejects a row of the wrong length.
+    /// The expressions spell a word that the automaton accepts, like Python's
+    /// `add_automaton`. Each transition is `(tail, label, head)`, in the order
+    /// of Python's transition triples.
+    ///
+    /// ```
+    /// use cpsat::prelude::*;
+    ///
+    /// let mut model = Model::new();
+    /// let labels = [(); 3].map(|()| model.int_var(0..=1));
+    /// // Accepts words without two consecutive 1s.
+    /// let transitions = [(0, 0, 0), (0, 1, 1), (1, 0, 0)];
+    /// model.add(Constraint::automaton(labels, 0, [0, 1], transitions));
+    /// ```
     #[must_use]
-    pub fn row(mut self, values: impl IntoIterator<Item = i64>) -> Self {
-        self.0.values.extend(values);
-        self
-    }
-}
-
-impl From<Table> for Constraint {
-    fn from(table: Table) -> Self {
-        Self::of(table.0)
-    }
-}
-
-/// The expressions spell a word that the automaton accepts, like Python's
-/// `add_automaton`.
-///
-/// ```
-/// use cpsat::prelude::*;
-///
-/// let mut model = Model::new();
-/// let labels = [(); 3].map(|()| model.int_var(0..=1));
-/// // Accepts words without two consecutive 1s.
-/// model.add(
-///     Automaton::new(labels, 0, [0, 1])
-///         .transition(0, 0, 0)
-///         .transition(0, 1, 1)
-///         .transition(1, 0, 0),
-/// );
-/// ```
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct Automaton(AutomatonConstraintProto);
-
-impl Automaton {
-    #[must_use]
-    pub fn new(
+    pub fn automaton(
         exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
         starting_state: i64,
         final_states: impl IntoIterator<Item = i64>,
+        transitions: impl IntoIterator<Item = (i64, i64, i64)>,
     ) -> Self {
-        Self(AutomatonConstraintProto {
+        let mut automaton = AutomatonConstraintProto {
             starting_state,
             final_states: final_states.into_iter().collect(),
             exprs: self::exprs(exprs),
             ..Default::default()
-        })
-    }
-
-    /// Moves from state `tail` to state `head` on the value `label`, in the
-    /// order of Python's transition triples.
-    #[must_use]
-    pub fn transition(mut self, tail: i64, label: i64, head: i64) -> Self {
-        self.0.transition_tail.push(tail);
-        self.0.transition_label.push(label);
-        self.0.transition_head.push(head);
-        self
-    }
-}
-
-impl From<Automaton> for Constraint {
-    fn from(automaton: Automaton) -> Self {
-        Self::of(automaton.0)
+        };
+        for (tail, label, head) in transitions {
+            automaton.transition_tail.push(tail);
+            automaton.transition_label.push(label);
+            automaton.transition_head.push(head);
+        }
+        Self::of(automaton)
     }
 }

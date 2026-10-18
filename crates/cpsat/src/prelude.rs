@@ -1,8 +1,6 @@
 //! The types that typical modeling code needs, for `use cpsat::prelude::*`.
 
-pub use crate::constraint::{
-    Automaton, Circuit, Constraint, ConstraintRef, Cumulative, MultipleCircuit, Reservoir, Table,
-};
+pub use crate::constraint::{Constraint, ConstraintRef};
 pub use crate::domain::Domain;
 pub use crate::expr::LinearExpr;
 pub use crate::model::Model;

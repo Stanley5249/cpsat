@@ -107,22 +107,21 @@ model.int_var(0..=10) -----------------------> IntVar(i32)
 model.bool_var() ----------------------------> BoolVar(i32), !b = -i - 1
 x + 2 * y - 3 -------------------------------> LinearExpr(LinearExpressionProto)
 (x + 2 * y).le(10).only_if(b) ---------------> Constraint(ConstraintProto)
-Circuit::new().arc(0, 1, a) --- From -------> Constraint
+Constraint::circuit([(0, 1, a)]) ------------> Constraint
 model.add(constraint) --- move into model ---> ConstraintRef(i32)
 ```
 
-| Topic          | Decision                                                                                                                            | Reason                                                                                                        |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Handles        | `IntVar`, `BoolVar`, `IntervalVar`, and `ConstraintRef` are typed `i32` indices without a model identity                            | Like `petgraph` and `slotmap`, the types keep categories apart at no cost, and the model only appends         |
-| Literals       | `BoolVar` is a literal, and `!` negates it                                                                                          | The schema's `-i - 1` convention, and `!b` counts as `1 - b` in an expression                                 |
-| Expressions    | `LinearExpr` wraps `LinearExpressionProto`, and writing it sorts, merges, and drops zero terms                                      | Matches Python's output, and the arithmetic panics on `i64` overflow where Python raises                      |
-| Comparisons    | Inherent `eq`, `ne`, `le`, `lt`, `ge`, `gt`, and `in_domain` on `IntVar`, `BoolVar`, and `LinearExpr`                               | Rust's comparison traits must return `bool`, and handles derive no `PartialOrd` to keep the names unambiguous |
-| Constraints    | `Constraint` owns a `ConstraintProto`, with `only_if` and `with_name`. One-shot families are constructors on it                     | One common type, and every family in v9.15 accepts enforcement literals                                       |
-| Builders       | `Circuit`, `MultipleCircuit`, `Table`, `Automaton`, `Cumulative`, and `Reservoir` grow entry by entry and convert into `Constraint` | Families with many entries read best as chains or `collect`                                                   |
-| Insertion      | `Model::add` is the only path for constraints, and intervals come from `Model` methods                                              | An interval is a constraint that other constraints reference by index                                         |
-| Validation     | The OR-Tools validator through `validate_model` and the solve status                                                                | Python's eager argument checks would duplicate it                                                             |
-| Responses      | `value` takes any expression and `boolean_value` takes a literal, on the owned response and the solution view                       | Mirrors `CpSolver.value` and the solution callback                                                            |
-| Proto identity | `tests/equivalence.rs` compares each family with the output of `tests/fixtures/generate.py`                                         | Proves the encoding equals Python's, except for the constant cache                                            |
+| Topic          | Decision                                                                                                      | Reason                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Handles        | `IntVar`, `BoolVar`, `IntervalVar`, and `ConstraintRef` are typed `i32` indices without a model identity      | Like `petgraph` and `slotmap`, the types keep categories apart at no cost, and the model only appends         |
+| Literals       | `BoolVar` is a literal, and `!` negates it                                                                    | The schema's `-i - 1` convention, and `!b` counts as `1 - b` in an expression                                 |
+| Expressions    | `LinearExpr` wraps `LinearExpressionProto`, and writing it sorts, merges, and drops zero terms                | Matches Python's output, and the arithmetic panics on `i64` overflow where Python raises                      |
+| Comparisons    | Inherent `eq`, `ne`, `le`, `lt`, `ge`, `gt`, and `in_domain` on `IntVar`, `BoolVar`, and `LinearExpr`         | Rust's comparison traits must return `bool`, and handles derive no `PartialOrd` to keep the names unambiguous |
+| Constraints    | `Constraint` owns a `ConstraintProto`, with `only_if` and `with_name`. Every family is a constructor on it    | One common type, and every family in v9.15 accepts enforcement literals                                       |
+| Insertion      | `Model::add` is the only path for constraints, and intervals come from `Model` methods                        | An interval is a constraint that other constraints reference by index                                         |
+| Validation     | The OR-Tools validator through `validate_model` and the solve status                                          | Python's eager argument checks would duplicate it                                                             |
+| Responses      | `value` takes any expression and `boolean_value` takes a literal, on the owned response and the solution view | Mirrors `CpSolver.value` and the solution callback                                                            |
+| Proto identity | `tests/equivalence.rs` compares each family with the output of `tests/fixtures/generate.py`                   | Proves the encoding equals Python's, except for the constant cache                                            |
 
 ## Milestones
 
