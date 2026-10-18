@@ -314,3 +314,16 @@ fn float_operators_mix_constants_and_expressions() {
     assert_eq!(response.float_value(&expr), Some(13.5));
     assert_eq!(response.float_value(x - 0.5), Some(2.5));
 }
+
+#[test]
+fn a_zero_one_variable_serves_as_a_literal() {
+    let mut model = Model::new();
+    let flag = model.int_var(0..=1);
+    let wide = model.int_var(0..=2);
+    let literal = model.as_literal(flag).unwrap();
+    assert_eq!(literal.variable(), flag);
+    assert_eq!(model.as_literal(wide), None);
+    model.add(Constraint::bool_or([literal]));
+    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    assert_eq!(response.value(flag), Some(1));
+}
