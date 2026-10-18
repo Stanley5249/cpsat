@@ -1,13 +1,15 @@
-//! Pinned OR-Tools archives. Each SHA-256 was computed from a real download and
-//! matches the digest GitHub reports for the release asset.
+//! Pinned OR-Tools archives.
+//!
+//! To bump the version, update every URL, then refresh each SHA-256 from a
+//! real download, for example `curl -fsSL <url> | sha256sum`, and compare it
+//! with the `digest` that `gh api repos/google/or-tools/releases/tags/<tag>`
+//! reports for the asset. Keep the vendored protos in `crates/cpsat/proto` on
+//! the same tag.
 
 pub struct Archive {
     pub url: &'static str,
     pub sha256: &'static str,
 }
-
-/// Keep in sync with the vendored protos in `crates/cpsat/proto`.
-pub const VERSION: &str = "v9.15";
 
 pub const SOURCE: Archive = Archive {
     url: "https://github.com/google/or-tools/archive/refs/tags/v9.15.tar.gz",

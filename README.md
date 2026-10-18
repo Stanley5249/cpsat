@@ -64,7 +64,7 @@ For development, also install:
 - [just](https://github.com/casey/just)
 - [tombi](https://tombi-toml.github.io/tombi/)
 - [Bun](https://bun.sh/) for `bunx oxfmt`
-- [Buf](https://buf.build/docs/cli/installation/), only for `just gen`
+- [Buf](https://buf.build/docs/cli/installation/), only for `just proto-gen`
 
 ## Commands
 

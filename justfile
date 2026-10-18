@@ -39,8 +39,8 @@ ci: check test doc
 
 # Regenerate Buffa code from the vendored protos
 [working-directory("crates/cpsat/proto")]
-gen:
-    buf generate
+proto-gen *args:
+    buf generate {{ args }}
     cargo fmt -p cpsat
 
 _fmt-cargo *args:

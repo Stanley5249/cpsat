@@ -1,4 +1,4 @@
-//! Buffa types generated from the vendored OR-Tools protos by `just gen`.
+//! Buffa types generated from the vendored OR-Tools protos by `just proto-gen`.
 
 include!("operations_research.sat.rs");
 

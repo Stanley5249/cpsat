@@ -3,6 +3,12 @@
 //! `CPSAT_ORTOOLS` selects where OR-Tools comes from: `prebuilt` (default),
 //! `source`, or `dir:<path>`. An environment variable replaces Cargo features
 //! because features are additive and two modes cannot both apply.
+//!
+//! The shared libraries are linked or copied under `OUT_DIR`, because Cargo
+//! puts native search paths inside the target directory on `PATH` or
+//! `LD_LIBRARY_PATH` for `cargo run` and `cargo test`. Cargo skips paths
+//! outside it, so this fails when `build.build-dir` leaves the target
+//! directory.
 
 #[path = "build/artifacts.rs"]
 mod artifacts;
@@ -15,7 +21,7 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, bail, ensure};
 
 enum Mode {
     Prebuilt,
@@ -28,19 +34,16 @@ enum Toolchain {
     Gnu,
 }
 
-fn main() {
-    if let Err(error) = run() {
-        eprintln!("error: {error:#}");
-        std::process::exit(1);
-    }
-}
+/// Files the build reads from an OR-Tools install.
+const HEADER: &str = "include/ortools/sat/swig_helper.h";
+const CMAKE_TARGETS: &str = "lib/cmake/ortools/ortoolsTargets.cmake";
 
-fn run() -> Result<()> {
+fn main() -> Result<()> {
     for path in ["build.rs", "build", "native"] {
-        println!("cargo:rerun-if-changed={path}");
+        println!("cargo::rerun-if-changed={path}");
     }
     for var in ["CPSAT_ORTOOLS", "CPSAT_CACHE_DIR", "DOCS_RS"] {
-        println!("cargo:rerun-if-env-changed={var}");
+        println!("cargo::rerun-if-env-changed={var}");
     }
     // docs.rs builds without network, and rustdoc never links.
     if env::var_os("DOCS_RS").is_some() {
@@ -54,36 +57,35 @@ fn run() -> Result<()> {
         Mode::Prebuilt => {
             let archive = artifacts::prebuilt(&target).with_context(|| {
                 format!(
-                    "no prebuilt OR-Tools {} for {target}; set CPSAT_ORTOOLS=source or \
-                     CPSAT_ORTOOLS=dir:<path>",
-                    artifacts::VERSION
+                    "no prebuilt OR-Tools for {target}; set CPSAT_ORTOOLS=source or \
+                     CPSAT_ORTOOLS=dir:<path>"
                 )
             })?;
             fetch::extracted(archive, &fetch::cache_dir()?)?
         }
-        Mode::Source => {
-            let cache = fetch::cache_dir()?;
-            let source = fetch::extracted(&artifacts::SOURCE, &cache)?;
-            source::build(&source, &cache.join("source").join(&target))?
-        }
-        Mode::Dir(path) => {
-            println!("cargo:rerun-if-changed={}", path.display());
-            path
+        Mode::Source => source::build(&fetch::cache_dir()?, &target)?,
+        Mode::Dir(root) => {
+            for file in [HEADER, CMAKE_TARGETS] {
+                println!("cargo::rerun-if-changed={}", root.join(file).display());
+            }
+            root
         }
     };
-    if !root.join("include/ortools/sat/swig_helper.h").exists() {
-        bail!("{} is not an OR-Tools C++ install", root.display());
-    }
+    ensure!(
+        root.join(HEADER).exists(),
+        "{} is not an OR-Tools C++ install",
+        root.display()
+    );
 
     let runtime = out.join("runtime");
-    copy_runtime(&root, &runtime, &toolchain)?;
+    place_runtime(&root, &runtime, &toolchain)?;
     compile_bridge(&root, &toolchain)?;
     link(&root, &runtime, &toolchain)?;
 
     // Dependents read these as DEP_ORTOOLS_ROOT and DEP_ORTOOLS_RUNTIME, for
     // example to copy the runtime libraries next to a shipped executable.
-    println!("cargo:root={}", root.display());
-    println!("cargo:runtime={}", runtime.display());
+    println!("cargo::metadata=root={}", root.display());
+    println!("cargo::metadata=runtime={}", runtime.display());
     Ok(())
 }
 
@@ -92,12 +94,20 @@ fn mode() -> Result<Mode> {
     match value.as_str() {
         "" | "prebuilt" => Ok(Mode::Prebuilt),
         "source" => Ok(Mode::Source),
-        _ => value
-            .strip_prefix("dir:")
-            .map(|path| Mode::Dir(PathBuf::from(path)))
-            .with_context(|| {
-                format!("unknown CPSAT_ORTOOLS={value:?}; expected prebuilt, source, or dir:<path>")
-            }),
+        _ => {
+            let Some(path) = value.strip_prefix("dir:") else {
+                bail!("unknown CPSAT_ORTOOLS={value:?}; expected prebuilt, source, or dir:<path>");
+            };
+            let path = PathBuf::from(path);
+            // The build script runs in the package directory, so a relative
+            // path would not mean what the user typed.
+            ensure!(
+                path.is_absolute(),
+                "CPSAT_ORTOOLS=dir:<path> needs an absolute path: {}",
+                path.display()
+            );
+            Ok(Mode::Dir(path))
+        }
     }
 }
 
@@ -111,12 +121,7 @@ fn toolchain(target: &str) -> Result<Toolchain> {
     }
 }
 
-/// Links or copies the shared libraries under `OUT_DIR`, because Cargo puts
-/// native search paths inside the target directory on `PATH` or
-/// `LD_LIBRARY_PATH` for `cargo run` and `cargo test`. Cargo skips paths
-/// outside it, so this fails when `build.build-dir` is moved out of the target
-/// directory.
-fn copy_runtime(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
+fn place_runtime(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
     if runtime.exists() {
         fs::remove_dir_all(runtime)?;
     }
@@ -129,43 +134,29 @@ fn copy_runtime(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()
         }),
         Toolchain::Gnu => ("lib", |name| name.contains(".so")),
     };
-    for entry in fs::read_dir(root.join(dir))? {
+    let dir = root.join(dir);
+    for entry in fs::read_dir(&dir).with_context(|| format!("failed to read {}", dir.display()))? {
         let entry = entry?;
         let name = entry.file_name();
-        if !name.to_str().is_some_and(wanted) {
-            continue;
-        }
-        let to = runtime.join(&name);
-        if entry.file_type()?.is_symlink() {
-            copy_symlink(&entry.path(), &to)?;
-        } else {
-            link_or_copy(&entry.path(), &to)?;
+        if name.to_str().is_some_and(wanted) {
+            place(&entry.path(), &runtime.join(&name))?;
         }
     }
     Ok(())
 }
 
-// Every OUT_DIR would otherwise hold its own 90 MB copy. A hard link fails
-// across volumes, such as a cache on C: and a project on D:, so fall back to a
-// copy.
-fn link_or_copy(from: &Path, to: &Path) -> Result<()> {
+/// Hard-links one library, because every `OUT_DIR` would otherwise hold its
+/// own 90 MB copy, and copies it when the link fails across volumes.
+fn place(from: &Path, to: &Path) -> Result<()> {
+    // Keep the soname symlink chain that the dynamic loader follows.
+    #[cfg(unix)]
+    if from.is_symlink() {
+        std::os::unix::fs::symlink(fs::read_link(from)?, to)?;
+        return Ok(());
+    }
     if fs::hard_link(from, to).is_err() {
         fs::copy(from, to)?;
     }
-    Ok(())
-}
-
-#[cfg(unix)]
-fn copy_symlink(from: &Path, to: &Path) -> Result<()> {
-    std::os::unix::fs::symlink(fs::read_link(from)?, to)?;
-    Ok(())
-}
-
-// Windows archives contain no symbolic links, so a copy of the target is
-// equivalent.
-#[cfg(not(unix))]
-fn copy_symlink(from: &Path, to: &Path) -> Result<()> {
-    fs::copy(from, to)?;
     Ok(())
 }
 
@@ -184,6 +175,8 @@ fn compile_bridge(root: &Path, toolchain: &Toolchain) -> Result<()> {
             None => build.define(&define, None),
         };
     }
+    // The rest mirror the exported compile options and the Protobuf and Abseil
+    // DLL definitions, which the bridge needs to import their symbols.
     match toolchain {
         Toolchain::Msvc => {
             build
@@ -205,7 +198,7 @@ fn compile_bridge(root: &Path, toolchain: &Toolchain) -> Result<()> {
 /// Reads `INTERFACE_COMPILE_DEFINITIONS` of `ortools::ortools` from the
 /// installed CMake package.
 fn exported_definitions(root: &Path) -> Result<Vec<String>> {
-    let targets = root.join("lib/cmake/ortools/ortoolsTargets.cmake");
+    let targets = root.join(CMAKE_TARGETS);
     let text = fs::read_to_string(&targets)
         .with_context(|| format!("failed to read {}", targets.display()))?;
     let block = text
@@ -216,9 +209,11 @@ fn exported_definitions(root: &Path) -> Result<Vec<String>> {
     let definitions = block
         .lines()
         .find_map(|line| line.trim().strip_prefix("INTERFACE_COMPILE_DEFINITIONS "))
-        .map(|value| value.trim_matches('"'))
-        .unwrap_or_default();
+        .with_context(|| format!("no compile definitions in {}", targets.display()))?;
+    // The pinned archives export no generator expressions here, so any that a
+    // future version adds are dropped rather than passed to the compiler raw.
     Ok(definitions
+        .trim_matches('"')
         .split(';')
         .filter(|define| !define.is_empty() && !define.contains("$<"))
         .map(str::to_owned)
@@ -226,22 +221,22 @@ fn exported_definitions(root: &Path) -> Result<Vec<String>> {
 }
 
 fn link(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
-    println!("cargo:rustc-link-search=native={}", runtime.display());
+    println!("cargo::rustc-link-search=native={}", runtime.display());
     match toolchain {
         Toolchain::Msvc => {
             println!(
-                "cargo:rustc-link-search=native={}",
+                "cargo::rustc-link-search=native={}",
                 root.join("lib").display()
             );
             for lib in ["ortools", "libprotobuf", "abseil_dll"] {
-                println!("cargo:rustc-link-lib=dylib={lib}");
+                println!("cargo::rustc-link-lib=dylib={lib}");
             }
         }
         Toolchain::Gnu => {
             // The bridge calls Protobuf and Abseil directly, and GNU ld rejects
             // symbols that resolve only through another shared library. rustc
             // links with --as-needed, so unused libraries are dropped.
-            println!("cargo:rustc-link-lib=dylib=ortools");
+            println!("cargo::rustc-link-lib=dylib=ortools");
             for entry in fs::read_dir(root.join("lib"))? {
                 let name = entry?.file_name();
                 let Some(lib) = name
@@ -252,7 +247,7 @@ fn link(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
                     continue;
                 };
                 if lib == "protobuf" || lib.starts_with("absl_") || lib.starts_with("utf8_") {
-                    println!("cargo:rustc-link-lib=dylib={lib}");
+                    println!("cargo::rustc-link-lib=dylib={lib}");
                 }
             }
         }

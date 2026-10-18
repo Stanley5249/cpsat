@@ -3,21 +3,20 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::Result;
-use crate::fetch::run;
+use anyhow::Result;
+use sha2::{Digest, Sha256};
 
-/// Options turned off because CP-SAT does not need them. Defaults verified in
-/// the v9.15 root `CMakeLists.txt`. `BUILD_MATH_OPT` stays on, because
-/// `ortools_gurobi` links `ortools::math_opt_proto` and fails to generate
-/// without it.
+use crate::artifacts;
+use crate::fetch;
+
+/// Options that differ from the v9.15 defaults in the root `CMakeLists.txt`.
+/// `BUILD_MATH_OPT` stays on, because `ortools_gurobi` links
+/// `ortools::math_opt_proto` and fails to generate without it. The install
+/// directories are fixed because `GNUInstallDirs` may pick `lib64`.
 const OPTIONS: &[&str] = &[
-    "-DCMAKE_BUILD_TYPE=Release",
-    "-DBUILD_SHARED_LIBS=ON",
+    "-DCMAKE_INSTALL_LIBDIR=lib",
+    "-DCMAKE_INSTALL_BINDIR=bin",
     "-DBUILD_DEPS=ON",
-    "-DBUILD_CXX=ON",
-    "-DBUILD_PYTHON=OFF",
-    "-DBUILD_JAVA=OFF",
-    "-DBUILD_DOTNET=OFF",
     "-DBUILD_SAMPLES=OFF",
     "-DBUILD_EXAMPLES=OFF",
     "-DBUILD_TESTING=OFF",
@@ -25,32 +24,44 @@ const OPTIONS: &[&str] = &[
     "-DUSE_SCIP=OFF",
     "-DUSE_HIGHS=OFF",
     "-DUSE_COINOR=OFF",
-    "-DUSE_GLPK=OFF",
 ];
 
-/// Configures, builds, and installs under `dir`, and returns the install
-/// prefix. `dir` lives in the shared cache, because a full build takes about an
-/// hour and should survive `cargo clean`.
-pub fn build(source: &Path, dir: &Path) -> Result<PathBuf> {
-    let build = dir.join("build");
-    let install = dir.join("install");
-    if install.join(".complete").exists() {
-        return Ok(install);
+/// Builds and installs into the shared cache, because a full build is slow
+/// and should survive `cargo clean`, and returns the install prefix.
+///
+/// The directory is keyed by the source, the options, and the target, so a
+/// change to any of them builds anew. A failed build keeps its CMake tree, so
+/// the next attempt continues incrementally.
+pub fn build(cache: &Path, target: &str) -> Result<PathBuf> {
+    let source = fetch::extracted(&artifacts::SOURCE, cache)?;
+    let mut key = Sha256::new();
+    for part in [artifacts::SOURCE.sha256, target].iter().chain(OPTIONS) {
+        key.update(part.as_bytes());
+        key.update([0]);
     }
-    run(Command::new("cmake")
-        .arg("-S")
-        .arg(source)
-        .arg("-B")
-        .arg(&build)
-        .args(OPTIONS)
-        .arg(format!("-DCMAKE_INSTALL_PREFIX={}", install.display())))?;
-    run(Command::new("cmake").arg("--build").arg(&build).args([
-        "--config",
-        "Release",
-        "--target",
-        "install",
-        "--parallel",
-    ]))?;
-    std::fs::write(install.join(".complete"), "")?;
+    let dir = cache
+        .join("source")
+        .join(&fetch::hex(&key.finalize())[..16]);
+    let install = dir.join("install");
+    fetch::once(&dir, |dir| {
+        let build = dir.join("build");
+        fetch::run(
+            Command::new("cmake")
+                .arg("-S")
+                .arg(&source)
+                .arg("-B")
+                .arg(&build)
+                .args(OPTIONS)
+                .arg(format!("-DCMAKE_INSTALL_PREFIX={}", install.display())),
+        )?;
+        // Multi-config generators such as Visual Studio need --config.
+        fetch::run(Command::new("cmake").arg("--build").arg(&build).args([
+            "--config",
+            "Release",
+            "--target",
+            "install",
+            "--parallel",
+        ]))
+    })?;
     Ok(install)
 }
