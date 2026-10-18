@@ -1,7 +1,8 @@
-//! Raw FFI declarations for the CP-SAT bridge in `native/bridge.h`.
+//! Raw FFI declarations for the CP-SAT bridge.
 //!
-//! Use the `cpsat` crate for a safe interface. The build script acquires
-//! OR-Tools as described in its module documentation.
+//! `native/bridge.h` is the contract: it documents each function, the
+//! preconditions every call must meet, and buffer ownership. Use the `cpsat`
+//! crate for a safe interface.
 
 use core::ffi::c_void;
 
@@ -27,7 +28,7 @@ impl CpsatBuffer {
     };
 }
 
-/// One solver event. `data` is borrowed and valid only during the callback.
+/// One solver event; see `CpsatEvent` in `native/bridge.h`.
 #[repr(C)]
 #[derive(Debug)]
 pub struct CpsatEvent {
@@ -37,8 +38,7 @@ pub struct CpsatEvent {
     pub bound: f64,
 }
 
-/// Called with at most one event at a time, possibly from a solver worker
-/// thread. A nonzero return requests the solver to stop.
+/// Event callback; see `CpsatEventFn` in `native/bridge.h`.
 pub type CpsatEventFn = unsafe extern "C" fn(context: *mut c_void, event: *const CpsatEvent) -> i32;
 
 /// Opaque native session for one solve.

@@ -33,6 +33,23 @@ void Fill(CpsatBuffer* out, const std::string& bytes) {
   std::memcpy(out->data, bytes.data(), bytes.size());
 }
 
+// Serializes straight into the bridge-owned buffer, without an intermediate
+// std::string.
+void FillResponse(CpsatBuffer* out, const CpSolverResponse& message) {
+  const size_t size = message.ByteSizeLong();
+  out->data = nullptr;
+  out->len = size;
+  if (size == 0) return;
+  if (size > static_cast<size_t>(INT_MAX)) {
+    throw Error{"CpSolverResponse exceeds 2 GiB"};
+  }
+  out->data = static_cast<uint8_t*>(std::malloc(size));
+  if (out->data == nullptr) throw std::bad_alloc();
+  if (!message.SerializeToArray(out->data, static_cast<int>(size))) {
+    throw Error{"failed to serialize CpSolverResponse"};
+  }
+}
+
 template <typename Message>
 void Parse(Message& message, const uint8_t* data, size_t len,
            const char* name) {
@@ -76,13 +93,31 @@ int32_t Guard(CpsatBuffer* error, Body body) noexcept {
 
 }  // namespace
 
+namespace {
+
+class Observer : public SolutionCallback {
+ public:
+  explicit Observer(CpsatSession* session) : session_(session) {}
+  void OnSolutionCallback() const override;
+
+ private:
+  CpsatSession* session_;
+};
+
+}  // namespace
+
 struct CpsatSession {
   // CP-SAT already serializes each event kind, but log and solution events can
   // come from different threads, so this mutex lets Rust see one at a time.
+  // Rust relies on it to hold the only live reference to its callback state.
   std::mutex event_mutex;
   CpsatEventFn on_event = nullptr;
   void* context = nullptr;
+  bool used = false;
   SolveWrapper wrapper;
+  // SolveWrapper keeps a reference to the observer, so the observer lives as
+  // long as the session rather than as long as one call.
+  Observer observer{this};
 
   void Dispatch(const CpsatEvent& event) {
     std::lock_guard<std::mutex> lock(event_mutex);
@@ -90,26 +125,13 @@ struct CpsatSession {
   }
 };
 
-namespace {
-
-class Observer : public SolutionCallback {
- public:
-  explicit Observer(CpsatSession* session) : session_(session) {}
-
-  void OnSolutionCallback() const override {
-    std::string bytes;
-    SharedResponse()->SerializeToString(&bytes);
-    CpsatEvent event{CPSAT_EVENT_SOLUTION,
-                     reinterpret_cast<const uint8_t*>(bytes.data()),
-                     bytes.size(), 0.0};
-    session_->Dispatch(event);
-  }
-
- private:
-  CpsatSession* session_;
-};
-
-}  // namespace
+void Observer::OnSolutionCallback() const {
+  std::string bytes;
+  SharedResponse()->SerializeToString(&bytes);
+  session_->Dispatch(CpsatEvent{CPSAT_EVENT_SOLUTION,
+                                reinterpret_cast<const uint8_t*>(bytes.data()),
+                                bytes.size(), 0.0});
+}
 
 extern "C" {
 
@@ -140,6 +162,8 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
   response->data = nullptr;
   response->len = 0;
   return Guard(error, [&] {
+    if (session->used) throw Error{"a CP-SAT session serves one solve"};
+    session->used = true;
     CpModelProto model_proto;
     Parse(model_proto, model, model_len, "CpModelProto");
     SatParameters parameters;
@@ -150,9 +174,9 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
     SolveWrapper& wrapper = session->wrapper;
     wrapper.SetParameters(parameters);
 
-    // The observer must outlive Solve, because SolveWrapper keeps a reference.
-    Observer observer(session);
-    if (events & CPSAT_EVENT_SOLUTION) wrapper.AddSolutionCallback(observer);
+    if (events & CPSAT_EVENT_SOLUTION) {
+      wrapper.AddSolutionCallback(session->observer);
+    }
     if (events & CPSAT_EVENT_BEST_BOUND) {
       wrapper.AddBestBoundCallback([session](double bound) {
         session->Dispatch(CpsatEvent{CPSAT_EVENT_BEST_BOUND, nullptr, 0, bound});
@@ -166,13 +190,9 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
       });
     }
 
-    const CpSolverResponse result = wrapper.Solve(model_proto);
-    if (events & CPSAT_EVENT_SOLUTION) wrapper.ClearSolutionCallback(observer);
-    std::string bytes;
-    if (!result.SerializeToString(&bytes)) {
-      throw Error{"failed to serialize CpSolverResponse"};
-    }
-    Fill(response, bytes);
+    // Solve joins its worker threads before it returns, so every event
+    // callback happens before the caller reads its callback state.
+    FillResponse(response, wrapper.Solve(model_proto));
   });
 }
 

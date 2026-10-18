@@ -4,6 +4,10 @@
 // return int32_t return CPSAT_OK or CPSAT_ERROR; on error, *error holds a UTF-8
 // message. Buffers in CpsatBuffer outputs are owned by the bridge and must be
 // released with cpsat_buffer_free.
+//
+// Preconditions for every function: pointer arguments are non-null and valid,
+// byte pointers are readable for their lengths, and a session comes from
+// cpsat_session_new and is not yet freed. The bridge does not check them.
 
 #ifndef CPSAT_BRIDGE_H_
 #define CPSAT_BRIDGE_H_
