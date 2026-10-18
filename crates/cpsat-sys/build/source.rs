@@ -1,7 +1,9 @@
 //! Builds OR-Tools from the pinned source with upstream CMake.
 
+use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::thread;
 
 use anyhow::Result;
 use sha2::{Digest, Sha256};
@@ -43,10 +45,11 @@ pub fn build(cache: &Path, target: &str) -> Result<PathBuf> {
         .join("source")
         .join(&fetch::hex(&key.finalize())[..16]);
     let install = dir.join("install");
+    let jobs = jobs();
     fetch::once(&dir, |dir| {
         let build = dir.join("build");
         fetch::run(
-            Command::new("cmake")
+            cmake(jobs)
                 .arg("-S")
                 .arg(&source)
                 .arg("-B")
@@ -55,13 +58,41 @@ pub fn build(cache: &Path, target: &str) -> Result<PathBuf> {
                 .arg(format!("-DCMAKE_INSTALL_PREFIX={}", install.display())),
         )?;
         // Multi-config generators such as Visual Studio need --config.
-        fetch::run(Command::new("cmake").arg("--build").arg(&build).args([
-            "--config",
-            "Release",
-            "--target",
-            "install",
-            "--parallel",
-        ]))
+        fetch::run(
+            cmake(jobs)
+                .arg("--build")
+                .arg(&build)
+                .args(["--config", "Release", "--target", "install"])
+                .arg(format!("--parallel={jobs}")),
+        )
     })?;
     Ok(install)
+}
+
+/// The parallel build jobs: `CMAKE_BUILD_PARALLEL_LEVEL` when set, otherwise
+/// three quarters of the hardware threads, so a build of most of an hour
+/// leaves the machine usable.
+fn jobs() -> usize {
+    if let Some(jobs) = env::var("CMAKE_BUILD_PARALLEL_LEVEL")
+        .ok()
+        .and_then(|value| value.parse().ok())
+    {
+        return jobs;
+    }
+    let threads = thread::available_parallelism().map_or(1, usize::from);
+    (threads * 3 / 4).max(1)
+}
+
+fn cmake(jobs: usize) -> Command {
+    let mut command = Command::new("cmake");
+    // Dependencies that configure builds through FetchContent read the level
+    // from the environment.
+    command.env("CMAKE_BUILD_PARALLEL_LEVEL", jobs.to_string());
+    // OR-Tools adds /MP, which lets every MSBuild project spawn one compiler
+    // per thread on top of --parallel. /MP1 last on the command line keeps
+    // the job count the only limit.
+    if cfg!(windows) {
+        command.env("_CL_", "/MP1");
+    }
+    command
 }
