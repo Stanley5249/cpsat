@@ -20,9 +20,10 @@ typecheck *args:
 
 # Run Clippy with warnings as errors
 lint *args:
-    cargo clippy --locked --workspace --all-targets {{ args }} -- -D warnings
+    cargo clippy --quiet --locked --workspace --all-targets {{ args }} -- -D warnings
 
 # Fast local gate: format checks and lints
+[parallel]
 check: (_fmt-cargo "--check") (_fmt-tombi "--check") (_fmt-oxfmt "--check") (_fmt-just "--check") lint
 
 # Run tests
@@ -42,6 +43,10 @@ ci: check test doc
 proto-gen *args:
     buf generate {{ args }}
     cargo fmt -p cpsat
+
+# Fail when the committed Buffa code differs from a fresh generation
+proto-check: proto-gen
+    git diff --exit-code -- crates/cpsat/src/proto
 
 _fmt-cargo *args:
     cargo fmt --all {{ args }}

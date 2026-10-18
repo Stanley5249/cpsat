@@ -2,23 +2,45 @@ name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
+  # Runs a task branch on demand without opening a pull request.
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
   CPSAT_CACHE_DIR: ${{ github.workspace }}/.cpsat-cache
 
 jobs:
-  format:
+  rustfmt:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: cargo fmt --all --check
+
+  tombi:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.0 # no major-version tag exists
+      - run: uvx tombi@1.8.4 format --quiet --check .
+
+  oxfmt:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
-      - uses: extractions/setup-just@v4
-      - run: cargo fmt --all --check
-      - run: uvx tombi@1.8.4 format --check .
       - run: bunx oxfmt --check
+
+  just-fmt:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: extractions/setup-just@v4
       - run: just --fmt --check
 
   lint:
@@ -32,7 +54,8 @@ jobs:
             ortools-${{ runner.os }}-${{
             hashFiles('crates/cpsat-sys/build/artifacts.rs') }}
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - run:
+          cargo clippy --quiet --locked --workspace --all-targets -- -D warnings
 
   docs:
     runs-on: ubuntu-24.04
@@ -45,7 +68,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo doc --locked --workspace --no-deps
 
-  generated:
+  proto:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -58,7 +81,7 @@ jobs:
       - run: git diff --exit-code -- crates/cpsat/src/proto
       - name: Vendored protos match the pinned OR-Tools tag
         run: |
-          tag=$(sed -n 's/^pub const VERSION: &str = "\(.*\)";/\1/p' crates/cpsat-sys/build/artifacts.rs)
+          tag=$(sed -n 's|.*/archive/refs/tags/\(v[0-9.]*\)\.tar\.gz.*|\1|p' crates/cpsat-sys/build/artifacts.rs)
           for proto in cp_model sat_parameters; do
             curl -fsSL "https://raw.githubusercontent.com/google/or-tools/$tag/ortools/sat/$proto.proto" |
               diff - "crates/cpsat/proto/ortools/sat/$proto.proto"
@@ -104,7 +127,11 @@ jobs:
         run: |
           # Match both the legacy and the Cargo 1.100 build-dir layouts.
           runtime=$(find target/debug/build -type d -name runtime -path '*cpsat-sys*/out/*' | head -n 1)
-          for binary in target/debug/deps/solve-*; do
-            [ -x "$binary" ] || continue
-            ! LD_LIBRARY_PATH="$runtime" ldd "$binary" | grep 'not found'
+          status=0
+          for binary in $(find target/debug/deps -maxdepth 1 -type f -executable); do
+            output=$(LD_LIBRARY_PATH="$runtime" ldd "$binary")
+            if grep -q 'not found' <<<"$output"; then
+              echo "$binary"; echo "$output"; status=1
+            fi
           done
+          exit $status
