@@ -26,7 +26,8 @@
 //! stops solves from any thread.
 //!
 //! OR-Tools aborts the process on an internal `CHECK` failure, which Rust
-//! cannot catch. [`validate_model`] reports invalid models without solving.
+//! cannot catch. [`validate_model`] reports invalid models without solving,
+//! and a subprocess keeps an untrusted model from ending the caller.
 
 #[cfg(not(feature = "views"))]
 compile_error!("the `views` feature is required, because solution events are Buffa views");

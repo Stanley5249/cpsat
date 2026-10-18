@@ -1,6 +1,7 @@
 # Proto2 defaults in Buffa
 
-`sat_parameters.proto` is proto2, and most of its fields declare a default:
+`sat_parameters.proto` is proto2, and most of its fields declare a default, such
+as these two.
 
 ```protobuf
 optional double max_time_in_seconds = 36 [default = inf];

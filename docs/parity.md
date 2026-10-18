@@ -44,7 +44,7 @@ solves each global and scheduling family.
 | `new_*_series`                                                                | iterators and `collect`                                                                | `samples.rs::nqueens`                                                                                 |
 | `LinearExpr` arithmetic, `sum`, `weighted_sum`                                | `+`, `-`, `*`, unary `-`, `+=`, and `Sum` on `LinearExpr`                              | `equivalence.rs::linear`, `model.rs`                                                                  |
 | `~b`, `Not()`                                                                 | `!b`                                                                                   | `model.rs::literals_negate_and_name_their_variable`                                                   |
-| A 0-1 `IntVar` where a literal goes                                           | `Model::as_literal`                                                                    | `model.rs::a_zero_one_variable_serves_as_a_literal`                                                   |
+| A 0-1 `IntVar` where a literal goes                                           | `Model::to_literal`                                                                    | `model.rs::a_zero_one_variable_serves_as_a_literal`                                                   |
 | `add(x == y)` and the other comparisons                                       | `eq`, `ne`, `le`, `lt`, `ge`, `gt`                                                     | `equivalence.rs::linear`                                                                              |
 | `add_linear_constraint`, `add_linear_expression_in_domain`                    | `in_domain` with a range or a `Domain`                                                 | `equivalence.rs::linear`, `samples.rs::step_function`                                                 |
 | `add(True)`, `add(False)`                                                     | `Constraint::bool_and([])`, `Constraint::bool_or([])`                                  | none                                                                                                  |
@@ -87,9 +87,10 @@ solves each global and scheduling family.
 - An unset `SatParameters` field reads as `None` instead of its proto2 default.
   `docs/buffa-proto2-defaults.md` explains why and how to read the defaults.
 - An OR-Tools `CHECK` failure aborts the process, as in Python.
-- Python rejects some arguments while it builds a constraint, such as an empty
-  arc list. Types reject most of them in Rust, and the OR-Tools validator
-  reports the rest at `validate_model` or as `MODEL_INVALID`.
+- Python rejects some arguments while it builds a constraint. Rust types reject
+  some of them, such as a product of two variables, and the OR-Tools validator
+  reports the rest, such as an empty arc list, at `validate_model` or as
+  `MODEL_INVALID`.
 - A stopped `StopHandle` stays stopped, so it also stops later solves, where
   Python's `stop_search` stops only the running solve. A new handle per solve
   gives Python's behavior.

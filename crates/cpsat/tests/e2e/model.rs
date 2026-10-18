@@ -320,12 +320,23 @@ fn a_zero_one_variable_serves_as_a_literal() {
     let mut model = Model::new();
     let flag = model.int_var(0..=1);
     let wide = model.int_var(0..=2);
-    let literal = model.as_literal(flag).unwrap();
+    let literal = model.to_literal(flag).unwrap();
     assert_eq!(literal.variable(), flag);
-    assert_eq!(model.as_literal(wide), None);
+    assert_eq!(model.to_literal(wide), None);
     model.add(Constraint::bool_or([literal]));
     let response = solve(model.proto(), &SatParameters::default()).unwrap();
     assert_eq!(response.value(flag), Some(1));
+}
+
+#[test]
+fn only_domains_within_zero_and_one_are_literals() {
+    let mut model = Model::new();
+    for domain in [Domain::new(0, 0), Domain::new(1, 1)] {
+        let fixed = model.int_var(domain);
+        assert!(model.to_literal(fixed).is_some());
+    }
+    let empty = model.int_var(Domain::default());
+    assert_eq!(model.to_literal(empty), None);
 }
 
 #[test]

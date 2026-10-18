@@ -35,7 +35,7 @@ impl Model {
     /// `var` as a literal if its domain is within `[0, 1]`, for the places
     /// where Python accepts a 0-1 integer variable as a literal.
     #[must_use]
-    pub fn as_literal(&self, var: IntVar) -> Option<BoolVar> {
+    pub fn to_literal(&self, var: IntVar) -> Option<BoolVar> {
         self.bool_var_from_index(var.0)
     }
 
