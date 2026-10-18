@@ -79,19 +79,18 @@ fn reports_best_bounds() {
 fn forwards_logs_and_parameters() {
     let params = SatParameters::default()
         .with_log_search_progress(true)
-        .with_log_to_stdout(false)
-        .with_num_workers(3);
+        .with_log_to_stdout(false);
     let mut log = String::new();
-    Solver::new(params)
-        .on_event(EventSet::LOG, |event| {
-            if let Event::Log(line) = event {
-                log.push_str(line);
-                log.push('\n');
-            }
-            ControlFlow::Continue(())
-        })
-        .solve(&tiny_model())
-        .unwrap();
+    let mut solver = Solver::new(params).on_event(EventSet::LOG, |event| {
+        if let Event::Log(line) = event {
+            log.push_str(line);
+            log.push('\n');
+        }
+        ControlFlow::Continue(())
+    });
+    solver.params_mut().num_workers = Some(3);
+    solver.solve(&tiny_model()).unwrap();
+    drop(solver);
     // OR-Tools 9.15 echoes non-default parameters, which proves they reached
     // C++. The wording may change with the pinned version.
     assert!(log.contains("num_workers: 3"), "{log}");
