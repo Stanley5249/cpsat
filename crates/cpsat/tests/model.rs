@@ -270,3 +270,13 @@ fn reads_interval_parts_like_python() {
         [present]
     );
 }
+
+#[test]
+#[should_panic(expected = "is not an interval of this model")]
+fn interval_parts_panic_on_a_replaced_interval() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=9);
+    let interval = model.fixed_size_interval_var(x, 3);
+    model[interval] = x.le(5).into_proto();
+    let _ = model.interval_start(interval);
+}

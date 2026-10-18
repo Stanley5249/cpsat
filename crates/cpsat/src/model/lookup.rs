@@ -75,11 +75,12 @@ impl Model {
     ///
     /// # Panics
     ///
-    /// If `interval` is out of range.
+    /// If `interval` is not an interval of this model.
     pub fn interval_presence_literals(
         &self,
         interval: IntervalVar,
     ) -> impl Iterator<Item = BoolVar> + '_ {
+        self.interval_proto(interval);
         self[interval]
             .enforcement_literal
             .iter()
