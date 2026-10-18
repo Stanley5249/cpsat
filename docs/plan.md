@@ -111,9 +111,12 @@ of the model.
 ### M3b source backend
 
 `build/source.rs` holds the CMake options that turn off what CP-SAT does not
-need. Inspect the configured targets after configuration instead of trusting
-that these options produce a CP-SAT-only build. The source backend must pass the
-same tests as the prebuilt one, through the on-demand `source` workflow.
+need. Configuring with them succeeds on Windows with SCIP, HiGHS, and Coin-OR
+off. MathOpt must stay on, and Gurobi and Xpress stay on because OR-Tools loads
+them at runtime without build dependencies. Inspect the configured targets
+instead of trusting that these options produce a CP-SAT-only build. The source
+backend must pass the same tests as the prebuilt one, through the on-demand
+`source` workflow.
 
 ### M7 performance
 

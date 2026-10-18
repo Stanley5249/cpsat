@@ -7,7 +7,9 @@ use crate::Result;
 use crate::fetch::run;
 
 /// Options turned off because CP-SAT does not need them. Defaults verified in
-/// the v9.15 root `CMakeLists.txt`.
+/// the v9.15 root `CMakeLists.txt`. `BUILD_MATH_OPT` stays on, because
+/// `ortools_gurobi` links `ortools::math_opt_proto` and fails to generate
+/// without it.
 const OPTIONS: &[&str] = &[
     "-DCMAKE_BUILD_TYPE=Release",
     "-DBUILD_SHARED_LIBS=ON",
@@ -19,7 +21,6 @@ const OPTIONS: &[&str] = &[
     "-DBUILD_SAMPLES=OFF",
     "-DBUILD_EXAMPLES=OFF",
     "-DBUILD_TESTING=OFF",
-    "-DBUILD_MATH_OPT=OFF",
     "-DBUILD_FLATZINC=OFF",
     "-DUSE_SCIP=OFF",
     "-DUSE_HIGHS=OFF",
