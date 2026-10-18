@@ -80,7 +80,6 @@ of the model.
 | ----------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Crates            | `cpsat-sys` and `cpsat` under `crates/`                                                              | Cargo's `links` key allows one native link per graph                                                                       |
 | Codegen           | `just proto-gen` runs `buf generate` with the remote Buffa plugin, and the output is committed       | Buffa's recommended path. Normal builds need no `buf` or `protoc`                                                          |
-| Plugin pin        | `buf.gen.yaml` pins the plugin to the runtime version in `Cargo.toml`                                | Generated code must match the runtime                                                                                      |
 | Bridge build      | `cc` crate with definitions read from `ortoolsTargets.cmake`                                         | Prebuilt mode needs only a C++ compiler, not CMake                                                                         |
 | Download          | `curl` and `tar` from the system                                                                     | No build-dependency compile time, and the system proxy and CA store apply. `build/fetch.rs` names when to switch to `ureq` |
 | Cache             | Archives, extractions, and source builds in `CPSAT_CACHE_DIR`, each filled once under a `File::lock` | Survives `cargo clean`, one extraction serves every `OUT_DIR`, and concurrent builds wait instead of racing                |
@@ -94,7 +93,6 @@ of the model.
 | Solution payload  | `CpSolverResponseView`, zero-copy                                                                    | Callers that keep a solution call `to_owned_message`                                                                       |
 | Formats           | Buffa `text=true` and `json=true` with `gate_impls=true`, as the `text` and `json` features          | Pure Rust. `views` is a required feature, because Buffa gates views with the formats                                       |
 | Defaults          | `default_parameters` fills `SatParameters` through C++ reflection                                    | Buffa generates no proto2 default getters                                                                                  |
-| Generated lints   | `#[expect(clippy::all, clippy::pedantic, ...)]` on `mod proto`                                       | Buffa follows its own lint policy                                                                                          |
 
 ## Modeling API
 
@@ -125,29 +123,22 @@ model.add(constraint) --- move into model ---> ConstraintRef(i32)
 
 ## Milestones
 
-| Phase | Deliverable                                                       | Status                                                 |
-| ----- | ----------------------------------------------------------------- | ------------------------------------------------------ |
-| M0    | Scaffolding, lints, formatters, `justfile`                        | Done                                                   |
-| M1    | Buffa types and round-trip tests in `tests/e2e/protobuf.rs`       | Done                                                   |
-| M2    | Bridge over `SolveWrapper` and `CpSatHelper`                      | Done                                                   |
-| M3a   | Prebuilt and `dir:` modes, shared cache, runtime copy             | Done on Windows, Linux in CI                           |
-| M4    | `solve`, `Solver`, `StopHandle`, helpers, diagnostics             | Done                                                   |
-| M5    | Parity matrix in `docs/parity.md`, cross-checked with Python 9.15 | Done                                                   |
-| M6    | CI on Windows, Debian 12, and Ubuntu 22.04, 24.04, and 26.04      | Done                                                   |
-| M3b   | Source backend                                                    | Done on Windows, Linux `source` workflow not run yet   |
-| M7    | Benchmarks                                                        | Open                                                   |
-| M8    | Static linking and CP-SAT-only exploration                        | Optional                                               |
-| M9    | Modeling API: `Model`, handles, expressions, every family         | Done, with the Python fixtures and 18 official samples |
+M0 to M6 and M9 are done: the scaffolding, Buffa types, the bridge, the prebuilt
+and `dir:` modes, the solver API, the parity matrix, CI, and the modeling API.
+
+| Phase | Deliverable                                | Status                                               |
+| ----- | ------------------------------------------ | ---------------------------------------------------- |
+| M3b   | Source backend                             | Done on Windows, Linux `source` workflow not run yet |
+| M7    | Benchmarks                                 | Open                                                 |
+| M8    | Static linking and CP-SAT-only exploration | Optional                                             |
 
 ### M3b source backend
 
 `build/source.rs` holds the CMake options that turn off what CP-SAT does not
-need. Configuring with them succeeds on Windows with SCIP, HiGHS, and Coin-OR
-off. MathOpt must stay on, and Gurobi and Xpress stay on because OR-Tools loads
-them at runtime without build dependencies. Inspect the configured targets
-instead of trusting that these options produce a CP-SAT-only build. A full
-Windows build takes about 40 minutes and passes the same tests as the prebuilt
-archive. The on-demand `source` workflow runs the same tests on Linux.
+need, and says why MathOpt stays on. Inspect the configured targets instead of
+trusting that these options produce a CP-SAT-only build. A full Windows build
+passes the same tests as the prebuilt archive. The on-demand `source` workflow
+runs them on Windows and Ubuntu 24.04, and has not run yet.
 
 ### M7 performance
 
@@ -165,14 +156,33 @@ before maintaining any of them.
 
 ## Definition of done
 
-- `cargo build` works on clean Windows, Debian 12, and Ubuntu 22.04 to 26.04
-  machines with a C++ compiler, `curl`, and `tar`.
+- `cargo build` works on a clean machine of each platform that the README lists,
+  with a C++ compiler, `curl`, and `tar`.
 - Native libraries are acquired, linked, and found at runtime automatically.
-- Buffa types are the only model representation, and models stay mutable between
-  solves.
+- Models stay mutable between solves.
 - Every Python v9.15 modeling capability has a Rust API or a documented Protobuf
   equivalent, and passes its parity test.
 - Typical modeling code needs only `use cpsat::prelude::*`.
 - Callbacks and cancellation are safe.
 - `just ci` passes, and normal builds regenerate neither Protobuf code nor
   OR-Tools.
+
+## Open questions before publishing
+
+A design review on 2026-10-19 found the direction sound and named these
+decisions as expensive to reverse after a crates.io release.
+
+- Buffa, a 0.x crate, is part of the public API, so each Buffa minor release is
+  a breaking change here. Options: accept it, or keep the wire bytes as the
+  stable interchange so a later switch stays possible.
+- The supported platforms are two x86_64 targets, and the build needs network
+  access. Options: document `dir:` as the offline mode, and add the macOS and
+  aarch64 archives that OR-Tools publishes.
+- A comparison with a constant `i64::MIN` or `i64::MAX` panics, so user data can
+  panic a service. Options: keep the panic like Python's exception, or add
+  `try_` variants.
+- Shipped binaries find the OR-Tools libraries only through
+  `DEP_ORTOOLS_RUNTIME` and a manual copy, and Linux gets no `$ORIGIN` rpath.
+  Shipping them also requires the license notices of OR-Tools and its bundled
+  libraries.
+- A versioning policy that ties crate releases to OR-Tools releases.
