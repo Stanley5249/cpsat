@@ -1,2 +1,2 @@
 # Clippy reads the MSRV from `rust-version` in Cargo.toml.
-doc-valid-idents = ["CMake", "CP-SAT", "OR-Tools", "SatParameters", "CpModelProto", "CpSolverResponse", ".."]
+doc-valid-idents = ["CMake", "CP-SAT", "OR-Tools", "SatParameters", "CpModelProto", "CpSolverResponse", "AlmaLinux", ".."]

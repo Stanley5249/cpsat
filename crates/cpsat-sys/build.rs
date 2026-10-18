@@ -34,9 +34,11 @@ enum Toolchain {
     Gnu,
 }
 
-/// Files the build reads from an OR-Tools install.
+/// Files the build reads from an OR-Tools install. The CMake file lives in the
+/// library directory, which is `lib64` in the AlmaLinux archive.
 const HEADER: &str = "include/ortools/sat/swig_helper.h";
-const CMAKE_TARGETS: &str = "lib/cmake/ortools/ortoolsTargets.cmake";
+const CMAKE_TARGETS: &str = "cmake/ortools/ortoolsTargets.cmake";
+const LIB_DIRS: [&str; 2] = ["lib", "lib64"];
 
 fn main() -> Result<()> {
     for path in ["build.rs", "build", "native"] {
@@ -65,9 +67,7 @@ fn main() -> Result<()> {
         }
         Mode::Source => source::build(&fetch::cache_dir()?, &target)?,
         Mode::Dir(root) => {
-            for file in [HEADER, CMAKE_TARGETS] {
-                println!("cargo::rerun-if-changed={}", root.join(file).display());
-            }
+            println!("cargo::rerun-if-changed={}", root.join(HEADER).display());
             root
         }
     };
@@ -76,11 +76,25 @@ fn main() -> Result<()> {
         "{} is not an OR-Tools C++ install",
         root.display()
     );
+    let lib = LIB_DIRS
+        .iter()
+        .map(|dir| root.join(dir))
+        .find(|lib| lib.join(CMAKE_TARGETS).exists())
+        .with_context(|| {
+            format!(
+                "no lib/{CMAKE_TARGETS} or lib64/{CMAKE_TARGETS} in {}",
+                root.display()
+            )
+        })?;
+    println!(
+        "cargo::rerun-if-changed={}",
+        lib.join(CMAKE_TARGETS).display()
+    );
 
     let runtime = out.join("runtime");
-    place_runtime(&root, &runtime, &toolchain)?;
-    compile_bridge(&root, &toolchain)?;
-    link(&root, &runtime, &toolchain)?;
+    place_runtime(&root, &lib, &runtime, &toolchain)?;
+    compile_bridge(&root, &lib, &toolchain)?;
+    link(&lib, &runtime, &toolchain)?;
 
     // Dependents read these as DEP_ORTOOLS_ROOT and DEP_ORTOOLS_RUNTIME, for
     // example to copy the runtime libraries next to a shipped executable.
@@ -121,20 +135,19 @@ fn toolchain(target: &str) -> Result<Toolchain> {
     }
 }
 
-fn place_runtime(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
+fn place_runtime(root: &Path, lib: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
     if runtime.exists() {
         fs::remove_dir_all(runtime)?;
     }
     fs::create_dir_all(runtime)?;
     let (dir, wanted): (_, fn(&str) -> bool) = match toolchain {
-        Toolchain::Msvc => ("bin", |name| {
+        Toolchain::Msvc => (root.join("bin"), |name| {
             Path::new(name)
                 .extension()
                 .is_some_and(|extension| extension.eq_ignore_ascii_case("dll"))
         }),
-        Toolchain::Gnu => ("lib", |name| name.contains(".so")),
+        Toolchain::Gnu => (lib.to_owned(), |name| name.contains(".so")),
     };
-    let dir = root.join(dir);
     for entry in fs::read_dir(&dir).with_context(|| format!("failed to read {}", dir.display()))? {
         let entry = entry?;
         let name = entry.file_name();
@@ -160,7 +173,7 @@ fn place(from: &Path, to: &Path) -> Result<()> {
     Ok(())
 }
 
-fn compile_bridge(root: &Path, toolchain: &Toolchain) -> Result<()> {
+fn compile_bridge(root: &Path, lib: &Path, toolchain: &Toolchain) -> Result<()> {
     let mut build = cc::Build::new();
     build
         .cpp(true)
@@ -169,7 +182,7 @@ fn compile_bridge(root: &Path, toolchain: &Toolchain) -> Result<()> {
         .include(root.join("include"));
     // Match the definitions OR-Tools exports to its CMake consumers, because
     // some of them change declarations in the installed headers.
-    for define in exported_definitions(root)? {
+    for define in exported_definitions(lib)? {
         match define.split_once('=') {
             Some((name, value)) => build.define(name, value),
             None => build.define(&define, None),
@@ -197,8 +210,8 @@ fn compile_bridge(root: &Path, toolchain: &Toolchain) -> Result<()> {
 
 /// Reads `INTERFACE_COMPILE_DEFINITIONS` of `ortools::ortools` from the
 /// installed CMake package.
-fn exported_definitions(root: &Path) -> Result<Vec<String>> {
-    let targets = root.join(CMAKE_TARGETS);
+fn exported_definitions(lib: &Path) -> Result<Vec<String>> {
+    let targets = lib.join(CMAKE_TARGETS);
     let text = fs::read_to_string(&targets)
         .with_context(|| format!("failed to read {}", targets.display()))?;
     let block = text
@@ -220,14 +233,11 @@ fn exported_definitions(root: &Path) -> Result<Vec<String>> {
         .collect())
 }
 
-fn link(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
+fn link(lib: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
     println!("cargo::rustc-link-search=native={}", runtime.display());
     match toolchain {
         Toolchain::Msvc => {
-            println!(
-                "cargo::rustc-link-search=native={}",
-                root.join("lib").display()
-            );
+            println!("cargo::rustc-link-search=native={}", lib.display());
             for lib in ["ortools", "libprotobuf", "abseil_dll"] {
                 println!("cargo::rustc-link-lib=dylib={lib}");
             }
@@ -237,7 +247,7 @@ fn link(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
             // symbols that resolve only through another shared library. rustc
             // links with --as-needed, so unused libraries are dropped.
             println!("cargo::rustc-link-lib=dylib=ortools");
-            for entry in fs::read_dir(root.join("lib"))? {
+            for entry in fs::read_dir(lib)? {
                 let name = entry?.file_name();
                 let Some(lib) = name
                     .to_str()

@@ -95,8 +95,13 @@ jobs:
         include:
           - name: windows
             os: windows-latest
+          - name: ubuntu-22.04
+            os: ubuntu-22.04
           - name: ubuntu-24.04
             os: ubuntu-24.04
+          - name: debian-12
+            os: ubuntu-24.04
+            container: debian:12
           - name: ubuntu-26.04
             os: ubuntu-24.04
             container: ubuntu:26.04

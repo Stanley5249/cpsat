@@ -106,7 +106,7 @@ of the model.
 | M3a   | Prebuilt and `dir:` modes, shared cache, runtime copy             | Done on Windows, Linux in CI                             |
 | M4    | `solve`, `Solver`, `StopHandle`, helpers, diagnostics             | Done                                                     |
 | M5    | Parity matrix in `docs/parity.md`, cross-checked with Python 9.15 | Done                                                     |
-| M6    | CI on Windows, Ubuntu 24.04, and Ubuntu 26.04                     | Done                                                     |
+| M6    | CI on Windows, Debian 12, and Ubuntu 22.04, 24.04, and 26.04      | Done                                                     |
 | M3b   | Source backend                                                    | Implemented, configure step verified, full build pending |
 | M7    | Benchmarks                                                        | Open                                                     |
 | M8    | Static linking and CP-SAT-only exploration                        | Optional                                                 |
@@ -137,8 +137,8 @@ before maintaining any of them.
 
 ## Definition of done
 
-- `cargo build` works on clean Windows and Ubuntu 24.04 and 26.04 machines with
-  a C++ compiler, `curl`, and `tar`.
+- `cargo build` works on clean Windows, Debian 12, and Ubuntu 22.04 to 26.04
+  machines with a C++ compiler, `curl`, and `tar`.
 - Native libraries are acquired, linked, and found at runtime automatically.
 - Buffa types are the only model representation, and models stay mutable between
   solves.

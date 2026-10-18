@@ -15,8 +15,9 @@ cpsat = { git = "https://github.com/Stanley5249/cpsat" }
 ```
 
 Supported targets are `x86_64-pc-windows-msvc` and `x86_64-unknown-linux-gnu` on
-Ubuntu 24.04 or newer. Building needs a C++ compiler (MSVC 2022 or GCC 13 or
-newer), `curl`, and `tar`, plus CMake for `CPSAT_ORTOOLS=source`.
+glibc 2.28 or newer, such as Debian 12 or Ubuntu 22.04. Building needs a C++
+compiler (MSVC 2022 or GCC 11 or newer), `curl`, and `tar`, plus CMake for
+`CPSAT_ORTOOLS=source`.
 
 ## Usage
 
