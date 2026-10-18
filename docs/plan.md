@@ -173,14 +173,11 @@ A design review on 2026-10-19 found the direction sound and named these
 decisions as expensive to reverse after a crates.io release.
 
 - Buffa, a 0.x crate, is part of the public API, so each Buffa minor release is
-  a breaking change here. Options: accept it, or keep the wire bytes as the
-  stable interchange so a later switch stays possible.
-- The supported platforms are two x86_64 targets, and the build needs network
-  access. Options: document `dir:` as the offline mode, and add the macOS and
-  aarch64 archives that OR-Tools publishes.
-- A comparison with a constant `i64::MIN` or `i64::MAX` panics, so user data can
-  panic a service. Options: keep the panic like Python's exception, or add
-  `try_` variants.
+  a breaking change here. It stays until this decision, and keeping the wire
+  bytes as the stable interchange would keep a later switch possible.
+- The supported platforms are two x86_64 targets. The README documents `dir:` as
+  the offline mode, and the macOS and aarch64 archives that OR-Tools publishes
+  are not supported yet.
 - Shipped binaries find the OR-Tools libraries only through
   `DEP_ORTOOLS_RUNTIME` and a manual copy, and Linux gets no `$ORIGIN` rpath.
   Shipping them also requires the license notices of OR-Tools and its bundled
