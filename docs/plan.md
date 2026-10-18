@@ -11,7 +11,7 @@ reproducing its high-level API.
 
 ### Hard requirements
 
-- Windows x86-64 MSVC and Linux x86-64 GNU on Ubuntu 24.04 and 26.04.
+- The platforms that the README's Installation section lists.
 - `cargo build` automatically acquires OR-Tools and builds the native bridge.
 - No manually installed OR-Tools, Conda, or Python runtime.
 - Official prebuilt OR-Tools archives by default, a reproducible source build as
@@ -26,7 +26,8 @@ reproducing its high-level API.
 
 ### Non-goals
 
-- Python's modeling DSL, `CpModelBuilder`, or the C++ class hierarchy.
+- Python's modeling DSL, `CpModelBuilder`, or the C++ class hierarchy. Small
+  helpers on the generated types cover the common cases instead.
 - A persistent incremental solver.
 - OR-Tools subsystems outside CP-SAT.
 - Custom propagation or search algorithms.
@@ -53,15 +54,14 @@ These facts shape the design. Recheck them when the pinned version changes.
 - Both prebuilt archives are dynamic. `ortools.dll` loads HiGHS and SCIP even
   for CP-SAT. `ortoolsTargets.cmake` exports the compile definitions consumers
   need.
-- `cp_model.proto` is proto3 and `sat_parameters.proto` is proto2. Buffa does
-  not generate getters for proto2 `[default = X]` values.
+- `cp_model.proto` is proto3 and `sat_parameters.proto` is proto2.
 
 ## Architecture
 
 ```text
 user code
    |
-crates/cpsat          Buffa types, solve(), events, StopHandle, diagnostics
+crates/cpsat          Buffa types, helpers, Solver, StopHandle, diagnostics
    |  (safe Rust, owns the model)
 crates/cpsat-sys      build.rs, raw extern "C" declarations, links = "ortools"
    |  (serialized bytes, fn pointer + context, opaque session)
@@ -78,20 +78,22 @@ of the model.
 
 ## Decisions
 
-| Topic             | Decision                                                                                | Reason                                                                                                                                                               |
-| ----------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Crates            | `cpsat-sys` and `cpsat` under `crates/`                                                 | Cargo's `links` key allows one native link per graph                                                                                                                 |
-| Codegen           | `buf generate` with the remote Buffa plugin, committed output                           | Buffa's recommended path; normal builds need no `buf` or `protoc`                                                                                                    |
-| Plugin pin        | `buf.gen.yaml` pins the plugin to the runtime version in `Cargo.toml`                   | Generated code must match the runtime                                                                                                                                |
-| Bridge build      | `cc` crate with definitions read from `ortoolsTargets.cmake`                            | Prebuilt mode needs only a C++ compiler, not CMake                                                                                                                   |
-| Artifacts         | `build/artifacts.rs` holds URLs and SHA-256                                             | No TOML parser in the build script                                                                                                                                   |
-| Download          | `curl` and `tar` from the system                                                        | Both ship with Windows 10+ and Linux, and `tar` keeps the Linux symlinks                                                                                             |
-| Cache             | Archives, extractions, and source builds in `CPSAT_CACHE_DIR`, not `build-dir`          | Survives `cargo clean`, and one extraction serves every `OUT_DIR`. Moving into `build-dir` would not fix library lookup when `build-dir` leaves the target directory |
-| Runtime libraries | Hard-linked, or copied across volumes, into `OUT_DIR/runtime`                           | Cargo puts that path on `PATH` or `LD_LIBRARY_PATH` for `cargo run` and `cargo test`, but only while `build-dir` stays inside the target directory                   |
-| Errors            | `anyhow` in the library and the build script                                            | Chosen by the project owner                                                                                                                                          |
-| Events            | One `FnMut(Event) -> ControlFlow<()> + Send` callback with an `Events` subscription set | Mirrors the bridge's tagged dispatcher, and `Break` stops at once                                                                                                    |
-| Solution payload  | `CpSolverResponseView`, zero-copy                                                       | Callers that keep a solution call `to_owned_message`                                                                                                                 |
-| Generated lints   | `#[expect(clippy::all, clippy::pedantic, ...)]` on `mod proto`                          | Buffa follows its own lint policy                                                                                                                                    |
+| Topic             | Decision                                                                                             | Reason                                                                                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Crates            | `cpsat-sys` and `cpsat` under `crates/`                                                              | Cargo's `links` key allows one native link per graph                                                                       |
+| Codegen           | `just proto-gen` runs `buf generate` with the remote Buffa plugin, and the output is committed       | Buffa's recommended path. Normal builds need no `buf` or `protoc`                                                          |
+| Plugin pin        | `buf.gen.yaml` pins the plugin to the runtime version in `Cargo.toml`                                | Generated code must match the runtime                                                                                      |
+| Bridge build      | `cc` crate with definitions read from `ortoolsTargets.cmake`                                         | Prebuilt mode needs only a C++ compiler, not CMake                                                                         |
+| Download          | `curl` and `tar` from the system                                                                     | No build-dependency compile time, and the system proxy and CA store apply. `build/fetch.rs` names when to switch to `ureq` |
+| Cache             | Archives, extractions, and source builds in `CPSAT_CACHE_DIR`, each filled once under a `File::lock` | Survives `cargo clean`, one extraction serves every `OUT_DIR`, and concurrent builds wait instead of racing                |
+| MSRV              | 1.89                                                                                                 | `File::lock`                                                                                                               |
+| Runtime libraries | Hard-linked, or copied across volumes, into `OUT_DIR/runtime`                                        | See the `cpsat-sys` build script                                                                                           |
+| Errors            | `thiserror` enum in `cpsat`, `anyhow` in the build script                                            | Callers can match an invalid model or a native failure, and the build script reports a context chain                       |
+| Solve API         | `cpsat::solve` for the plain case, and a `Solver` that owns its parameters for events and stops      | Mirrors Python's `CpSolver` without a mandatory object for the plain case                                                  |
+| Events            | One `FnMut(Event) -> ControlFlow<()> + Send` callback with an `EventSet` subscription                | Mirrors the bridge's tagged dispatcher, and `Break` stops at once                                                          |
+| Stop              | `StopHandle` stops every solve attached to it, and a stop is sticky                                  | Behaves like a cancellation token, so sharing one handle never loses a stop                                                |
+| Solution payload  | `CpSolverResponseView`, zero-copy                                                                    | Callers that keep a solution call `to_owned_message`                                                                       |
+| Generated lints   | `#[expect(clippy::all, clippy::pedantic, ...)]` on `mod proto`                                       | Buffa follows its own lint policy                                                                                          |
 
 ## Milestones
 
@@ -101,9 +103,9 @@ of the model.
 | M1    | Buffa types and round-trip tests in `tests/protobuf.rs`           | Done                                                     |
 | M2    | Bridge over `SolveWrapper` and `CpSatHelper`                      | Done                                                     |
 | M3a   | Prebuilt and `dir:` modes, shared cache, runtime copy             | Done on Windows, Linux in CI                             |
-| M4    | `solve`, `solve_with`, `StopHandle`, diagnostics                  | Done                                                     |
+| M4    | `solve`, `Solver`, `StopHandle`, helpers, diagnostics             | Done                                                     |
 | M5    | Parity matrix in `docs/parity.md`, cross-checked with Python 9.15 | Done                                                     |
-| M6    | CI on Windows, Ubuntu 24.04, and Ubuntu 26.04                     | Workflows written                                        |
+| M6    | CI on Windows, Ubuntu 24.04, and Ubuntu 26.04                     | Done                                                     |
 | M3b   | Source backend                                                    | Implemented, configure step verified, full build pending |
 | M7    | Benchmarks                                                        | Open                                                     |
 | M8    | Static linking and CP-SAT-only exploration                        | Optional                                                 |

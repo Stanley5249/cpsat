@@ -16,7 +16,7 @@ cpsat = { git = "https://github.com/Stanley5249/cpsat" }
 
 Supported targets are `x86_64-pc-windows-msvc` and `x86_64-unknown-linux-gnu` on
 Ubuntu 24.04 or newer. Building needs a C++ compiler (MSVC 2022 or GCC 13 or
-newer), `curl`, and `tar`.
+newer), `curl`, and `tar`, plus CMake for `CPSAT_ORTOOLS=source`.
 
 ## Usage
 
@@ -24,37 +24,45 @@ newer), `curl`, and `tar`.
 use std::ops::ControlFlow;
 
 use cpsat::proto::{CpModelProto, SatParameters};
-use cpsat::{Event, Events, StopHandle};
+use cpsat::{Event, EventSet, Solver, StopHandle};
 
-let model = CpModelProto::default();
-let params = SatParameters { num_workers: Some(8), ..Default::default() };
-let response = cpsat::solve(&model, &params)?;
+let mut model = CpModelProto::default();
+let x = model.add_int_var(0, 10);
+let y = model.add_int_var(0, 10);
+model.add_linear(&[(x, 1), (y, 1)], i64::MIN, 4);
+model.maximize(&[(x, 2), (y, 3)]);
+
+let response = cpsat::solve(&model, &SatParameters::default())?;
+println!("{}: x = {:?}", response.status(), response.value(x));
 
 let stop = StopHandle::new();
-let response = cpsat::solve_with(&model, &params, Events::SOLUTION, Some(&stop), |event| {
-    if let Event::Solution(view) = event {
-        println!("objective {}", view.objective_value);
-    }
-    ControlFlow::Continue(())
-})?;
+let response = Solver::new(SatParameters::default().with_num_workers(8))
+    .on_event(EventSet::SOLUTION, |event| {
+        if let Event::Solution(view) = event {
+            println!("objective {}", view.objective_value);
+        }
+        ControlFlow::Continue(())
+    })
+    .stop(&stop)
+    .solve(&model)?;
 ```
+
+`crates/cpsat/tests/samples.rs` ports the official OR-Tools samples.
 
 ## Configuration
 
 The build script reads these environment variables:
 
-| Variable          | Effect                                                                          |
-| ----------------- | ------------------------------------------------------------------------------- |
-| `CPSAT_ORTOOLS`   | `prebuilt` (default), `source` to build OR-Tools with CMake, or `dir:<path>`    |
-| `CPSAT_CACHE_DIR` | Download and build cache, by default `%LOCALAPPDATA%\cpsat` or `~/.cache/cpsat` |
+| Variable          | Effect                                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `CPSAT_ORTOOLS`   | `prebuilt` (default), `source` to build OR-Tools with CMake, or `dir:<path>`                                  |
+| `CPSAT_CACHE_DIR` | Download and build cache, by default `%LOCALAPPDATA%\cpsat`, or `$XDG_CACHE_HOME/cpsat` then `~/.cache/cpsat` |
 
-`cargo run` and `cargo test` find the OR-Tools shared libraries automatically,
-as long as Cargo's `build.build-dir` stays inside the target directory, which is
-the default. Cargo adds library paths to `PATH` or `LD_LIBRARY_PATH` only from
-inside the target directory, so a `build-dir` moved elsewhere needs that path
-set by hand. A shipped executable needs the libraries beside it or on the
-library path. A build script that depends on `cpsat-sys` can copy them from
-`DEP_ORTOOLS_RUNTIME`.
+Both paths must be absolute. `cargo run` and `cargo test` find the OR-Tools
+shared libraries while Cargo's `build.build-dir` stays inside the target
+directory, which is the default. The `cpsat-sys` build script explains why. A
+shipped executable needs the libraries beside it or on the library path. A build
+script that depends on `cpsat-sys` can copy them from `DEP_ORTOOLS_RUNTIME`.
 
 ## Requirements
 
@@ -64,7 +72,8 @@ For development, also install:
 - [just](https://github.com/casey/just)
 - [tombi](https://tombi-toml.github.io/tombi/)
 - [Bun](https://bun.sh/) for `bunx oxfmt`
-- [Buf](https://buf.build/docs/cli/installation/), only for `just proto-gen`
+- [Buf](https://buf.build/docs/cli/installation/), only for `just proto-gen` and
+  `just proto-check`
 
 ## Commands
 
