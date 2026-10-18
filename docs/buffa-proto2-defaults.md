@@ -1,31 +1,25 @@
-# Draft issue: proto2 default getters in Buffa
+# Proto2 defaults in Buffa
 
-A draft for [anthropics/buffa](https://github.com/anthropics/buffa), to file
-later. `cpsat::default_parameters` works around it until then.
-
-## Title
-
-Generate accessors that return the `[default = X]` value of proto2 optional
-fields
-
-## Body
-
-Buffa 0.9.2 represents a proto2 `optional` scalar as `Option<T>`, so an unset
-field reads as `None`. The guide says that `[default = X]` on `optional` fields
-does not generate unwrap-to-default accessors, and that custom defaults apply
-only to `required` fields.
-
-Schemas such as OR-Tools' `sat_parameters.proto` rely on defaults heavily:
+`sat_parameters.proto` is proto2, and most of its fields declare a default:
 
 ```protobuf
 optional double max_time_in_seconds = 36 [default = inf];
 optional bool cp_model_presolve = 86 [default = true];
 ```
 
-A caller that wants the effective value has to copy each default from the
-`.proto` by hand, and the copies drift when the schema changes.
+Buffa generates each `optional` field as `Option<T>` and, by design, no accessor
+that returns the `[default = X]` value. Its README says that custom defaults
+apply only to `required` fields through `impl Default`, and that callers read
+optional fields with pattern matching or `.unwrap_or(X)`. So an unset
+`SatParameters` field reads as `None`, where Python's
+`solver.parameters.max_time_in_seconds` reads `inf`.
 
-Request: for each proto2 `optional` scalar or enum field with a default,
-generate an accessor such as `fn max_time_in_seconds_or_default(&self) -> f64`,
-matching what prost generates as `fn max_time_in_seconds(&self) -> f64`. A
-`const` per default would also work.
+`None` changes nothing for a solve, because OR-Tools applies its defaults to
+every unset field. It matters only to code that reads a parameter, and that code
+has two options:
+
+- `cpsat::default_parameters()` returns `SatParameters` with every singular
+  field set to its OR-Tools default, read through C++ reflection, so the values
+  follow the pinned OR-Tools version instead of a copy.
+- `.unwrap_or(X)` on one field, which copies `X` from the `.proto` and drifts
+  when the schema changes.

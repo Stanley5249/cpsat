@@ -84,20 +84,15 @@ solves each global and scheduling family.
 
 ## Limitations
 
-- An unset `SatParameters` field reads as `None`, because Buffa generates no
-  getters for proto2 `[default = X]` values. `cpsat::default_parameters` fills
-  them, and `docs/buffa-proto2-defaults.md` drafts the upstream request.
-- An OR-Tools `CHECK` failure aborts the process in both Python and Rust.
-  `validate_model` catches invalid models first, and a subprocess isolates
-  untrusted ones.
-- Python checks arguments while it builds a constraint, such as affine-only
-  expressions or a non-empty arc list. Rust leaves these checks to the OR-Tools
-  validator, so the error appears at `validate_model` or as `MODEL_INVALID`.
+- An unset `SatParameters` field reads as `None` instead of its proto2 default.
+  `docs/buffa-proto2-defaults.md` explains why and how to read the defaults.
+- An OR-Tools `CHECK` failure aborts the process, as in Python.
+- Python rejects some arguments while it builds a constraint, such as an empty
+  arc list. Types reject most of them in Rust, and the OR-Tools validator
+  reports the rest at `validate_model` or as `MODEL_INVALID`.
 - A stopped `StopHandle` stays stopped, so it also stops later solves, where
   Python's `stop_search` stops only the running solve. A new handle per solve
   gives Python's behavior.
-- Expression arithmetic and `value` panic when they overflow `i64`. Python's
-  expression arithmetic wraps silently instead.
 - A handle does not know its model. A handle from another model reads the wrong
   variable, or `None` from a response and a panic from `model[handle]` when it
   is out of range.
