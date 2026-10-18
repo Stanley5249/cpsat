@@ -76,10 +76,8 @@ jobs:
       - uses: bufbuild/buf-action@v1
         with:
           setup_only: true
-      - run: buf generate
-        working-directory: crates/cpsat/proto
-      - run: cargo fmt -p cpsat
-      - run: git diff --exit-code -- crates/cpsat/src/proto
+      - uses: extractions/setup-just@v4
+      - run: just proto-check
       - name: Vendored protos match the pinned OR-Tools tag
         run: |
           tag=$(sed -n 's|.*/archive/refs/tags/\(v[0-9.]*\)\.tar\.gz.*|\1|p' crates/cpsat-sys/build/artifacts.rs)
