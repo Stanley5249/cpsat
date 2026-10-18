@@ -327,3 +327,24 @@ fn a_zero_one_variable_serves_as_a_literal() {
     let response = solve(model.proto(), &SatParameters::default()).unwrap();
     assert_eq!(response.value(flag), Some(1));
 }
+
+#[test]
+fn constants_survive_round_trips_and_edits() {
+    let mut model = Model::new();
+    let five = model.constant(5);
+    assert_eq!(model.constant(5), five);
+
+    // Like Python's clone, a rebuilt model reuses any fixed variable.
+    let mut proto = model.into_proto();
+    proto.variables[0].domain = vec![7, 7];
+    let mut model = Model::from(proto);
+    assert_eq!(model.constant(7), five);
+    assert_eq!(model.clone().constant(7), five);
+
+    // An edited or removed variable no longer serves its old value.
+    model.proto_mut().variables.clear();
+    let seven = model.constant(7);
+    assert_eq!(seven.index(), 0);
+    model[seven].domain = vec![0, 9];
+    assert_ne!(model.constant(7), seven);
+}

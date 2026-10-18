@@ -2,7 +2,7 @@
 
 mod lookup;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use buffa::MessageField;
 
@@ -45,7 +45,7 @@ pub struct Model(CpModelProto, Constants);
 
 /// The variable of each value that [`Model::constant`] created, so a value
 /// reuses one variable like Python's constant map.
-type Constants = HashMap<i64, i32>;
+type Constants = BTreeMap<i64, i32>;
 
 impl PartialEq for Model {
     /// Compares the messages, because the constant map only saves variables.
@@ -115,7 +115,11 @@ impl Model {
     /// [`LinearExpr::constant`], which adds no variable.
     pub fn constant(&mut self, value: i64) -> IntVar {
         if let Some(&index) = self.1.get(&value)
-            && self.0.variables[slot(index)].domain == [value, value]
+            && self
+                .0
+                .variables
+                .get(slot(index))
+                .is_some_and(|variable| variable.domain == [value, value])
         {
             return IntVar(index);
         }
