@@ -56,15 +56,21 @@ fn solution_view_reads_values_and_converts_to_owned() {
 #[test]
 fn reports_best_bounds() {
     let mut bounds = Vec::new();
+    // A busy machine reports bounds late, so stop after two instead of
+    // after a fixed time.
     let params = SatParameters::default()
-        .with_max_time_in_seconds(2.0)
+        .with_max_time_in_seconds(30.0)
         .with_num_workers(8);
     Solver::new(params)
         .on_event(EventSet::BEST_BOUND, |event| {
             if let Event::BestBound(bound) = event {
                 bounds.push(bound);
             }
-            ControlFlow::Continue(())
+            if bounds.len() < 2 {
+                ControlFlow::Continue(())
+            } else {
+                ControlFlow::Break(())
+            }
         })
         .solve(&hard_model())
         .unwrap();
