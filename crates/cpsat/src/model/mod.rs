@@ -32,7 +32,7 @@ use crate::variable::{BoolVar, IntVar, IntervalVar};
 /// model.add(Constraint::all_different([x, y]));
 /// model.maximize(x + y);
 ///
-/// let response = cpsat::solve(model.proto(), &SatParameters::default())?;
+/// let response = solve(model.proto(), &SatParameters::default())?;
 /// assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
 /// assert_eq!(response.value(x + y), Some(12));
 /// # Ok::<(), cpsat::Error>(())

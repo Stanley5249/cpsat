@@ -7,14 +7,14 @@ use cpsat::prelude::*;
 fn validates_a_valid_model() {
     let mut model = Model::new();
     model.bool_var();
-    cpsat::validate_model(model.proto()).unwrap();
+    validate_model(model.proto()).unwrap();
 }
 
 #[test]
 fn reports_why_a_model_is_invalid() {
     let mut model = Model::new();
     model.int_var(Domain::new(5, 1));
-    let Err(Error::InvalidModel(message)) = cpsat::validate_model(model.proto()) else {
+    let Err(Error::InvalidModel(message)) = validate_model(model.proto()) else {
         panic!("an empty domain must be invalid");
     };
     // Python 9.15 reports the same message for this model.

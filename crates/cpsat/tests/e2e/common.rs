@@ -1,7 +1,7 @@
 //! Models shared by the integration tests.
 
 use cpsat::prelude::*;
-use cpsat::proto::{CpModelProto, CpSolverResponse};
+use cpsat::proto::CpModelProto;
 
 /// A pseudo-random multi-dimensional knapsack that CP-SAT cannot prove
 /// optimal within seconds, for testing stops.
