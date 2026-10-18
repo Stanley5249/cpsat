@@ -71,7 +71,7 @@ solves each global and scheduling family.
 | `remove_all_names`                                                            | `Model::remove_all_names`                                                              | `model.rs::constraint_builder_sets_enforcement_and_name`                                              |
 | Change domains, objectives, constraints, then solve again                     | `model[handle]`, `proto_mut`                                                           | `solve.rs::resolves_after_model_change`                                                               |
 | `clone`, `proto`, serialization                                               | `Clone`, `Model::proto`, `Message::encode_to_vec`                                      | `solve.rs::clone_and_serialize_round_trip`                                                            |
-| `validate`, `model_stats`                                                     | `Model::validate`, `model_stats`, also on `CpModelProto`                               | `diagnostics.rs`                                                                                      |
+| `validate`, `model_stats`                                                     | `Model::validate`, `Model::model_stats`, also on `CpModelProto`                        | `diagnostics.rs`                                                                                      |
 
 ## Formats and parameters
 

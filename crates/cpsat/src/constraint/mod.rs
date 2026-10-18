@@ -42,7 +42,9 @@ pub struct Constraint(ConstraintProto);
 
 impl Constraint {
     /// Enforces this constraint only when `literal` is true, like Python's
-    /// `only_enforce_if`. Several calls require all their literals.
+    /// `only_enforce_if`. Several calls require all their literals. Every
+    /// family accepts it, but OR-Tools notes that an enforced circuit,
+    /// multiple circuit, no-overlap, or cumulative constraint may solve slower.
     #[must_use]
     pub fn only_if(mut self, literal: BoolVar) -> Self {
         self.0.enforcement_literal.push(literal.0);
@@ -102,7 +104,8 @@ pub(crate) fn linear(expr: LinearExpr, domain: &Domain) -> Constraint {
     let (vars, coeffs, offset) = expr.into_terms();
     // The domain bounds i64::MIN and i64::MAX stand for infinity, so they
     // stay, and finite bounds saturate into them like Python's `Domain`
-    // arithmetic.
+    // arithmetic. A saturated bound admits no extra value, because OR-Tools
+    // rejects a variable whose domain reaches near either limit.
     let shift = |bound: i64| match bound {
         i64::MIN | i64::MAX => bound,
         _ => i64::try_from(

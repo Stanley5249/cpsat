@@ -49,7 +49,7 @@ let response = Solver::new(&SatParameters::default().with_num_workers(8))
         ControlFlow::Continue(())
     })
     .with_stop_handle(&stop)
-    .solve(model.proto())?;
+    .solve(&model)?;
 ```
 
 `crates/cpsat/tests/e2e/samples.rs` ports the official OR-Tools samples, and
@@ -71,11 +71,12 @@ set `CPSAT_ORTOOLS=dir:<path>` to the extracted directory that holds `include`
 and `lib`. `crates/cpsat-sys/build/artifacts.rs` lists each archive's URL and
 SHA-256.
 
-The `dir:` path and `CPSAT_CACHE_DIR` must be absolute. `cargo run` and
-`cargo test` find the OR-Tools shared libraries while Cargo's `build.build-dir`
-stays inside the target directory, which is the default. The `cpsat-sys` build
-script explains why. A shipped executable needs the libraries beside it or on
-the library path. A build script that depends on `cpsat-sys` can copy them from
+Deleting `CPSAT_CACHE_DIR` makes the next build download and extract again. The
+`dir:` path and `CPSAT_CACHE_DIR` must be absolute. `cargo run` and `cargo test`
+find the OR-Tools shared libraries while Cargo's `build.build-dir` stays inside
+the target directory, which is the default. The `cpsat-sys` build script
+explains why. A shipped executable needs the libraries beside it or on the
+library path. A build script that depends on `cpsat-sys` can copy them from
 `DEP_ORTOOLS_RUNTIME`.
 
 ## Requirements

@@ -181,6 +181,7 @@ fn comparisons_at_the_i64_limits_match_python() {
         (x.gt(y + MAX), vec![MAX, MAX]),
         (x.ne(MAX), vec![MIN, MAX - 1]),
         (x.ne(MIN), vec![MIN + 1, MAX]),
+        ((x + MAX).le(-2), vec![MIN, MIN]),
         // Out-of-range bounds saturate into the limits, as in Python.
         ((x + MIN).ge(0), vec![MAX, MAX]),
         ((x + 5).le(MIN + 2), vec![MIN, MIN]),

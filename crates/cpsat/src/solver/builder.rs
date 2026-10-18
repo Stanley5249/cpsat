@@ -115,7 +115,8 @@ impl<'a, F> Solver<'a, F> {
     }
 
     /// Solves the model and returns the final response. The solver can solve
-    /// again, for example after the model changes.
+    /// again, for example after the model changes. Pass `&model` to keep a
+    /// [`Model`](crate::Model), because a `Model` by value moves into the call.
     ///
     /// # Errors
     ///
