@@ -45,13 +45,22 @@ against `ortools==9.15.6755`, and `samples.rs` ports the official samples.
 Other constraints, such as `add_all_different` or `add_no_overlap`, are fields
 of `ConstraintProto` and need no helper.
 
+## Formats and parameters
+
+| Python                                             | Rust                                            | Native                          | Test                                                     |
+| -------------------------------------------------- | ----------------------------------------------- | ------------------------------- | -------------------------------------------------------- |
+| `export_to_file` with a `.txt` name, `text_format` | `buffa::text`, `text` feature, on by default    | none                            | `formats.rs::reads_python_text_format`                   |
+| `json_format`                                      | `serde_json` with the `json` feature            | none                            | `formats.rs::reads_python_json`                          |
+| reading `solver.parameters` defaults               | `cpsat::default_parameters`                     | reflection over `SatParameters` | `diagnostics.rs::reads_parameter_defaults_from_or_tools` |
+| `Domain`, `new_int_var_from_domain`                | `cpsat::Domain`, `CpModelProto::add_int_var_in` | none                            | `domain.rs`                                              |
+
 ## Limitations
 
-- Buffa does not generate getters for proto2 `[default = X]` values, so an unset
-  `SatParameters` field reads as `None` rather than its OR-Tools default. The
-  solver still applies the default.
-- Text-format I/O is out of scope: Python's `export_to_file` with a `.txt` name
-  and string parameters. Binary export is `encode_to_vec` plus `std::fs::write`.
-- `Domain` arithmetic is out of scope. Domains are flat `[min, max, ...]` lists
-  in the schema.
+- An unset `SatParameters` field reads as `None`, because Buffa generates no
+  getters for proto2 `[default = X]` values. `cpsat::default_parameters` fills
+  them, and `docs/buffa-proto2-defaults.md` drafts the upstream request.
+- `Domain` covers set operations only, not Python's arithmetic such as
+  `addition_with` or `multiplication_by`.
 - An OR-Tools `CHECK` failure aborts the process in both Python and Rust.
+  `validate_model` catches invalid models first, and a subprocess isolates
+  untrusted ones.

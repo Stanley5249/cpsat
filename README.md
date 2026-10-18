@@ -84,6 +84,7 @@ Run `just` to list the recipes. `just check` is the fast local gate, and
 
 - [Plan](docs/plan.md)
 - [Python parity](docs/parity.md)
+- [Draft Buffa issue on proto2 defaults](docs/buffa-proto2-defaults.md)
 
 ## License
 

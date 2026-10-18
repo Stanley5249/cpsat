@@ -32,8 +32,7 @@ reproducing its high-level API.
 - OR-Tools subsystems outside CP-SAT.
 - Custom propagation or search algorithms.
 - A CP-SAT-only source fork.
-- `Domain` arithmetic and text-format parameter or model I/O. Both can be added
-  later through `CpSatHelper` if needed.
+- `Domain` arithmetic beyond set operations.
 
 ## Facts verified against v9.15
 
@@ -93,6 +92,8 @@ of the model.
 | Events            | One `FnMut(Event) -> ControlFlow<()> + Send` callback with an `EventSet` subscription                | Mirrors the bridge's tagged dispatcher, and `Break` stops at once                                                          |
 | Stop              | `StopHandle` stops every solve attached to it, and a stop is sticky                                  | Behaves like a cancellation token, so sharing one handle never loses a stop                                                |
 | Solution payload  | `CpSolverResponseView`, zero-copy                                                                    | Callers that keep a solution call `to_owned_message`                                                                       |
+| Formats           | Buffa `text=true` and `json=true` with `gate_impls=true`, as the `text` and `json` features          | Pure Rust. `views` is a required feature, because Buffa gates views with the formats                                       |
+| Defaults          | `default_parameters` fills `SatParameters` through C++ reflection                                    | Buffa generates no proto2 default getters                                                                                  |
 | Generated lints   | `#[expect(clippy::all, clippy::pedantic, ...)]` on `mod proto`                                       | Buffa follows its own lint policy                                                                                          |
 
 ## Milestones
