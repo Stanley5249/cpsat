@@ -7,24 +7,24 @@ against `ortools==9.15.6755`, and `samples.rs` ports the official samples.
 
 ## Solver
 
-| Python                                                   | Rust                                               | Native                             | Test                                                           |
-| -------------------------------------------------------- | -------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------- |
-| `CpSolver.solve(model)`                                  | `cpsat::solve`, `Solver::solve`                    | `SolveWrapper::Solve`              | `samples.rs::cp_sat_example`, `events.rs::solver_solves_again` |
-| `CpSolver.parameters`                                    | `SatParameters`, `Solver::params_mut`              | `SolveWrapper::SetParameters`      | `events.rs::forwards_logs_and_parameters`                      |
-| `max_time_in_seconds`                                    | `SatParameters` field                              | none                               | `solve.rs::honors_time_limit`                                  |
-| `CpSolverSolutionCallback.on_solution_callback`          | `Event::Solution`                                  | `SolutionCallback`                 | `samples.rs::solve_and_print_intermediate_solutions`           |
-| `CpSolverSolutionCallback.value`, `boolean_value`        | `CpSolverResponseView::value`, `boolean_value`     | none                               | `events.rs::solution_view_reads_values_and_converts_to_owned`  |
-| `CpSolver.best_bound_callback`                           | `Event::BestBound`                                 | `AddBestBoundCallback`             | `events.rs::reports_best_bounds`                               |
-| `CpSolver.log_callback`                                  | `Event::Log`                                       | `AddLogCallback`                   | `events.rs::forwards_logs_and_parameters`                      |
-| `CpSolverSolutionCallback.stop_search`                   | return `ControlFlow::Break`                        | `StopSearch`                       | `samples.rs::stop_after_n_solutions`                           |
-| `CpSolver.stop_search` from another thread               | `StopHandle::stop` with `Solver::with_stop_handle` | `StopSearch`                       | `events.rs::stops_from_another_thread`                         |
-| Exception in a callback stops the search and is reraised | panic stops the search and resumes after the solve | none                               | `events.rs::callback_panic_stops_and_resumes_after_solve`      |
-| `enumerate_all_solutions`                                | `SatParameters` field with `EventSet::SOLUTION`    | none                               | `samples.rs::search_for_all_solutions`                         |
-| `fill_additional_solutions_in_response`                  | `CpSolverResponse::additional_solutions`           | none                               | `solve.rs::fills_additional_solutions_when_asked`              |
-| `CpSolver.value`, `boolean_value`                        | `CpSolverResponse::value`, `boolean_value`         | none                               | `solve.rs::reads_negated_literals_and_expressions`             |
-| `CpSolver.status_name`                                   | `Display for CpSolverStatus`                       | none                               | `solve.rs::displays_status_like_python`                        |
-| `CpSolver.response_stats`                                | `cpsat::response_stats`                            | `CpSatHelper::SolverResponseStats` | `diagnostics.rs::describes_model_and_response`                 |
-| `CpSolver.sufficient_assumptions_for_infeasibility`      | `CpSolverResponse` field                           | none                               | `samples.rs::assumptions`                                      |
+| Python                                                   | Rust                                                      | Native                             | Test                                                           |
+| -------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------- |
+| `CpSolver.solve(model)`                                  | `cpsat::solve`, `Solver::solve`                           | `SolveWrapper::Solve`              | `samples.rs::cp_sat_example`, `events.rs::solver_solves_again` |
+| `CpSolver.parameters`                                    | `SatParameters` passed to `Solver::new`, `Solver::params` | `SolveWrapper::SetParameters`      | `events.rs::forwards_logs_and_parameters`                      |
+| `max_time_in_seconds`                                    | `SatParameters` field                                     | none                               | `solve.rs::honors_time_limit`                                  |
+| `CpSolverSolutionCallback.on_solution_callback`          | `Event::Solution`                                         | `SolutionCallback`                 | `samples.rs::solve_and_print_intermediate_solutions`           |
+| `CpSolverSolutionCallback.value`, `boolean_value`        | `CpSolverResponseView::value`, `boolean_value`            | none                               | `events.rs::solution_view_reads_values_and_converts_to_owned`  |
+| `CpSolver.best_bound_callback`                           | `Event::BestBound`                                        | `AddBestBoundCallback`             | `events.rs::reports_best_bounds`                               |
+| `CpSolver.log_callback`                                  | `Event::Log`                                              | `AddLogCallback`                   | `events.rs::forwards_logs_and_parameters`                      |
+| `CpSolverSolutionCallback.stop_search`                   | return `ControlFlow::Break`                               | `StopSearch`                       | `samples.rs::stop_after_n_solutions`                           |
+| `CpSolver.stop_search` from another thread               | `StopHandle::stop` with `Solver::with_stop_handle`        | `StopSearch`                       | `events.rs::stops_from_another_thread`                         |
+| Exception in a callback stops the search and is reraised | panic stops the search and resumes after the solve        | none                               | `events.rs::callback_panic_stops_and_resumes_after_solve`      |
+| `enumerate_all_solutions`                                | `SatParameters` field with `EventSet::SOLUTION`           | none                               | `samples.rs::search_for_all_solutions`                         |
+| `fill_additional_solutions_in_response`                  | `CpSolverResponse::additional_solutions`                  | none                               | `solve.rs::fills_additional_solutions_when_asked`              |
+| `CpSolver.value`, `boolean_value`                        | `CpSolverResponse::value`, `boolean_value`                | none                               | `solve.rs::reads_negated_literals_and_expressions`             |
+| `CpSolver.status_name`                                   | `Display for CpSolverStatus`                              | none                               | `solve.rs::displays_status_like_python`                        |
+| `CpSolver.response_stats`                                | `cpsat::response_stats`                                   | `CpSatHelper::SolverResponseStats` | `diagnostics.rs::describes_model_and_response`                 |
+| `CpSolver.sufficient_assumptions_for_infeasibility`      | `CpSolverResponse` field                                  | none                               | `samples.rs::assumptions`                                      |
 
 ## Model
 

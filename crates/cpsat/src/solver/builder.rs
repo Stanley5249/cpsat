@@ -1,6 +1,7 @@
 use core::ffi::c_void;
 use std::ops::ControlFlow;
 use std::panic::resume_unwind;
+use std::sync::LazyLock;
 
 use buffa::Message;
 
@@ -36,7 +37,7 @@ pub fn solve(model: &CpModelProto, params: &SatParameters) -> Result<CpSolverRes
 ///
 /// let model = CpModelProto::default();
 /// let params = SatParameters::default().with_num_workers(8);
-/// let response = Solver::new(params)
+/// let response = Solver::new(&params)
 ///     .on_event(EventSet::SOLUTION, |event| {
 ///         if let Event::Solution(view) = event {
 ///             println!("objective {}", view.objective_value);
@@ -48,15 +49,18 @@ pub fn solve(model: &CpModelProto, params: &SatParameters) -> Result<CpSolverRes
 /// ```
 #[derive(Debug)]
 pub struct Solver<'a, F = NoEvents> {
-    params: SatParameters,
+    params: &'a SatParameters,
     events: EventSet,
     stop: Option<&'a StopHandle>,
     on_event: F,
 }
 
-impl Solver<'_> {
+impl<'a> Solver<'a> {
+    /// A solver that borrows `params`, like [`solve`] does. Build a new solver
+    /// to solve with other parameters, and bind the parameters to a variable
+    /// first to keep the solver for several solves.
     #[must_use]
-    pub fn new(params: SatParameters) -> Self {
+    pub fn new(params: &'a SatParameters) -> Self {
         Self {
             params,
             events: EventSet::NONE,
@@ -68,15 +72,16 @@ impl Solver<'_> {
 
 impl Default for Solver<'_> {
     fn default() -> Self {
-        Self::new(SatParameters::default())
+        static DEFAULT: LazyLock<SatParameters> = LazyLock::new(SatParameters::default);
+        Self::new(&DEFAULT)
     }
 }
 
 impl<'a, F> Solver<'a, F> {
-    /// The parameters, which may change between solves, like Python's
-    /// `solver.parameters`.
-    pub fn params_mut(&mut self) -> &mut SatParameters {
-        &mut self.params
+    /// The parameters, like Python's `solver.parameters`.
+    #[must_use]
+    pub fn params(&self) -> &'a SatParameters {
+        self.params
     }
 
     /// Reports `events` to `on_event`, which runs on a solver thread, one
@@ -119,7 +124,7 @@ impl<'a, F> Solver<'a, F> {
     {
         run(
             model,
-            &self.params,
+            self.params,
             self.events,
             self.stop,
             &mut self.on_event,

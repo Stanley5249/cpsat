@@ -22,7 +22,7 @@ fn all_solutions<const N: usize>(
     exprs: &[LinearExpr; N],
 ) -> Vec<[i64; N]> {
     let mut solutions = Vec::new();
-    let response = Solver::new(params.with_enumerate_all_solutions(true))
+    let response = Solver::new(&params.with_enumerate_all_solutions(true))
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 solutions.push(exprs.each_ref().map(|expr| view.value(expr).unwrap()));
@@ -97,7 +97,7 @@ fn search_for_all_solutions() {
     let params = SatParameters::default().with_enumerate_all_solutions(true);
 
     let mut solutions = Vec::new();
-    let response = Solver::new(params)
+    let response = Solver::new(&params)
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 solutions.push(view.solution.to_vec());
@@ -121,7 +121,7 @@ fn stop_after_n_solutions() {
     let params = SatParameters::default().with_enumerate_all_solutions(true);
 
     let mut count = 0;
-    let response = Solver::new(params)
+    let response = Solver::new(&params)
         .on_event(EventSet::SOLUTION, |_| {
             count += 1;
             if count >= 5 {
@@ -300,7 +300,7 @@ fn nqueens() {
     ));
 
     let mut count = 0;
-    Solver::new(SatParameters::default().with_enumerate_all_solutions(true))
+    Solver::new(&SatParameters::default().with_enumerate_all_solutions(true))
         .on_event(EventSet::SOLUTION, |_| {
             count += 1;
             ControlFlow::Continue(())
@@ -328,7 +328,7 @@ fn cp_is_fun() {
     );
 
     let mut count = 0;
-    Solver::new(SatParameters::default().with_enumerate_all_solutions(true))
+    Solver::new(&SatParameters::default().with_enumerate_all_solutions(true))
         .on_event(EventSet::SOLUTION, |_| {
             count += 1;
             ControlFlow::Continue(())

@@ -41,7 +41,7 @@ let response = solve(model.proto(), &SatParameters::default())?;
 println!("{}: x = {:?}", response.status(), response.value(x));
 
 let stop = StopHandle::new();
-let response = Solver::new(SatParameters::default().with_num_workers(8))
+let response = Solver::new(&SatParameters::default().with_num_workers(8))
     .on_event(EventSet::SOLUTION, |event| {
         if let Event::Solution(view) = event {
             println!("objective {}", view.objective_value);
