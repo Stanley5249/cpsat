@@ -114,8 +114,8 @@ impl Model {
     /// # Errors
     ///
     /// Returns an error if the native call fails.
-    pub fn model_stats(&self) -> Result<String> {
-        self.0.model_stats()
+    pub fn stats(&self) -> Result<String> {
+        self.0.stats()
     }
 
     /// An integer variable in `domain`, like Python's `new_int_var` and

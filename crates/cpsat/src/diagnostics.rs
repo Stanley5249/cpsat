@@ -51,7 +51,7 @@ impl CpModelProto {
     /// # Errors
     ///
     /// Returns an error if the native call fails.
-    pub fn model_stats(&self) -> Result<String> {
+    pub fn stats(&self) -> Result<String> {
         call(cpsat_sys::cpsat_model_stats, &self.encode_to_vec())
     }
 }
@@ -63,7 +63,7 @@ impl CpSolverResponse {
     /// # Errors
     ///
     /// Returns an error if the native call fails.
-    pub fn response_stats(&self) -> Result<String> {
+    pub fn stats(&self) -> Result<String> {
         call(cpsat_sys::cpsat_response_stats, &self.encode_to_vec())
     }
 }

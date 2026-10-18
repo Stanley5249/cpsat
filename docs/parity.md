@@ -23,7 +23,7 @@ against `ortools==9.15.6755`, and `samples.rs` ports the official samples.
 | `fill_additional_solutions_in_response`                          | `CpSolverResponse::additional_solutions`                      | none                               | `solve.rs::fills_additional_solutions_when_asked`                                                    |
 | `CpSolver.value`, `boolean_value`, `float_value`                 | `CpSolverResponse::value`, `boolean_value`, `float_value`     | none                               | `solve.rs::reads_negated_literals_and_expressions`, `solve.rs::solves_a_float_objective_like_python` |
 | `CpSolver.status_name`                                           | `Display for CpSolverStatus`                                  | none                               | `solve.rs::displays_status_like_python`                                                              |
-| `CpSolver.response_stats`                                        | `CpSolverResponse::response_stats`                            | `CpSatHelper::SolverResponseStats` | `diagnostics.rs::describes_model_and_response`                                                       |
+| `CpSolver.response_stats`                                        | `CpSolverResponse::stats`                                     | `CpSatHelper::SolverResponseStats` | `diagnostics.rs::describes_model_and_response`                                                       |
 | `CpSolver.sufficient_assumptions_for_infeasibility`              | `CpSolverResponse` field                                      | none                               | `samples.rs::assumptions`                                                                            |
 
 ## Model
@@ -71,7 +71,7 @@ solves each global and scheduling family.
 | `remove_all_names`                                                            | `Model::remove_all_names`                                                              | `model.rs::constraint_builder_sets_enforcement_and_name`                                              |
 | Change domains, objectives, constraints, then solve again                     | `model[handle]`, `proto_mut`                                                           | `solve.rs::resolves_after_model_change`                                                               |
 | `clone`, `proto`, serialization                                               | `Clone`, `Model::proto`, `Message::encode_to_vec`                                      | `solve.rs::clone_and_serialize_round_trip`                                                            |
-| `validate`, `model_stats`                                                     | `Model::validate`, `Model::model_stats`, also on `CpModelProto`                        | `diagnostics.rs`                                                                                      |
+| `validate`, `model_stats`                                                     | `Model::validate`, `Model::stats`, also on `CpModelProto`                              | `diagnostics.rs`                                                                                      |
 
 ## Formats and parameters
 

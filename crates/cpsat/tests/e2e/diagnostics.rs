@@ -27,11 +27,11 @@ fn describes_model_and_response() {
     let x = model.int_var(0..=10);
     let y = model.int_var(0..=10);
     model.maximize(x + y);
-    let stats = model.model_stats().unwrap();
+    let stats = model.stats().unwrap();
     assert!(stats.contains("#Variables: 2"), "{stats}");
 
     let response = model.solve(&SatParameters::default()).unwrap();
-    let stats = response.response_stats().unwrap();
+    let stats = response.stats().unwrap();
     assert!(stats.contains("status: OPTIMAL"), "{stats}");
 }
 
