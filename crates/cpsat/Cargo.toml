@@ -1,0 +1,16 @@
+[package]
+name = "cpsat"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Rust binding for the OR-Tools CP-SAT solver on raw Protobuf models"
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+buffa.workspace = true
+cpsat-sys.workspace = true
+
+[lints]
+workspace = true

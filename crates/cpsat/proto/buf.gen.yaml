@@ -1,0 +1,7 @@
+# Keep the plugin version equal to the buffa version in the root Cargo.toml.
+version: v2
+plugins:
+  - remote: buf.build/anthropics/buffa:v0.9.2
+    out: ../src/proto
+    opt:
+      - file_per_package=true

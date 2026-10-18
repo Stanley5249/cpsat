@@ -1,0 +1,2 @@
+# Vendored from OR-Tools; the pinned tag lives in crates/cpsat-sys/build/artifacts.rs.
+version: v2
