@@ -46,7 +46,7 @@ fn builds_a_variable_with_holes() {
     let mut model = Model::new();
     let x = model.int_var(Domain::from_values([1, 3, 5]));
     model.maximize(x);
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_eq!(response.value(x), Some(5));
 }

@@ -8,12 +8,13 @@ use buffa::MessageField;
 
 use crate::constraint::{Constraint, ConstraintRef};
 use crate::domain::Domain;
+use crate::error::Result;
 use crate::expr::LinearExpr;
 use crate::float_expr::FloatExpr;
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use crate::proto::{
-    ConstraintProto, CpModelProto, CpObjectiveProto, DecisionStrategyProto, FloatObjectiveProto,
-    IntegerVariableProto, IntervalConstraintProto,
+    ConstraintProto, CpModelProto, CpObjectiveProto, CpSolverResponse, DecisionStrategyProto,
+    FloatObjectiveProto, IntegerVariableProto, IntervalConstraintProto, SatParameters,
 };
 use crate::variable::{BoolVar, IntVar, IntervalVar};
 
@@ -35,7 +36,7 @@ use crate::variable::{BoolVar, IntVar, IntervalVar};
 /// model.add(Constraint::all_different([x, y]));
 /// model.maximize(x + y);
 ///
-/// let response = solve(model.proto(), &SatParameters::default())?;
+/// let response = model.solve(&SatParameters::default())?;
 /// assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
 /// assert_eq!(response.value(x + y), Some(12));
 /// # Ok::<(), cpsat::Error>(())
@@ -85,6 +86,36 @@ impl Model {
     #[must_use]
     pub fn into_proto(self) -> CpModelProto {
         self.0
+    }
+
+    /// Solves the model, like Python's `CpSolver().solve(model)`. See
+    /// [`CpModelProto::solve`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the native bridge fails.
+    pub fn solve(&self, params: &SatParameters) -> Result<CpSolverResponse> {
+        self.0.solve(params)
+    }
+
+    /// Validates the model, like Python's `validate`. See
+    /// [`CpModelProto::validate`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidModel`](crate::Error::InvalidModel) when the
+    /// model is invalid.
+    pub fn validate(&self) -> Result<()> {
+        self.0.validate()
+    }
+
+    /// OR-Tools' statistics for the model, like Python's `model_stats`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the native call fails.
+    pub fn model_stats(&self) -> Result<String> {
+        self.0.model_stats()
     }
 
     /// An integer variable in `domain`, like Python's `new_int_var` and
@@ -360,6 +391,20 @@ impl From<CpModelProto> for Model {
             }
         }
         Self(proto, constants)
+    }
+}
+
+impl AsRef<CpModelProto> for Model {
+    fn as_ref(&self) -> &CpModelProto {
+        &self.0
+    }
+}
+
+impl AsRef<Self> for CpModelProto {
+    /// Lets [`Solver::solve`](crate::Solver::solve) take a model or its
+    /// message.
+    fn as_ref(&self) -> &Self {
+        self
     }
 }
 

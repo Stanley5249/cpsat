@@ -32,7 +32,7 @@ pub fn long_params() -> SatParameters {
 
 /// Solves `model` with default parameters and asserts that it is optimal.
 pub fn solve_optimal(model: &Model) -> CpSolverResponse {
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     response
 }

@@ -37,7 +37,7 @@ model.add(x.ne(y).only_if(enabled));
 model.add(Constraint::all_different([x, y]));
 model.maximize(x + y);
 
-let response = solve(model.proto(), &SatParameters::default())?;
+let response = model.solve(&SatParameters::default())?;
 println!("{}: x = {:?}", response.status(), response.value(x));
 
 let stop = StopHandle::new();

@@ -38,7 +38,7 @@ fn expected() -> CpModelProto {
 fn reads_python_text_format() {
     let model: CpModelProto = buffa::text::decode_from_str(MODEL_TEXT).unwrap();
     assert_eq!(model, expected());
-    let response = solve(&model, &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert!((response.objective_value - 12.0).abs() < 1e-9);
 }

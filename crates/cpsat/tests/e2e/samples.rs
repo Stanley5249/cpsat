@@ -42,7 +42,7 @@ fn simple_sat_program() {
     let [x, y, z] = three_vars(&mut model);
     model.add(x.ne(y));
 
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_ne!(response.value(x), response.value(y));
     assert!(response.value(z).is_some_and(|z| (0..=2).contains(&z)));
@@ -58,7 +58,7 @@ fn cp_sat_example() {
     model.add((5 * x + 2 * y - 6 * z).le(37));
     model.maximize(2 * x + 2 * y + 3 * z);
 
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert!((response.objective_value - 35.0).abs() < 1e-9);
     assert_eq!(response.solution, [7, 3, 5]);
@@ -151,7 +151,7 @@ fn assumptions() {
     model.add(z.gt(x).only_if(c));
     model.add_assumptions([a, b, c]);
 
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::INFEASIBLE);
     let mut core = response.sufficient_assumptions_for_infeasibility.clone();
     core.sort_unstable();
@@ -168,7 +168,7 @@ fn solution_hinting() {
     model.add_hint(x, 1);
     model.add_hint(y, 2);
 
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert!((response.objective_value - 11.0).abs() < 1e-9);
     assert_eq!(response.solution, [1, 2, 2]);

@@ -28,38 +28,44 @@ fn call(
     Ok(output.text().into_owned())
 }
 
-/// Checks the model with OR-Tools' own validation, which a solve also runs
-/// before it reports `MODEL_INVALID`.
-///
-/// # Errors
-///
-/// Returns [`Error::InvalidModel`] with OR-Tools' message when the model is
-/// invalid.
-pub fn validate_model(model: &CpModelProto) -> Result<()> {
-    let message = call(cpsat_sys::cpsat_validate_model, &model.encode_to_vec())?;
-    if message.is_empty() {
-        Ok(())
-    } else {
-        Err(Error::InvalidModel(message))
+impl CpModelProto {
+    /// Checks the model with OR-Tools' own validation, which a solve also
+    /// runs before it reports `MODEL_INVALID`, like Python's `validate`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidModel`] with OR-Tools' message when the model
+    /// is invalid.
+    pub fn validate(&self) -> Result<()> {
+        let message = call(cpsat_sys::cpsat_validate_model, &self.encode_to_vec())?;
+        if message.is_empty() {
+            Ok(())
+        } else {
+            Err(Error::InvalidModel(message))
+        }
+    }
+
+    /// OR-Tools' human-readable statistics for the model, like Python's
+    /// `model_stats`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the native call fails.
+    pub fn model_stats(&self) -> Result<String> {
+        call(cpsat_sys::cpsat_model_stats, &self.encode_to_vec())
     }
 }
 
-/// Returns OR-Tools' human-readable statistics for a model.
-///
-/// # Errors
-///
-/// Returns an error if the native call fails.
-pub fn model_stats(model: &CpModelProto) -> Result<String> {
-    call(cpsat_sys::cpsat_model_stats, &model.encode_to_vec())
-}
-
-/// Returns OR-Tools' human-readable statistics for a response.
-///
-/// # Errors
-///
-/// Returns an error if the native call fails.
-pub fn response_stats(response: &CpSolverResponse) -> Result<String> {
-    call(cpsat_sys::cpsat_response_stats, &response.encode_to_vec())
+impl CpSolverResponse {
+    /// OR-Tools' human-readable statistics for the response, like Python's
+    /// `CpSolver.response_stats`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the native call fails.
+    pub fn response_stats(&self) -> Result<String> {
+        call(cpsat_sys::cpsat_response_stats, &self.encode_to_vec())
+    }
 }
 
 /// Returns `SatParameters` with every singular field set to its OR-Tools

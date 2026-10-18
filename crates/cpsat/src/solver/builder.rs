@@ -15,16 +15,19 @@ use crate::solver::stop::StopHandle;
 /// The callback type of a [`Solver`] without events.
 pub type NoEvents = fn(Event<'_>) -> ControlFlow<()>;
 
-/// Solves the model and returns the final response.
-///
-/// # Errors
-///
-/// Returns an error if the native bridge fails. An invalid model is not an
-/// error; the response status is `MODEL_INVALID`.
-pub fn solve(model: &CpModelProto, params: &SatParameters) -> Result<CpSolverResponse> {
-    run(model, params, EventSet::NONE, None, |_| {
-        ControlFlow::Continue(())
-    })
+impl CpModelProto {
+    /// Solves the model and returns the final response, like Python's
+    /// `CpSolver.solve` without a callback. [`Solver`] adds events and stops.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the native bridge fails. An invalid model is not an
+    /// error; the response status is `MODEL_INVALID`.
+    pub fn solve(&self, params: &SatParameters) -> Result<CpSolverResponse> {
+        run(self, params, EventSet::NONE, None, |_| {
+            ControlFlow::Continue(())
+        })
+    }
 }
 
 /// Configures a solve with events and cancellation, like Python's `CpSolver`.
@@ -56,7 +59,7 @@ pub struct Solver<'a, F = NoEvents> {
 }
 
 impl<'a> Solver<'a> {
-    /// A solver that borrows `params`, like [`solve`] does. Build a new solver
+    /// A solver that borrows `params`, like [`CpModelProto::solve`] does. Build a new solver
     /// to solve with other parameters, and bind the parameters to a variable
     /// first to keep the solver for several solves.
     #[must_use]
@@ -118,12 +121,12 @@ impl<'a, F> Solver<'a, F> {
     ///
     /// Returns an error if the native bridge fails. An invalid model is not an
     /// error; the response status is `MODEL_INVALID`.
-    pub fn solve(&mut self, model: &CpModelProto) -> Result<CpSolverResponse>
+    pub fn solve(&mut self, model: impl AsRef<CpModelProto>) -> Result<CpSolverResponse>
     where
         F: FnMut(Event<'_>) -> ControlFlow<()> + Send,
     {
         run(
-            model,
+            model.as_ref(),
             self.params,
             self.events,
             self.stop,

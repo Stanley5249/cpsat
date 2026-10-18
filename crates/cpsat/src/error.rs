@@ -2,8 +2,8 @@
 
 /// An error from the native bridge or from decoding its output.
 ///
-/// An invalid model is not an error of [`solve`](crate::solve), which reports
-/// it as the `MODEL_INVALID` status, but [`validate_model`](crate::validate_model)
+/// An invalid model is not an error of a solve, which reports it as the
+/// `MODEL_INVALID` status, but [`Model::validate`](crate::Model::validate)
 /// returns it as [`Error::InvalidModel`].
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]

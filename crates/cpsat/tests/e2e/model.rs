@@ -97,7 +97,7 @@ fn constants_and_true_literals_solve_to_their_values() {
         5,
         [(x, 2, yes), (seven, -2, no)],
     ));
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_eq!(response.value(x), Some(8));
     assert_eq!(response.boolean_value(yes), Some(true));
@@ -132,7 +132,7 @@ fn circuit_takes_arcs_from_an_iterator() {
     let arcs: Vec<(i32, i32, BoolVar)> =
         (0..3).map(|i| (i, (i + 1) % 3, model.bool_var())).collect();
     model.add(Constraint::circuit(arcs));
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.solution, [1, 1, 1]);
 }
 
@@ -324,7 +324,7 @@ fn a_zero_one_variable_serves_as_a_literal() {
     assert_eq!(literal.variable(), flag);
     assert_eq!(model.to_literal(wide), None);
     model.add(Constraint::bool_or([literal]));
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.value(flag), Some(1));
 }
 

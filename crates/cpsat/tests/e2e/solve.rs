@@ -24,7 +24,7 @@ fn single_worker() -> SatParameters {
 #[test]
 fn solves_to_optimality() {
     let (model, x, y) = small_model();
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_eq!((response.value(x), response.value(y)), (Some(3), Some(1)));
     assert_eq!(response.value(2 * x + 3 * y - 1), Some(8));
@@ -38,7 +38,7 @@ fn reads_negated_literals_and_expressions() {
     let x = model.constant(4);
     let b = model.bool_var();
     model.add(b.eq(1));
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.value(-x), Some(-4));
     assert_eq!(response.value(7), Some(7));
     assert_eq!(response.boolean_value(b), Some(true));
@@ -63,7 +63,7 @@ fn reports_infeasible() {
     let mut model = Model::new();
     let x = model.int_var(0..=3);
     model.add(x.in_domain(5..=10));
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::INFEASIBLE);
     assert_eq!(response.value(x), None);
 }
@@ -72,30 +72,24 @@ fn reports_infeasible() {
 fn reports_model_invalid_as_status() {
     let mut model = Model::new();
     model.int_var(Domain::new(5, 1));
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::MODEL_INVALID);
 }
 
 #[test]
 fn resolves_after_model_change() {
     let (mut model, x, y) = small_model();
-    assert_eq!(
-        solve(model.proto(), &single_worker()).unwrap().solution,
-        [3, 1]
-    );
+    assert_eq!(model.solve(&single_worker()).unwrap().solution, [3, 1]);
 
     // Tighten x <= 1 through its domain.
     model[x].domain = vec![0, 1];
-    assert_eq!(
-        solve(model.proto(), &single_worker()).unwrap().solution,
-        [0, 2]
-    );
+    assert_eq!(model.solve(&single_worker()).unwrap().solution, [0, 2]);
 
     // Replace the objective, then remove the second constraint, so y is
     // bounded only by x + y <= 4.
     model.maximize(y);
     model.proto_mut().constraints.truncate(1);
-    let response = solve(model.proto(), &single_worker()).unwrap();
+    let response = model.solve(&single_worker()).unwrap();
     assert_eq!(response.value(y), Some(4));
 }
 
@@ -104,7 +98,7 @@ fn clone_and_serialize_round_trip() {
     let (model, ..) = small_model();
     let decoded = CpModelProto::decode_from_slice(&model.proto().encode_to_vec()).unwrap();
     assert_eq!(model.clone(), Model::from(decoded.clone()));
-    let response = solve(&decoded, &SatParameters::default()).unwrap();
+    let response = decoded.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
 }
 
@@ -121,11 +115,11 @@ fn first_solution_follows_the_hint() {
     let params = single_worker()
         .with_stop_after_first_solution(true)
         .with_cp_model_presolve(false);
-    assert_ne!(solve(model.proto(), &params).unwrap().solution, [7, 3]);
+    assert_ne!(model.solve(&params).unwrap().solution, [7, 3]);
 
     model.add_hint(x, 7);
     model.add_hint(y, 3);
-    assert_eq!(solve(model.proto(), &params).unwrap().solution, [7, 3]);
+    assert_eq!(model.solve(&params).unwrap().solution, [7, 3]);
 
     model.clear_hints();
     assert!(model.proto().solution_hint.is_unset());
@@ -134,7 +128,7 @@ fn first_solution_follows_the_hint() {
 #[test]
 fn honors_time_limit() {
     let params = SatParameters::default().with_max_time_in_seconds(0.5);
-    let response = solve(&crate::common::hard_model(), &params).unwrap();
+    let response = crate::common::hard_model().solve(&params).unwrap();
     assert_ne!(response.status(), CpSolverStatus::OPTIMAL);
     assert!(
         response.wall_time < 30.0,
@@ -151,7 +145,7 @@ fn fills_additional_solutions_when_asked() {
         .with_enumerate_all_solutions(true)
         .with_fill_additional_solutions_in_response(true)
         .with_solution_pool_size(10);
-    let response = solve(model.proto(), &params).unwrap();
+    let response = model.solve(&params).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     let mut values: Vec<i64> = response
         .additional_solutions
@@ -169,7 +163,7 @@ fn solves_a_float_objective_like_python() {
     let y = model.int_var(0..=10);
     model.add((x + y).le(7));
     model.minimize_float(0.5 * x - 1.25 * y);
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    let response = model.solve(&SatParameters::default()).unwrap();
     // Python's OR-Tools 9.15 reports -8.75 at x = 0, y = 7.
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert!((response.objective_value + 8.75).abs() < 1e-9);

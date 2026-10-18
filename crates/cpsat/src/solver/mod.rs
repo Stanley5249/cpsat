@@ -5,6 +5,6 @@ mod callback;
 mod event;
 mod stop;
 
-pub use builder::{NoEvents, Solver, solve};
+pub use builder::{NoEvents, Solver};
 pub use event::{Event, EventSet};
 pub use stop::StopHandle;

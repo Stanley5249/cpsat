@@ -9,7 +9,7 @@ against `ortools==9.15.6755`, and `samples.rs` ports the official samples.
 
 | Python                                                           | Rust                                                          | Native                             | Test                                                                                                 |
 | ---------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `CpSolver.solve(model)`                                          | `cpsat::solve`, `Solver::solve`                               | `SolveWrapper::Solve`              | `samples.rs::cp_sat_example`, `events.rs::solver_solves_again`                                       |
+| `CpSolver.solve(model)`                                          | `Model::solve`, `CpModelProto::solve`, `Solver::solve`        | `SolveWrapper::Solve`              | `samples.rs::cp_sat_example`, `events.rs::solver_solves_again`                                       |
 | `CpSolver.parameters`                                            | `SatParameters` passed to `Solver::new`, `Solver::params`     | `SolveWrapper::SetParameters`      | `events.rs::forwards_logs_and_parameters`                                                            |
 | `max_time_in_seconds`                                            | `SatParameters` field                                         | none                               | `solve.rs::honors_time_limit`                                                                        |
 | `CpSolverSolutionCallback.on_solution_callback`                  | `Event::Solution`                                             | `SolutionCallback`                 | `samples.rs::solve_and_print_intermediate_solutions`                                                 |
@@ -23,7 +23,7 @@ against `ortools==9.15.6755`, and `samples.rs` ports the official samples.
 | `fill_additional_solutions_in_response`                          | `CpSolverResponse::additional_solutions`                      | none                               | `solve.rs::fills_additional_solutions_when_asked`                                                    |
 | `CpSolver.value`, `boolean_value`, `float_value`                 | `CpSolverResponse::value`, `boolean_value`, `float_value`     | none                               | `solve.rs::reads_negated_literals_and_expressions`, `solve.rs::solves_a_float_objective_like_python` |
 | `CpSolver.status_name`                                           | `Display for CpSolverStatus`                                  | none                               | `solve.rs::displays_status_like_python`                                                              |
-| `CpSolver.response_stats`                                        | `cpsat::response_stats`                                       | `CpSatHelper::SolverResponseStats` | `diagnostics.rs::describes_model_and_response`                                                       |
+| `CpSolver.response_stats`                                        | `CpSolverResponse::response_stats`                            | `CpSatHelper::SolverResponseStats` | `diagnostics.rs::describes_model_and_response`                                                       |
 | `CpSolver.sufficient_assumptions_for_infeasibility`              | `CpSolverResponse` field                                      | none                               | `samples.rs::assumptions`                                                                            |
 
 ## Model
@@ -71,7 +71,7 @@ solves each global and scheduling family.
 | `remove_all_names`                                                            | `Model::remove_all_names`                                                              | `model.rs::constraint_builder_sets_enforcement_and_name`                                              |
 | Change domains, objectives, constraints, then solve again                     | `model[handle]`, `proto_mut`                                                           | `solve.rs::resolves_after_model_change`                                                               |
 | `clone`, `proto`, serialization                                               | `Clone`, `Model::proto`, `Message::encode_to_vec`                                      | `solve.rs::clone_and_serialize_round_trip`                                                            |
-| `validate`, `model_stats`                                                     | `cpsat::validate_model`, `model_stats` on `model.proto()`                              | `diagnostics.rs`                                                                                      |
+| `validate`, `model_stats`                                                     | `Model::validate`, `model_stats`, also on `CpModelProto`                               | `diagnostics.rs`                                                                                      |
 
 ## Formats and parameters
 
@@ -89,7 +89,7 @@ solves each global and scheduling family.
 - An OR-Tools `CHECK` failure aborts the process, as in Python.
 - Python rejects some arguments while it builds a constraint. Rust types reject
   some of them, such as a product of two variables, and the OR-Tools validator
-  reports the rest, such as an empty arc list, at `validate_model` or as
+  reports the rest, such as an empty arc list, at `validate` or as
   `MODEL_INVALID`.
 - A stopped `StopHandle` stays stopped, so it also stops later solves, where
   Python's `stop_search` stops only the running solve. A new handle per solve

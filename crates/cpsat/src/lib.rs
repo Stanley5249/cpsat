@@ -17,7 +17,7 @@
 //! model.maximize(2 * x + 3 * y);
 //!
 //! let params = SatParameters::default().with_num_workers(8);
-//! let response = solve(model.proto(), &params)?;
+//! let response = model.solve(&params)?;
 //! println!("{}: x = {:?}", response.status(), response.value(x));
 //! # Ok::<(), cpsat::Error>(())
 //! ```
@@ -26,7 +26,7 @@
 //! stops solves from any thread.
 //!
 //! OR-Tools aborts the process on an internal `CHECK` failure, which Rust
-//! cannot catch. [`validate_model`] reports invalid models without solving,
+//! cannot catch. [`Model::validate`] reports invalid models without solving,
 //! and a subprocess keeps an untrusted model from ending the caller.
 
 #[cfg(not(feature = "views"))]
@@ -56,11 +56,11 @@ mod variable;
 /// The Protobuf runtime, re-exported so callers use the same `Message` trait.
 pub use buffa;
 pub use constraint::{Constraint, ConstraintRef};
-pub use diagnostics::{default_parameters, model_stats, response_stats, validate_model};
+pub use diagnostics::default_parameters;
 pub use domain::Domain;
 pub use error::{Error, Result};
 pub use expr::LinearExpr;
 pub use float_expr::FloatExpr;
 pub use model::Model;
-pub use solver::{Event, EventSet, NoEvents, Solver, StopHandle, solve};
+pub use solver::{Event, EventSet, NoEvents, Solver, StopHandle};
 pub use variable::{BoolVar, IntVar, IntervalVar};
