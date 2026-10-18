@@ -141,3 +141,9 @@ jobs:
             fi
           done
           exit $status
+      - name: The dir mode links the extracted archive
+        if: matrix.name == 'ubuntu-24.04'
+        shell: bash
+        run: |
+          root=$(find "$CPSAT_CACHE_DIR/extracted" -mindepth 2 -maxdepth 2 -type d | head -n 1)
+          CPSAT_ORTOOLS="dir:$root" cargo test --locked --workspace --all-features
