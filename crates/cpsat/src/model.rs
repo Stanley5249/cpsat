@@ -297,6 +297,60 @@ impl Model {
         matches!(constraint.constraint, Some(Kind::Interval(_))).then_some(IntervalVar(index))
     }
 
+    /// The start of `interval`, like Python's `IntervalVar.start_expr`.
+    ///
+    /// # Panics
+    ///
+    /// If `interval` is not an interval of this model.
+    #[must_use]
+    pub fn interval_start(&self, interval: IntervalVar) -> LinearExpr {
+        LinearExpr::from((*self.interval_proto(interval).start).clone())
+    }
+
+    /// The size of `interval`, like Python's `IntervalVar.size_expr`.
+    ///
+    /// # Panics
+    ///
+    /// If `interval` is not an interval of this model.
+    #[must_use]
+    pub fn interval_size(&self, interval: IntervalVar) -> LinearExpr {
+        LinearExpr::from((*self.interval_proto(interval).size).clone())
+    }
+
+    /// The end of `interval`, like Python's `IntervalVar.end_expr`.
+    ///
+    /// # Panics
+    ///
+    /// If `interval` is not an interval of this model.
+    #[must_use]
+    pub fn interval_end(&self, interval: IntervalVar) -> LinearExpr {
+        LinearExpr::from((*self.interval_proto(interval).end).clone())
+    }
+
+    /// The literals that make `interval` present, none for an interval that is
+    /// always present, like Python's `IntervalVar.presence_literals`.
+    ///
+    /// # Panics
+    ///
+    /// If `interval` is out of range.
+    pub fn interval_presence_literals(
+        &self,
+        interval: IntervalVar,
+    ) -> impl Iterator<Item = BoolVar> + '_ {
+        self[interval]
+            .enforcement_literal
+            .iter()
+            .copied()
+            .map(BoolVar)
+    }
+
+    fn interval_proto(&self, interval: IntervalVar) -> &IntervalConstraintProto {
+        match &self[interval].constraint {
+            Some(Kind::Interval(proto)) => proto,
+            _ => panic!("{interval:?} is not an interval of this model"),
+        }
+    }
+
     fn variable(&self, index: i32) -> Option<&IntegerVariableProto> {
         self.0.variables.get(usize::try_from(index).ok()?)
     }

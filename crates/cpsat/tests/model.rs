@@ -241,3 +241,32 @@ fn adds_and_clears_assumptions() {
     model.clear_assumptions();
     assert_eq!(model.proto().assumptions, Vec::<i32>::new());
 }
+
+#[test]
+fn reads_interval_parts_like_python() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=9);
+    let present = model.bool_var();
+    let fixed = model.fixed_size_interval_var(x, 3);
+    let optional = model.optional_interval_var(x, 2, x + 2, present);
+    let parts = |interval| {
+        [
+            model.interval_start(interval),
+            model.interval_size(interval),
+            model.interval_end(interval),
+        ]
+        .map(LinearExpressionProto::from)
+    };
+    let expected = |size: i64| {
+        [x.into(), LinearExpr::constant(size), x + size].map(LinearExpressionProto::from)
+    };
+    assert_eq!(parts(fixed), expected(3));
+    assert_eq!(parts(optional), expected(2));
+    assert_eq!(model.interval_presence_literals(fixed).count(), 0);
+    assert_eq!(
+        model
+            .interval_presence_literals(optional)
+            .collect::<Vec<_>>(),
+        [present]
+    );
+}
