@@ -218,10 +218,7 @@ impl MulAssign<i64> for LinearExpr {
 
 impl<T: Into<Self>> Sum<T> for LinearExpr {
     fn sum<I: Iterator<Item = T>>(iter: I) -> Self {
-        iter.fold(Self::default(), |mut sum, item| {
-            sum += item;
-            sum
-        })
+        iter.fold(Self::default(), |sum, item| sum + item)
     }
 }
 

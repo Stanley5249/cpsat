@@ -73,14 +73,13 @@ pub fn build(cache: &Path, target: &str) -> Result<PathBuf> {
 /// three quarters of the hardware threads, so a build of most of an hour
 /// leaves the machine usable.
 fn jobs() -> usize {
-    if let Some(jobs) = env::var("CMAKE_BUILD_PARALLEL_LEVEL")
+    env::var("CMAKE_BUILD_PARALLEL_LEVEL")
         .ok()
         .and_then(|value| value.parse().ok())
-    {
-        return jobs;
-    }
-    let threads = thread::available_parallelism().map_or(1, usize::from);
-    (threads * 3 / 4).max(1)
+        .unwrap_or_else(|| {
+            let threads = thread::available_parallelism().map_or(1, usize::from);
+            (threads * 3 / 4).max(1)
+        })
 }
 
 fn cmake(jobs: usize) -> Command {
