@@ -79,6 +79,27 @@ impl Domain {
         self.0.is_empty()
     }
 
+    /// The smallest value, or `None` if the domain is empty.
+    #[must_use]
+    pub fn min(&self) -> Option<i64> {
+        self.0.first().map(|&(lower, _)| lower)
+    }
+
+    /// The largest value, or `None` if the domain is empty.
+    #[must_use]
+    pub fn max(&self) -> Option<i64> {
+        self.0.last().map(|&(_, upper)| upper)
+    }
+
+    /// The number of values. It saturates at `u64::MAX` for [`Domain::all`],
+    /// where Python's saturates at `i64::MAX` for any larger domain.
+    #[must_use]
+    pub fn size(&self) -> u64 {
+        self.0.iter().fold(0, |size: u64, &(lower, upper)| {
+            size.saturating_add(upper.abs_diff(lower).saturating_add(1))
+        })
+    }
+
     #[must_use]
     pub fn contains(&self, value: i64) -> bool {
         self.0
@@ -103,6 +124,18 @@ impl Domain {
             gaps.push((start, i64::MAX));
         }
         Self(gaps)
+    }
+
+    /// Whether every value of this domain is in `other`.
+    #[must_use]
+    pub fn is_included_in(&self, other: &Self) -> bool {
+        self.intersection_with(other) == *self
+    }
+
+    /// Whether this domain and `other` share a value.
+    #[must_use]
+    pub fn overlaps_with(&self, other: &Self) -> bool {
+        !self.intersection_with(other).is_empty()
     }
 
     #[must_use]

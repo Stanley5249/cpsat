@@ -50,3 +50,32 @@ fn builds_a_variable_with_holes() {
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_eq!(response.value(x), Some(5));
 }
+
+#[test]
+fn reports_bounds_and_size() {
+    let domain = Domain::from_values([1, 3, 9]);
+    assert_eq!(
+        (domain.min(), domain.max(), domain.size()),
+        (Some(1), Some(9), 3)
+    );
+    let empty = Domain::default();
+    assert_eq!((empty.min(), empty.max(), empty.size()), (None, None, 0));
+    assert_eq!(Domain::new(0, 5).size(), 6);
+    assert_eq!(Domain::all().size(), u64::MAX);
+    assert_eq!(Domain::new(i64::MIN, -1).size(), 1 << 63);
+    let edges = Domain::from_values([i64::MIN, i64::MAX]);
+    assert_eq!((edges.min(), edges.max()), (Some(i64::MIN), Some(i64::MAX)));
+}
+
+#[test]
+fn compares_sets() {
+    let small = Domain::new(2, 3);
+    let large = Domain::from_intervals([(0, 5), (10, 15)]);
+    assert!(small.is_included_in(&large) && !large.is_included_in(&small));
+    assert!(Domain::default().is_included_in(&small));
+    assert!(small.overlaps_with(&large));
+    assert!(!small.overlaps_with(&Domain::new(4, 9)));
+    assert!(small.overlaps_with(&Domain::new(3, 9)));
+    assert!(small.is_included_in(&small));
+    assert!(!small.is_included_in(&Domain::default()));
+}
