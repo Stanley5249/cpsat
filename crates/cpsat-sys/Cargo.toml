@@ -1,0 +1,17 @@
+[package]
+name = "cpsat-sys"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Native bridge to the OR-Tools CP-SAT solver"
+repository.workspace = true
+license.workspace = true
+links = "ortools"
+
+[build-dependencies]
+anyhow.workspace = true
+cc.workspace = true
+sha2.workspace = true
+
+[lints]
+workspace = true
