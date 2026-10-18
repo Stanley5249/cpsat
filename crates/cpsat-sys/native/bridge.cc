@@ -120,9 +120,11 @@ void SetError(CpsatBuffer* error, const std::string& message) noexcept {
 }
 
 // Exceptions must not cross the C ABI, so every entry point runs its body
-// through Guard.
+// through Guard, which also empties both output buffers first.
 template <typename Body>
-int32_t Guard(CpsatBuffer* error, Body body) noexcept {
+int32_t Guard(CpsatBuffer* out, CpsatBuffer* error, Body body) noexcept {
+  out->data = nullptr;
+  out->len = 0;
   error->data = nullptr;
   error->len = 0;
   try {
@@ -206,9 +208,7 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
                             size_t params_len, uint32_t events,
                             CpsatEventFn on_event, void* context,
                             CpsatBuffer* response, CpsatBuffer* error) {
-  response->data = nullptr;
-  response->len = 0;
-  return Guard(error, [&] {
+  return Guard(response, error, [&] {
     if (session->used) throw Error{"a CP-SAT session serves one solve"};
     session->used = true;
     CpModelProto model_proto;
@@ -245,9 +245,7 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
 
 int32_t cpsat_validate_model(const uint8_t* model, size_t model_len,
                              CpsatBuffer* message, CpsatBuffer* error) {
-  message->data = nullptr;
-  message->len = 0;
-  return Guard(error, [&] {
+  return Guard(message, error, [&] {
     CpModelProto model_proto;
     Parse(model_proto, model, model_len, "CpModelProto");
     Fill(message, CpSatHelper::ValidateModel(model_proto));
@@ -256,9 +254,7 @@ int32_t cpsat_validate_model(const uint8_t* model, size_t model_len,
 
 int32_t cpsat_model_stats(const uint8_t* model, size_t model_len,
                           CpsatBuffer* stats, CpsatBuffer* error) {
-  stats->data = nullptr;
-  stats->len = 0;
-  return Guard(error, [&] {
+  return Guard(stats, error, [&] {
     CpModelProto model_proto;
     Parse(model_proto, model, model_len, "CpModelProto");
     Fill(stats, CpSatHelper::ModelStats(model_proto));
@@ -267,9 +263,7 @@ int32_t cpsat_model_stats(const uint8_t* model, size_t model_len,
 
 int32_t cpsat_response_stats(const uint8_t* response, size_t response_len,
                              CpsatBuffer* stats, CpsatBuffer* error) {
-  stats->data = nullptr;
-  stats->len = 0;
-  return Guard(error, [&] {
+  return Guard(stats, error, [&] {
     CpSolverResponse response_proto;
     Parse(response_proto, response, response_len, "CpSolverResponse");
     Fill(stats, CpSatHelper::SolverResponseStats(response_proto));
@@ -277,9 +271,7 @@ int32_t cpsat_response_stats(const uint8_t* response, size_t response_len,
 }
 
 int32_t cpsat_default_parameters(CpsatBuffer* params, CpsatBuffer* error) {
-  params->data = nullptr;
-  params->len = 0;
-  return Guard(error, [&] {
+  return Guard(params, error, [&] {
     SatParameters parameters;
     SetDefaults(parameters);
     FillMessage(params, parameters);
