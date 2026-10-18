@@ -25,4 +25,4 @@ jobs:
           key:
             ortools-source-${{ runner.os }}-${{
             hashFiles('crates/cpsat-sys/build/**') }}
-      - run: cargo test --locked --workspace
+      - run: cargo test --locked --workspace --all-features

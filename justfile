@@ -16,11 +16,11 @@ fix: fmt
 
 # Type-check every target
 typecheck *args:
-    cargo check --locked --workspace --all-targets {{ args }}
+    cargo check --locked --workspace --all-targets --all-features {{ args }}
 
 # Run Clippy with warnings as errors
 lint *args:
-    cargo clippy --quiet --locked --workspace --all-targets {{ args }} -- -D warnings
+    cargo clippy --quiet --locked --workspace --all-targets --all-features {{ args }} -- -D warnings
 
 # Fast local gate: format checks and lints
 [parallel]
@@ -28,12 +28,12 @@ check: (_fmt-cargo "--check") (_fmt-tombi "--check") (_fmt-oxfmt "--check") (_fm
 
 # Run tests
 test *args:
-    cargo test --locked --workspace {{ args }}
+    cargo test --locked --workspace --all-features {{ args }}
 
 # Build rustdoc with warnings as errors
 [env("RUSTDOCFLAGS", "-D warnings")]
 doc *args:
-    cargo doc --locked --workspace --no-deps {{ args }}
+    cargo doc --locked --workspace --all-features --no-deps {{ args }}
 
 # Full gate
 ci: check test doc
