@@ -111,9 +111,11 @@ fn toolchain(target: &str) -> Result<Toolchain> {
     }
 }
 
-/// Copies the shared libraries under `OUT_DIR`, because Cargo puts native
-/// search paths inside the target directory on `PATH` or `LD_LIBRARY_PATH` for
-/// `cargo run` and `cargo test`.
+/// Links or copies the shared libraries under `OUT_DIR`, because Cargo puts
+/// native search paths inside the target directory on `PATH` or
+/// `LD_LIBRARY_PATH` for `cargo run` and `cargo test`. Cargo skips paths
+/// outside it, so this fails when `build.build-dir` is moved out of the target
+/// directory.
 fn copy_runtime(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()> {
     if runtime.exists() {
         fs::remove_dir_all(runtime)?;
@@ -137,8 +139,18 @@ fn copy_runtime(root: &Path, runtime: &Path, toolchain: &Toolchain) -> Result<()
         if entry.file_type()?.is_symlink() {
             copy_symlink(&entry.path(), &to)?;
         } else {
-            fs::copy(entry.path(), &to)?;
+            link_or_copy(&entry.path(), &to)?;
         }
+    }
+    Ok(())
+}
+
+// Every OUT_DIR would otherwise hold its own 90 MB copy. A hard link fails
+// across volumes, such as a cache on C: and a project on D:, so fall back to a
+// copy.
+fn link_or_copy(from: &Path, to: &Path) -> Result<()> {
+    if fs::hard_link(from, to).is_err() {
+        fs::copy(from, to)?;
     }
     Ok(())
 }

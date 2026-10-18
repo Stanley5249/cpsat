@@ -78,20 +78,20 @@ of the model.
 
 ## Decisions
 
-| Topic             | Decision                                                                                | Reason                                                                               |
-| ----------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Crates            | `cpsat-sys` and `cpsat` under `crates/`                                                 | Cargo's `links` key allows one native link per graph                                 |
-| Codegen           | `buf generate` with the remote Buffa plugin, committed output                           | Buffa's recommended path; normal builds need no `buf` or `protoc`                    |
-| Plugin pin        | `buf.gen.yaml` pins the plugin to the runtime version in `Cargo.toml`                   | Generated code must match the runtime                                                |
-| Bridge build      | `cc` crate with definitions read from `ortoolsTargets.cmake`                            | Prebuilt mode needs only a C++ compiler, not CMake                                   |
-| Artifacts         | `build/artifacts.rs` holds URLs and SHA-256                                             | No TOML parser in the build script                                                   |
-| Download          | `curl` and `tar` from the system                                                        | Both ship with Windows 10+ and Linux, and `tar` keeps the Linux symlinks             |
-| Cache             | Archives, extractions, and source builds in `CPSAT_CACHE_DIR`                           | Survives `cargo clean`                                                               |
-| Runtime libraries | Copied into `OUT_DIR/runtime`                                                           | Cargo puts that path on `PATH` or `LD_LIBRARY_PATH` for `cargo run` and `cargo test` |
-| Errors            | `anyhow` in the library and the build script                                            | Chosen by the project owner                                                          |
-| Events            | One `FnMut(Event) -> ControlFlow<()> + Send` callback with an `Events` subscription set | Mirrors the bridge's tagged dispatcher, and `Break` stops at once                    |
-| Solution payload  | `CpSolverResponseView`, zero-copy                                                       | Callers that keep a solution call `to_owned_message`                                 |
-| Generated lints   | `#[expect(clippy::all, clippy::pedantic, ...)]` on `mod proto`                          | Buffa follows its own lint policy                                                    |
+| Topic             | Decision                                                                                | Reason                                                                                                                                                               |
+| ----------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Crates            | `cpsat-sys` and `cpsat` under `crates/`                                                 | Cargo's `links` key allows one native link per graph                                                                                                                 |
+| Codegen           | `buf generate` with the remote Buffa plugin, committed output                           | Buffa's recommended path; normal builds need no `buf` or `protoc`                                                                                                    |
+| Plugin pin        | `buf.gen.yaml` pins the plugin to the runtime version in `Cargo.toml`                   | Generated code must match the runtime                                                                                                                                |
+| Bridge build      | `cc` crate with definitions read from `ortoolsTargets.cmake`                            | Prebuilt mode needs only a C++ compiler, not CMake                                                                                                                   |
+| Artifacts         | `build/artifacts.rs` holds URLs and SHA-256                                             | No TOML parser in the build script                                                                                                                                   |
+| Download          | `curl` and `tar` from the system                                                        | Both ship with Windows 10+ and Linux, and `tar` keeps the Linux symlinks                                                                                             |
+| Cache             | Archives, extractions, and source builds in `CPSAT_CACHE_DIR`, not `build-dir`          | Survives `cargo clean`, and one extraction serves every `OUT_DIR`. Moving into `build-dir` would not fix library lookup when `build-dir` leaves the target directory |
+| Runtime libraries | Hard-linked, or copied across volumes, into `OUT_DIR/runtime`                           | Cargo puts that path on `PATH` or `LD_LIBRARY_PATH` for `cargo run` and `cargo test`, but only while `build-dir` stays inside the target directory                   |
+| Errors            | `anyhow` in the library and the build script                                            | Chosen by the project owner                                                                                                                                          |
+| Events            | One `FnMut(Event) -> ControlFlow<()> + Send` callback with an `Events` subscription set | Mirrors the bridge's tagged dispatcher, and `Break` stops at once                                                                                                    |
+| Solution payload  | `CpSolverResponseView`, zero-copy                                                       | Callers that keep a solution call `to_owned_message`                                                                                                                 |
+| Generated lints   | `#[expect(clippy::all, clippy::pedantic, ...)]` on `mod proto`                          | Buffa follows its own lint policy                                                                                                                                    |
 
 ## Milestones
 

@@ -48,9 +48,13 @@ The build script reads these environment variables:
 | `CPSAT_ORTOOLS`   | `prebuilt` (default), `source` to build OR-Tools with CMake, or `dir:<path>`    |
 | `CPSAT_CACHE_DIR` | Download and build cache, by default `%LOCALAPPDATA%\cpsat` or `~/.cache/cpsat` |
 
-`cargo run` and `cargo test` find the OR-Tools shared libraries automatically. A
-shipped executable needs them beside it or on the library path. A build script
-that depends on `cpsat-sys` can copy them from `DEP_ORTOOLS_RUNTIME`.
+`cargo run` and `cargo test` find the OR-Tools shared libraries automatically,
+as long as Cargo's `build.build-dir` stays inside the target directory, which is
+the default. Cargo adds library paths to `PATH` or `LD_LIBRARY_PATH` only from
+inside the target directory, so a `build-dir` moved elsewhere needs that path
+set by hand. A shipped executable needs the libraries beside it or on the
+library path. A build script that depends on `cpsat-sys` can copy them from
+`DEP_ORTOOLS_RUNTIME`.
 
 ## Requirements
 
