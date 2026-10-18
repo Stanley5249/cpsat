@@ -5,9 +5,10 @@
 use std::ops::ControlFlow;
 
 use cpsat::prelude::*;
-use cpsat::proto::CpSolverResponse;
 use cpsat::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use cpsat::proto::sat_parameters::SearchBranching;
+
+use crate::common::solve_optimal;
 
 /// The three variables in `[0, 2]` that most samples share.
 fn three_vars(model: &mut Model) -> [IntVar; 3] {
@@ -32,12 +33,6 @@ fn all_solutions<const N: usize>(
         .unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     solutions
-}
-
-fn solve_optimal(model: &Model) -> CpSolverResponse {
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
-    assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
-    response
 }
 
 /// `simple_sat_program.py`

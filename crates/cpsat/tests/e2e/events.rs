@@ -6,10 +6,11 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::common::{hard_model, long_params};
 use buffa::MessageView;
 use cpsat::prelude::*;
 use cpsat::proto::CpModelProto;
+
+use crate::common::{hard_model, long_params};
 
 /// Generous, because CI runners are slow and run tests in parallel. A stop
 /// that fails runs for the full 60 seconds of `long_params`.

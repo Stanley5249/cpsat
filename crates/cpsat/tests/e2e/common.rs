@@ -1,7 +1,7 @@
 //! Models shared by the integration tests.
 
 use cpsat::prelude::*;
-use cpsat::proto::CpModelProto;
+use cpsat::proto::{CpModelProto, CpSolverResponse};
 
 /// A pseudo-random multi-dimensional knapsack that CP-SAT cannot prove
 /// optimal within seconds, for testing stops.
@@ -28,4 +28,11 @@ pub fn long_params() -> SatParameters {
     SatParameters::default()
         .with_max_time_in_seconds(60.0)
         .with_num_workers(2)
+}
+
+/// Solves `model` with default parameters and asserts that it is optimal.
+pub fn solve_optimal(model: &Model) -> CpSolverResponse {
+    let response = solve(model.proto(), &SatParameters::default()).unwrap();
+    assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
+    response
 }

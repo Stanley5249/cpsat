@@ -4,11 +4,7 @@
 use cpsat::prelude::*;
 use cpsat::proto::CpSolverResponse;
 
-fn solve_optimal(model: &Model) -> CpSolverResponse {
-    let response = solve(model.proto(), &SatParameters::default()).unwrap();
-    assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
-    response
-}
+use crate::common::solve_optimal;
 
 fn values(response: &CpSolverResponse, vars: impl IntoIterator<Item = IntVar>) -> Vec<i64> {
     vars.into_iter()
