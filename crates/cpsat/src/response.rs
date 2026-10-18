@@ -25,7 +25,7 @@ impl CpSolverStatus {
     }
 }
 
-/// The value of `expr` under `solution`, or `None` without a solution.
+/// The value of `expr` under `solution`, or `None` if a variable has no value.
 fn value(solution: &[i64], expr: impl Into<LinearExpr>) -> Option<i64> {
     expr.into().evaluate(solution)
 }
@@ -44,7 +44,13 @@ impl CpSolverResponse {
     }
 
     /// The value of a variable or expression in the solution, like Python's
-    /// `CpSolver.value`, or `None` without a solution.
+    /// `CpSolver.value`, or `None` if a variable has no value, such as without
+    /// a solution. A constant has its value even without a solution, as in
+    /// Python.
+    ///
+    /// # Panics
+    ///
+    /// If the value overflows `i64`.
     #[must_use]
     pub fn value(&self, expr: impl Into<LinearExpr>) -> Option<i64> {
         value(&self.solution, expr)
@@ -66,6 +72,10 @@ impl CpSolverResponseView<'_> {
     }
 
     /// The value of a variable or expression in the solution.
+    ///
+    /// # Panics
+    ///
+    /// If the value overflows `i64`.
     #[must_use]
     pub fn value(&self, expr: impl Into<LinearExpr>) -> Option<i64> {
         value(&self.solution, expr)

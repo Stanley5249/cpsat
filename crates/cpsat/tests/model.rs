@@ -2,7 +2,8 @@
 //! objectives, and expression arithmetic.
 
 use cpsat::prelude::*;
-use cpsat::proto::LinearExpressionProto;
+use cpsat::proto::constraint_proto::Constraint as Kind;
+use cpsat::proto::{CpSolverResponse, LinearExpressionProto};
 
 #[test]
 fn literals_negate_and_name_their_variable() {
@@ -149,4 +150,82 @@ fn negating_the_minimum_coefficient_panics() {
     let mut model = Model::new();
     let x = model.int_var(0..=1);
     let _ = -(x * i64::MIN);
+}
+
+fn linear_domain(constraint: Constraint) -> Vec<i64> {
+    match constraint.into_proto().constraint {
+        Some(Kind::Linear(linear)) => linear.domain,
+        other => panic!("expected a linear constraint, got {other:?}"),
+    }
+}
+
+#[test]
+fn comparisons_at_the_i64_limits_match_python() {
+    const MIN: i64 = i64::MIN;
+    const MAX: i64 = i64::MAX;
+    let mut model = Model::new();
+    let x = model.int_var(-10..=10);
+    let y = model.int_var(0..=5);
+    // The domains that Python's OR-Tools 9.15 writes for the same comparisons.
+    let cases = [
+        (x.le(5), vec![MIN, 5]),
+        ((x + 5).le(MAX), vec![MIN, MAX]),
+        ((x - 5).ge(MIN), vec![MIN, MAX]),
+        (x.ge(MIN), vec![MIN, MAX]),
+        (x.gt(MIN), vec![MIN + 1, MAX]),
+        (x.lt(MAX), vec![MIN, MAX - 1]),
+        ((x + 5).ge(0), vec![-5, MAX]),
+        ((x + 5).ne(0), vec![MIN, -6, -4, MAX]),
+        ((x - y + 4).gt(MAX - 3), vec![MAX - 6, MAX]),
+        ((x + MAX).le(0), vec![MIN, MIN + 1]),
+        (x.gt(y + MAX), vec![MAX, MAX]),
+        (x.ne(MAX), vec![MIN, MAX - 1]),
+        (x.ne(MIN), vec![MIN + 1, MAX]),
+        // Out-of-range bounds saturate into the limits, as in Python.
+        ((x + MIN).ge(0), vec![MAX, MAX]),
+        ((x + 5).le(MIN + 2), vec![MIN, MIN]),
+    ];
+    for (constraint, expected) in cases {
+        assert_eq!(linear_domain(constraint), expected);
+    }
+}
+
+#[test]
+fn constants_that_mean_infinity_panic_like_python() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=1);
+    let comparisons: [fn(IntVar) -> Constraint; 6] = [
+        |x| x.gt(i64::MAX),
+        |x| x.ge(i64::MAX),
+        |x| x.lt(i64::MIN),
+        |x| x.le(i64::MIN),
+        |x| x.eq(i64::MAX),
+        |x| x.eq(i64::MIN),
+    ];
+    for compare in comparisons {
+        let panic = std::panic::catch_unwind(|| compare(x)).unwrap_err();
+        let message = panic.downcast_ref::<String>().unwrap();
+        assert!(message.contains("is not supported"), "{message}");
+    }
+}
+
+#[test]
+fn values_without_a_solution() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=1);
+    let response = CpSolverResponse::default();
+    assert_eq!(response.value(x), None);
+    assert_eq!(response.value(LinearExpr::constant(3)), Some(3));
+}
+
+#[test]
+#[should_panic(expected = "linear expression overflows i64")]
+fn evaluation_overflow_panics() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=1);
+    let response = CpSolverResponse {
+        solution: vec![i64::MAX / 2],
+        ..Default::default()
+    };
+    let _ = response.value(x * 4);
 }
