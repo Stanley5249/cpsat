@@ -33,15 +33,15 @@ impl IntegerVariableProto {
 }
 
 impl LinearConstraintProto {
-    /// `sum(coeff * var)` must lie in `domain`, a flat list of disjoint
-    /// intervals `[min_0, max_0, min_1, max_1, ...]`.
+    /// `sum(coeff * var)` must lie in `domain`, a [`Domain`](crate::Domain) or
+    /// a flat list of disjoint intervals `[min_0, max_0, min_1, max_1, ...]`.
     #[must_use]
-    pub fn new(terms: &[(i32, i64)], domain: Vec<i64>) -> Self {
+    pub fn new(terms: &[(i32, i64)], domain: impl Into<Vec<i64>>) -> Self {
         let (vars, coeffs) = terms.iter().copied().unzip();
         Self {
             vars,
             coeffs,
-            domain,
+            domain: domain.into(),
             ..Default::default()
         }
     }
@@ -61,6 +61,15 @@ impl CpModelProto {
     /// its index, like Python's `new_int_var`.
     pub fn add_int_var(&mut self, lower: i64, upper: i64) -> i32 {
         self.add_variable(IntegerVariableProto::new(lower, upper))
+    }
+
+    /// Adds an integer variable with any domain and returns its index, like
+    /// Python's `new_int_var_from_domain`.
+    pub fn add_int_var_in(&mut self, domain: impl Into<Vec<i64>>) -> i32 {
+        self.add_variable(IntegerVariableProto {
+            domain: domain.into(),
+            ..Default::default()
+        })
     }
 
     /// Adds a Boolean variable and returns its index, like Python's

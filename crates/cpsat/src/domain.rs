@@ -1,0 +1,138 @@
+//! A set of integers in the interval form that the schema uses.
+
+/// A set of integers as sorted, disjoint, non-adjacent closed intervals, like
+/// OR-Tools' `Domain`.
+///
+/// It converts into the flat `[min_0, max_0, min_1, max_1, ...]` list of the
+/// schema's `domain` fields, so it can build a variable or a linear constraint.
+///
+/// ```
+/// use cpsat::Domain;
+///
+/// // x != 0, the domain Python builds for `x != 0`.
+/// let domain = Domain::from_values([0]).complement();
+/// assert_eq!(Vec::from(domain), [i64::MIN, -1, 1, i64::MAX]);
+/// ```
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+pub struct Domain(Vec<(i64, i64)>);
+
+impl Domain {
+    /// The interval `[lower, upper]`, or the empty domain if `lower > upper`.
+    #[must_use]
+    pub fn new(lower: i64, upper: i64) -> Self {
+        Self::from_intervals([(lower, upper)])
+    }
+
+    /// Every `i64`.
+    #[must_use]
+    pub fn all() -> Self {
+        Self(vec![(i64::MIN, i64::MAX)])
+    }
+
+    #[must_use]
+    pub fn from_values(values: impl IntoIterator<Item = i64>) -> Self {
+        Self::from_intervals(values.into_iter().map(|value| (value, value)))
+    }
+
+    /// Normalizes any intervals: empty ones are dropped, and overlapping or
+    /// adjacent ones merge.
+    #[must_use]
+    pub fn from_intervals(intervals: impl IntoIterator<Item = (i64, i64)>) -> Self {
+        let mut intervals: Vec<_> = intervals
+            .into_iter()
+            .filter(|&(lower, upper)| lower <= upper)
+            .collect();
+        intervals.sort_unstable();
+        let mut merged: Vec<(i64, i64)> = Vec::with_capacity(intervals.len());
+        for (lower, upper) in intervals {
+            match merged.last_mut() {
+                Some(last) if last.1.checked_add(1).is_none_or(|next| lower <= next) => {
+                    last.1 = last.1.max(upper);
+                }
+                _ => merged.push((lower, upper)),
+            }
+        }
+        Self(merged)
+    }
+
+    /// Reads a schema `domain` field, or `None` if it has an odd length.
+    #[must_use]
+    pub fn from_flat_intervals(flat: &[i64]) -> Option<Self> {
+        let (pairs, rest) = flat.as_chunks::<2>();
+        if !rest.is_empty() {
+            return None;
+        }
+        Some(Self::from_intervals(
+            pairs.iter().map(|&[lower, upper]| (lower, upper)),
+        ))
+    }
+
+    #[must_use]
+    pub fn intervals(&self) -> &[(i64, i64)] {
+        &self.0
+    }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    #[must_use]
+    pub fn contains(&self, value: i64) -> bool {
+        self.0
+            .iter()
+            .any(|&(lower, upper)| (lower..=upper).contains(&value))
+    }
+
+    /// Every `i64` outside this domain.
+    #[must_use]
+    pub fn complement(&self) -> Self {
+        let mut gaps = Vec::with_capacity(self.0.len() + 1);
+        let mut next = Some(i64::MIN);
+        for &(lower, upper) in &self.0 {
+            if let Some(start) = next
+                && start < lower
+            {
+                gaps.push((start, lower - 1));
+            }
+            next = upper.checked_add(1);
+        }
+        if let Some(start) = next {
+            gaps.push((start, i64::MAX));
+        }
+        Self(gaps)
+    }
+
+    #[must_use]
+    pub fn union_with(&self, other: &Self) -> Self {
+        Self::from_intervals(self.0.iter().chain(&other.0).copied())
+    }
+
+    #[must_use]
+    pub fn intersection_with(&self, other: &Self) -> Self {
+        self.complement()
+            .union_with(&other.complement())
+            .complement()
+    }
+
+    /// The schema's flat `[min_0, max_0, ...]` form.
+    #[must_use]
+    pub fn flattened_intervals(&self) -> Vec<i64> {
+        self.0
+            .iter()
+            .flat_map(|&(lower, upper)| [lower, upper])
+            .collect()
+    }
+}
+
+impl From<Domain> for Vec<i64> {
+    fn from(domain: Domain) -> Self {
+        domain.flattened_intervals()
+    }
+}
+
+impl FromIterator<i64> for Domain {
+    fn from_iter<I: IntoIterator<Item = i64>>(values: I) -> Self {
+        Self::from_values(values)
+    }
+}

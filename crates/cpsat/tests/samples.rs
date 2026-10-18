@@ -5,13 +5,13 @@
 use std::ops::ControlFlow;
 
 use cpsat::proto::{CpModelProto, CpSolverStatus, LinearConstraintProto, SatParameters};
-use cpsat::{Event, EventSet, Solver};
+use cpsat::{Domain, Event, EventSet, Solver};
 
 /// `x != y`, which Python encodes as `x - y` outside `{0}`.
 fn add_not_equal(model: &mut CpModelProto, x: i32, y: i32) {
     model.add_constraint(LinearConstraintProto::new(
         &[(x, 1), (y, -1)],
-        vec![i64::MIN, -1, 1, i64::MAX],
+        Domain::from_values([0]).complement(),
     ));
 }
 

@@ -1,0 +1,53 @@
+//! `Domain`, checked against what OR-Tools' `Domain` returns for the same sets.
+
+use cpsat::Domain;
+use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
+
+#[test]
+fn normalizes_intervals() {
+    let domain = Domain::from_intervals([(5, 7), (1, 2), (3, 3), (9, 8), (10, 12)]);
+    assert_eq!(domain.intervals(), [(1, 3), (5, 7), (10, 12)]);
+    assert!(Domain::new(3, 1).is_empty());
+    assert_eq!(
+        Domain::from_values([4, 2, 3, 9]).intervals(),
+        [(2, 4), (9, 9)]
+    );
+}
+
+#[test]
+fn complements_at_the_i64_limits() {
+    assert_eq!(Domain::all().complement(), Domain::default());
+    assert_eq!(Domain::default().complement(), Domain::all());
+    let edges = Domain::from_values([i64::MIN, i64::MAX]).complement();
+    assert_eq!(edges.intervals(), [(i64::MIN + 1, i64::MAX - 1)]);
+    let domain = Domain::from_intervals([(0, 3), (8, 9)]);
+    assert_eq!(domain.complement().complement(), domain);
+}
+
+#[test]
+fn unions_and_intersects() {
+    let a = Domain::from_intervals([(0, 5), (10, 15)]);
+    let b = Domain::from_intervals([(4, 11)]);
+    assert_eq!(a.union_with(&b).intervals(), [(0, 15)]);
+    assert_eq!(a.intersection_with(&b).intervals(), [(4, 5), (10, 11)]);
+    assert!(a.contains(12) && !a.contains(7));
+}
+
+#[test]
+fn flat_form_round_trips() {
+    let domain = Domain::from_intervals([(0, 2), (5, 5)]);
+    let flat: Vec<i64> = domain.clone().into();
+    assert_eq!(flat, [0, 2, 5, 5]);
+    assert_eq!(Domain::from_flat_intervals(&flat), Some(domain));
+    assert_eq!(Domain::from_flat_intervals(&[1, 2, 3]), None);
+}
+
+#[test]
+fn builds_a_variable_with_holes() {
+    let mut model = CpModelProto::default();
+    let x = model.add_int_var_in(Domain::from_values([1, 3, 5]));
+    model.maximize(&[(x, 1)]);
+    let response = cpsat::solve(&model, &SatParameters::default()).unwrap();
+    assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
+    assert_eq!(response.value(x), Some(5));
+}
