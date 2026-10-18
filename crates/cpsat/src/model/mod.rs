@@ -89,11 +89,17 @@ impl Model {
 
     /// A variable fixed to `value`, like Python's `new_constant`. Each call
     /// adds a variable, where Python reuses one per value.
+    ///
+    /// Use it where the schema needs a variable, such as in
+    /// [`Constraint::inverse`]. An expression takes a plain `i64` or
+    /// [`LinearExpr::constant`], which adds no variable.
     pub fn constant(&mut self, value: i64) -> IntVar {
         self.int_var(value..=value)
     }
 
     /// A literal fixed to `value`, which Python writes as `True` or `False`.
+    /// Use it where the schema needs a literal, such as in
+    /// [`Constraint::only_if`] or [`Constraint::bool_or`].
     pub fn bool_constant(&mut self, value: bool) -> BoolVar {
         BoolVar(self.constant(value.into()).0)
     }
