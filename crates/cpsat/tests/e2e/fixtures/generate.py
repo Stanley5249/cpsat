@@ -1,4 +1,4 @@
-"""Writes the models that `tests/equivalence.rs` rebuilds with the Rust API.
+"""Writes the models that `tests/e2e/equivalence.rs` rebuilds with the Rust API.
 
 Run it from the repository root with `just fixtures`. Each model uses only
 calls whose Protobuf output the Rust API reproduces exactly, so it avoids

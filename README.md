@@ -52,7 +52,7 @@ let response = Solver::new(SatParameters::default().with_num_workers(8))
     .solve(model.proto())?;
 ```
 
-`crates/cpsat/tests/samples.rs` ports the official OR-Tools samples, and
+`crates/cpsat/tests/e2e/samples.rs` ports the official OR-Tools samples, and
 `docs/parity.md` maps each Python method to its Rust counterpart.
 `Model::proto_mut` reaches any schema field that the modeling API does not
 cover.
@@ -83,7 +83,7 @@ For development, also install:
 - [Buf](https://buf.build/docs/cli/installation/), only for `just proto-gen` and
   `just proto-check`
 - [uv](https://docs.astral.sh/uv/), only for `just fixtures`, which regenerates
-  the Python models in `crates/cpsat/tests/fixtures`
+  the Python models in `crates/cpsat/tests/e2e/fixtures`
 
 ## Commands
 

@@ -122,14 +122,14 @@ model.add(constraint) --- move into model ---> ConstraintRef(i32)
 | Insertion      | `Model::add` is the only path for constraints, and intervals come from `Model` methods                        | An interval is a constraint that other constraints reference by index                                         |
 | Validation     | The OR-Tools validator through `validate_model` and the solve status                                          | Python's eager argument checks would duplicate it                                                             |
 | Responses      | `value` takes any expression and `boolean_value` takes a literal, on the owned response and the solution view | Mirrors `CpSolver.value` and the solution callback                                                            |
-| Proto identity | `tests/equivalence.rs` compares each family with the output of `tests/fixtures/generate.py`                   | Proves the encoding equals Python's, except for the constant cache                                            |
+| Proto identity | `tests/e2e/equivalence.rs` compares each family with the output of `tests/e2e/fixtures/generate.py`           | Proves the encoding equals Python's, except for the constant cache                                            |
 
 ## Milestones
 
 | Phase | Deliverable                                                       | Status                                                 |
 | ----- | ----------------------------------------------------------------- | ------------------------------------------------------ |
 | M0    | Scaffolding, lints, formatters, `justfile`                        | Done                                                   |
-| M1    | Buffa types and round-trip tests in `tests/protobuf.rs`           | Done                                                   |
+| M1    | Buffa types and round-trip tests in `tests/e2e/protobuf.rs`       | Done                                                   |
 | M2    | Bridge over `SolveWrapper` and `CpSatHelper`                      | Done                                                   |
 | M3a   | Prebuilt and `dir:` modes, shared cache, runtime copy             | Done on Windows, Linux in CI                           |
 | M4    | `solve`, `Solver`, `StopHandle`, helpers, diagnostics             | Done                                                   |

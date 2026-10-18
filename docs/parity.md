@@ -2,7 +2,7 @@
 
 Each row maps a capability of the Python binding in OR-Tools v9.15
 (`ortools/sat/python/cp_model.py` over `cp_model_helper.cc`) to this crate. Test
-names are in `crates/cpsat/tests`. The asserted values were cross-checked
+names are in `crates/cpsat/tests/e2e`. The asserted values were cross-checked
 against `ortools==9.15.6755`, and `samples.rs` ports the official samples.
 
 ## Solver

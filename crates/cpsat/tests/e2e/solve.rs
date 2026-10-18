@@ -1,9 +1,6 @@
 //! Model and solver-control capabilities, mirroring Python's `CpModel` and
 //! `CpSolver`.
 
-#[expect(dead_code, reason = "each test binary uses a subset of the helpers")]
-mod common;
-
 use buffa::Message;
 use cpsat::prelude::*;
 use cpsat::proto::CpModelProto;
@@ -137,7 +134,7 @@ fn first_solution_follows_the_hint() {
 #[test]
 fn honors_time_limit() {
     let params = SatParameters::default().with_max_time_in_seconds(0.5);
-    let response = solve(&common::hard_model(), &params).unwrap();
+    let response = solve(&crate::common::hard_model(), &params).unwrap();
     assert_ne!(response.status(), CpSolverStatus::OPTIMAL);
     assert!(
         response.wall_time < 30.0,

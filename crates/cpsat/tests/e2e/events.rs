@@ -1,15 +1,13 @@
 //! Events and cancellation, mirroring Python's solution, best-bound, and log
 //! callbacks and `stop_search`.
 
-mod common;
-
 use std::ops::ControlFlow;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::thread;
 use std::time::{Duration, Instant};
 
+use crate::common::{hard_model, long_params};
 use buffa::MessageView;
-use common::{hard_model, long_params};
 use cpsat::prelude::*;
 use cpsat::proto::CpModelProto;
 

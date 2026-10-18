@@ -9,7 +9,10 @@ use cpsat::proto::CpModelProto;
 use cpsat::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 
 fn python(name: &str) -> CpModelProto {
-    let path = format!("{}/tests/fixtures/{name}.txtpb", env!("CARGO_MANIFEST_DIR"));
+    let path = format!(
+        "{}/tests/e2e/fixtures/{name}.txtpb",
+        env!("CARGO_MANIFEST_DIR")
+    );
     let text = std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("{path}: {error}"));
     buffa::text::decode_from_str(&text).unwrap()
 }
