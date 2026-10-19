@@ -33,8 +33,9 @@
 //! stops solves from any thread.
 //!
 //! OR-Tools aborts the process on an internal `CHECK` failure, which Rust
-//! cannot catch. [`Model::validate`](prelude::Model::validate) reports invalid models without solving,
-//! and a subprocess keeps an untrusted model from ending the caller.
+//! cannot catch. [`Model::validate`](prelude::Model::validate) reports invalid
+//! models without solving. Solve an untrusted model in a subprocess, so that an
+//! abort cannot end the caller.
 
 #[cfg(not(feature = "views"))]
 compile_error!("the `views` feature is required, because solution events are Buffa views");

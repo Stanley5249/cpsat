@@ -65,23 +65,23 @@ impl StopHandle {
 /// # Safety
 ///
 /// The session must stay alive until the guard drops.
-pub unsafe fn attach(handle: &StopHandle, session: *mut CpsatSession) -> Attached<'_> {
+pub unsafe fn attach(handle: &StopHandle, session: *mut CpsatSession) -> AttachGuard<'_> {
     let mut sessions = handle.lock();
     sessions.push(SessionPtr(session));
     if handle.is_stopped() {
         // SAFETY: the caller keeps the session alive.
         unsafe { cpsat_sys::cpsat_session_stop(session) };
     }
-    Attached { handle, session }
+    AttachGuard { handle, session }
 }
 
 /// Detaches one session from its handle on drop.
-pub struct Attached<'a> {
+pub struct AttachGuard<'a> {
     handle: &'a StopHandle,
     session: *mut CpsatSession,
 }
 
-impl Drop for Attached<'_> {
+impl Drop for AttachGuard<'_> {
     fn drop(&mut self) {
         let mut sessions = self.handle.lock();
         if let Some(index) = sessions.iter().position(|s| s.0 == self.session) {

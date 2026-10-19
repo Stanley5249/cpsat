@@ -147,4 +147,4 @@ jobs:
         shell: bash
         run: |
           root=$(find "$CPSAT_CACHE_DIR/extracted" -mindepth 2 -maxdepth 2 -type d | head -n 1)
-          CPSAT_ORTOOLS="dir:$root" cargo test --locked --workspace --all-features
+          CPSAT_ORTOOLS="dir:$root" cargo run --locked -p cpsat --example solve

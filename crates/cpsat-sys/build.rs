@@ -44,7 +44,15 @@ fn main() -> Result<()> {
     for path in ["build.rs", "build", "bridge"] {
         println!("cargo::rerun-if-changed={path}");
     }
-    for var in ["CPSAT_ORTOOLS", "CPSAT_CACHE_DIR", "DOCS_RS"] {
+    // The default cache directory comes from the platform variables.
+    for var in [
+        "CPSAT_ORTOOLS",
+        "CPSAT_CACHE_DIR",
+        "DOCS_RS",
+        "LOCALAPPDATA",
+        "XDG_CACHE_HOME",
+        "HOME",
+    ] {
         println!("cargo::rerun-if-env-changed={var}");
     }
     // docs.rs builds without network, and rustdoc never links.
