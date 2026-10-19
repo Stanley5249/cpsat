@@ -40,9 +40,8 @@ proto-gen *args:
     buf generate {{ args }}
     cargo fmt -p cpsat
 
-# Fail when the committed Buffa code differs from a fresh generation
+# Fail when the committed Buffa code, new files included, differs from a fresh generation
 proto-check: proto-gen
-    # Intent-to-add makes a newly generated file show up in the diff.
     git add --intent-to-add -- crates/cpsat/src/proto
     git diff --exit-code -- crates/cpsat/src/proto
 
@@ -50,7 +49,7 @@ proto-check: proto-gen
 fixtures:
     uv run --quiet --with ortools==9.15.6755 python -I crates/cpsat/tests/e2e/fixtures/generate.py
 
-# Fail when the committed fixtures differ from a fresh generation
+# Fail when the committed fixtures, new files included, differ from a fresh generation
 fixtures-check: fixtures
     git add --intent-to-add -- crates/cpsat/tests/e2e/fixtures
     git diff --exit-code -- crates/cpsat/tests/e2e/fixtures
