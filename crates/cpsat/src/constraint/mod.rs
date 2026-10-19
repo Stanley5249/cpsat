@@ -43,7 +43,8 @@ impl Constraint {
     /// Enforces this constraint only when `literal` is true, like Python's
     /// `only_enforce_if`. Several calls require all their literals. Every
     /// family accepts it, but OR-Tools notes that an enforced circuit,
-    /// multiple circuit, no-overlap, or cumulative constraint may solve slower.
+    /// multiple circuit, no-overlap, 2D no-overlap, or cumulative constraint
+    /// may solve slower.
     #[must_use]
     pub fn only_enforce_if(mut self, literal: BoolVar) -> Self {
         self.0.enforcement_literal.push(literal.0);
