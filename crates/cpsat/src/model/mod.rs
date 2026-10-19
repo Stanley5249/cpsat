@@ -127,7 +127,7 @@ impl Model {
     pub fn int_var(&mut self, domain: impl Into<Domain>) -> IntVar {
         let index = next_index(self.0.variables.len(), "variables");
         self.0.variables.push(IntegerVariableProto {
-            domain: domain.into().into(),
+            domain: domain.into().flattened_intervals(),
             ..Default::default()
         });
         IntVar(index)
@@ -194,14 +194,10 @@ impl Model {
         self.0.solution_hint = MessageField::none();
     }
 
-    /// Solves under the assumption that `literal` is true. An infeasible
-    /// response lists a subset of the failed assumptions in
+    /// Solves under the assumption that each literal is true, like Python's
+    /// `add_assumption` and `add_assumptions`. An infeasible response lists a
+    /// subset of the failed assumptions in
     /// `sufficient_assumptions_for_infeasibility`.
-    pub fn add_assumption(&mut self, literal: BoolVar) {
-        self.0.assumptions.push(literal.0);
-    }
-
-    /// Adds each literal as an assumption, like Python's `add_assumptions`.
     pub fn add_assumptions(&mut self, literals: impl IntoIterator<Item = BoolVar>) {
         self.0
             .assumptions

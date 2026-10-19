@@ -16,8 +16,8 @@ fn literals_negate_and_name_their_variable() {
     assert_eq!((!b).variable(), b.variable());
     assert_eq!(b.variable().index(), 1);
 
-    model[!b].name = "b".into();
-    assert_eq!(model[b].name, "b");
+    model[(!b).variable()].name = "b".into();
+    assert_eq!(model[b.variable()].name, "b");
 }
 
 #[test]
@@ -33,12 +33,14 @@ fn looks_up_handles_by_index() {
     assert_eq!(model.int_var_from_index(x.index()), Some(x));
     assert_eq!(model.int_var_from_index(9), None);
     assert_eq!(model.int_var_from_index(-1), None);
-    assert_eq!(model.bool_var_from_index(b.index()), Some(b));
-    assert_eq!(
-        model.bool_var_from_index(one.index()).map(BoolVar::index),
-        Some(2)
-    );
-    assert_eq!(model.bool_var_from_index(x.index()), None);
+    let literal = |index| {
+        model
+            .int_var_from_index(index)
+            .and_then(|var| model.to_literal(var))
+    };
+    assert_eq!(literal(b.index()), Some(b));
+    assert_eq!(literal(one.index()).map(BoolVar::index), Some(2));
+    assert_eq!(literal(x.index()), None);
     assert_eq!(
         model.interval_var_from_index(interval.index()),
         Some(interval)
@@ -236,7 +238,7 @@ fn adds_and_clears_assumptions() {
     let mut model = Model::new();
     let a = model.bool_var();
     let b = model.bool_var();
-    model.add_assumption(a);
+    model.add_assumptions([a]);
     model.add_assumptions([!b]);
     assert_eq!(model.proto().assumptions, [0, -2]);
     model.clear_assumptions();

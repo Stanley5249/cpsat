@@ -35,7 +35,7 @@ fn unions_and_intersects() {
 #[test]
 fn flat_form_round_trips() {
     let domain = Domain::from_intervals([(0, 2), (5, 5)]);
-    let flat: Vec<i64> = domain.clone().into();
+    let flat = domain.flattened_intervals();
     assert_eq!(flat, [0, 2, 5, 5]);
     assert_eq!(Domain::from_flat_intervals(&flat), Some(domain));
     assert_eq!(Domain::from_flat_intervals(&[1, 2, 3]), None);
@@ -84,7 +84,7 @@ fn compares_sets() {
 fn negates_and_adds_like_python() {
     const MIN: i64 = i64::MIN;
     const MAX: i64 = i64::MAX;
-    let flat = |domain: Domain| Vec::from(domain);
+    let flat = |domain: Domain| domain.flattened_intervals();
     // The results of Python's OR-Tools 9.15 `Domain` for the same sets.
     let holes = Domain::from_intervals([(1, 3), (7, 9)]);
     assert_eq!(flat(holes.negation()), [-9, -7, -3, -1]);

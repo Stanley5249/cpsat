@@ -18,25 +18,19 @@ impl Model {
         self.variable(index).map(|_| IntVar(index))
     }
 
-    /// The 0-1 variable at `index`, like Python's
-    /// `get_bool_var_from_proto_index`, or `None` if its domain is not within
-    /// `[0, 1]`.
+    /// `var` as a literal if its domain is within `[0, 1]`, for the places
+    /// where Python accepts a 0-1 integer variable as a literal. With
+    /// [`int_var_from_index`](Self::int_var_from_index), it replaces Python's
+    /// `get_bool_var_from_proto_index`.
     #[must_use]
-    pub fn bool_var_from_index(&self, index: i32) -> Option<BoolVar> {
-        let variable = self.variable(index)?;
+    pub fn to_literal(&self, var: IntVar) -> Option<BoolVar> {
+        let variable = self.variable(var.0)?;
         let domain = Domain::from_flat_intervals(&variable.domain)?;
         let within = domain
             .intervals()
             .iter()
             .all(|&(lower, upper)| lower >= 0 && upper <= 1);
-        (within && !domain.is_empty()).then_some(BoolVar(index))
-    }
-
-    /// `var` as a literal if its domain is within `[0, 1]`, for the places
-    /// where Python accepts a 0-1 integer variable as a literal.
-    #[must_use]
-    pub fn to_literal(&self, var: IntVar) -> Option<BoolVar> {
-        self.bool_var_from_index(var.0)
+        (within && !domain.is_empty()).then_some(BoolVar(var.0))
     }
 
     /// The interval at constraint `index`, like Python's
@@ -118,21 +112,6 @@ impl Index<IntVar> for Model {
 impl IndexMut<IntVar> for Model {
     fn index_mut(&mut self, var: IntVar) -> &mut IntegerVariableProto {
         &mut self.0.variables[slot(var.0)]
-    }
-}
-
-impl Index<BoolVar> for Model {
-    type Output = IntegerVariableProto;
-
-    /// The literal's variable, ignoring the negation.
-    fn index(&self, literal: BoolVar) -> &IntegerVariableProto {
-        &self[literal.variable()]
-    }
-}
-
-impl IndexMut<BoolVar> for Model {
-    fn index_mut(&mut self, literal: BoolVar) -> &mut IntegerVariableProto {
-        &mut self[literal.variable()]
     }
 }
 

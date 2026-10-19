@@ -123,7 +123,7 @@ pub(crate) fn linear(expr: LinearExpr, domain: &Domain) -> Constraint {
     Constraint::of(LinearConstraintProto {
         vars,
         coeffs,
-        domain: domain.into(),
+        domain: domain.flattened_intervals(),
         ..Default::default()
     })
 }

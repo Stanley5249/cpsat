@@ -13,7 +13,7 @@ use std::ops::{Range, RangeFrom, RangeInclusive, RangeToInclusive};
 ///
 /// // x != 0, the domain Python builds for `x != 0`.
 /// let domain = Domain::from_values([0]).complement();
-/// assert_eq!(Vec::from(domain), [i64::MIN, -1, 1, i64::MAX]);
+/// assert_eq!(domain.flattened_intervals(), [i64::MIN, -1, 1, i64::MAX]);
 /// ```
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Domain(Vec<(i64, i64)>);
@@ -197,12 +197,6 @@ impl Domain {
             .iter()
             .flat_map(|&(lower, upper)| [lower, upper])
             .collect()
-    }
-}
-
-impl From<Domain> for Vec<i64> {
-    fn from(domain: Domain) -> Self {
-        domain.flattened_intervals()
     }
 }
 
