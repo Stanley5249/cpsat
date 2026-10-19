@@ -134,6 +134,27 @@ solves each global and scheduling family.
 | `INT_MIN`, `INT_MAX`, `INT32_MIN`, `INT32_MAX`, solver status and decision-strategy constants           | `i64::MIN/MAX`, `i32::MIN/MAX`, `CpSolverStatus` and `decision_strategy_proto` enums                                                                                           | none                            | `model.rs::comparisons_at_the_i64_limits_match_python`, `protobuf.rs::status_values_match_schema`, `equivalence.rs::search`           |
 | Model, variable, interval, expression, constraint, and `Domain` string/repr, copy, and pickle protocols | Rust `Debug`, `Clone` or `Copy`, plus model Protobuf serialization; human-readable Python formatting and pickle bytes are Python-specific                                      | none                            | `solve.rs::clone_and_serialize_round_trip` covers model clone and serialization; exact Python display/pickle output has no equivalent |
 
+## Rust additions
+
+These items have no Python counterpart. Most replace Python's runtime dispatch
+or mutable solver state with types.
+
+| Rust                                                                | Purpose                                                                                   |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `Solver<'a, F>`                                                     | Borrows parameters, holds one event callback and a stop handle, and returns each response |
+| `Event`, `EventSet`, `NoEvents`                                     | One tagged callback with a subscription set replaces Python's three callback kinds        |
+| `StopHandle`                                                        | A shareable, sticky cancellation token                                                    |
+| `Evaluate`, `Objective`, `Hint`                                     | Sealed traits that pick the value type at compile time, such as `bool` for a literal      |
+| `Constraint` and `ConstraintRef`                                    | A constraint value before insertion, and the index `Model::add` returns                   |
+| `Error`, `Result`                                                   | Typed failures where Python raises or returns a string                                    |
+| `CpSolverResponseView`                                              | Buffa's zero-copy view of a solution inside an event                                      |
+| `Index` and `IndexMut` on `Model`                                   | `model[x]`, `model[interval]`, and `model[constraint]` reach the stored message           |
+| `Model::proto`, `proto_mut`, `into_proto`, `From`, `AsRef`          | Move between `Model` and `CpModelProto`, and solve, validate, or describe a bare message  |
+| `BoolVar::variable`, `is_negated`, and `index` on handles           | Read a handle's encoding without a model                                                  |
+| `+=`, `-=`, `*=`, and `Sum` on `LinearExpr` and `FloatExpr`         | Build expressions in loops and iterator chains                                            |
+| `From` ranges, `FromIterator`, `PartialEq`, `intervals` on `Domain` | Build a domain from `0..=10` or values, and compare normalized sets                       |
+| `CpSolverStatus::has_solution`                                      | True for `OPTIMAL` and `FEASIBLE`                                                         |
+
 ## Limitations
 
 - Python's `validate` returns an empty string or an error description. Rust's
