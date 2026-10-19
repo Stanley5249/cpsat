@@ -8,7 +8,7 @@
 use std::ops::Not;
 
 /// An integer variable, an index into `CpModelProto::variables`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IntVar(pub(crate) i32);
 
 impl IntVar {
@@ -23,7 +23,7 @@ impl IntVar {
 ///
 /// The schema writes the negation of variable `i` as `-i - 1`, which is what
 /// [`index`](Self::index) returns for a negated literal.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BoolVar(pub(crate) i32);
 
 impl BoolVar {
@@ -60,7 +60,7 @@ impl Not for BoolVar {
 
 /// An interval, an index into `CpModelProto::constraints`, because the schema
 /// stores an interval as a constraint.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IntervalVar(pub(crate) i32);
 
 impl IntervalVar {

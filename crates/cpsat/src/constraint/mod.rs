@@ -88,7 +88,7 @@ impl From<Constraint> for ConstraintProto {
 }
 
 /// A constraint in a model, an index into `CpModelProto::constraints`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ConstraintRef(pub(crate) i32);
 
 impl ConstraintRef {

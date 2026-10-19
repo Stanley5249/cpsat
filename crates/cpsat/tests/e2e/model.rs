@@ -360,3 +360,23 @@ fn constants_survive_round_trips_and_edits() {
     model[seven].domain = vec![0, 9];
     assert_ne!(model.constant(7), seven);
 }
+
+/// Handles order by index, so they key sorted collections, while the
+/// comparison methods still build constraints.
+#[test]
+fn handles_order_by_index_and_compare_into_constraints() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=5);
+    let y = model.int_var(0..=5);
+    let mut vars = [y, x];
+    vars.sort_unstable();
+    assert_eq!(vars, [x, y]);
+    let keyed: std::collections::BTreeMap<IntVar, i64> = [(y, 2), (x, 1)].into();
+    assert_eq!(keyed.keys().copied().collect::<Vec<_>>(), [x, y]);
+
+    let constraint: Constraint = x.lt(y);
+    model.add(constraint);
+    model.maximize(x);
+    let response = model.solve(&SatParameters::default()).unwrap();
+    assert_eq!(response.value(x), Some(4));
+}
