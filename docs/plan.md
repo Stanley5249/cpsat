@@ -63,7 +63,7 @@ crates/cpsat          Model, Buffa types, Solver, StopHandle, diagnostics
    |  (safe Rust, owns the model)
 crates/cpsat-sys      build.rs, raw extern "C" declarations, links = "ortools"
    |  (serialized bytes, fn pointer + context, opaque session)
-native/bridge.cc      extern "C" over SolveWrapper and CpSatHelper
+cpsat-sys/native      extern "C" over SolveWrapper and CpSatHelper
    |
 ortools.dll / libortools.so  (SolveCpModel)
 ```

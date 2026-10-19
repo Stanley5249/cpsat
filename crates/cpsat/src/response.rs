@@ -47,7 +47,8 @@ impl CpSolverResponse {
     /// The value of a variable or expression in the solution, like Python's
     /// `CpSolver.value`, or `None` if a variable has no value, such as without
     /// a solution. A constant has its value even without a solution, as in
-    /// Python.
+    /// Python. Handles do not know their model, so a handle from another
+    /// model reads `None` when out of range and another variable otherwise.
     ///
     /// # Panics
     ///
