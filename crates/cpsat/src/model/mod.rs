@@ -4,6 +4,8 @@ mod interval;
 mod lookup;
 mod objective;
 
+pub use objective::Objective;
+
 use std::collections::BTreeMap;
 
 use buffa::MessageField;

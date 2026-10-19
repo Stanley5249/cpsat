@@ -289,7 +289,7 @@ fn integer_and_float_objectives_replace_each_other() {
     let mut model = Model::new();
     let x = model.int_var(0..=5);
     model.maximize(x);
-    model.minimize_float(0.5 * x + 1.0 - x * 2.0);
+    model.minimize(0.5 * x + 1.0 - x * 2.0);
     assert!(!model.proto().objective.is_set());
     let objective = model.proto().floating_point_objective.as_option().unwrap();
     assert_eq!(

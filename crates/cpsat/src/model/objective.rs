@@ -8,16 +8,55 @@ use crate::expr::LinearExpr;
 use crate::float_expr::FloatExpr;
 use crate::proto::{CpObjectiveProto, FloatObjectiveProto};
 
+mod sealed {
+    pub trait Sealed {}
+}
+
+/// What `minimize` and `maximize` accept. An integer expression writes the
+/// integer objective, and a [`FloatExpr`] or `f64` writes the floating-point
+/// objective, where Python picks by the coefficients at run time.
+pub trait Objective: sealed::Sealed {
+    #[doc(hidden)]
+    fn set(self, model: &mut Model, maximize: bool);
+}
+
+impl<T: Into<LinearExpr>> sealed::Sealed for T {}
+impl<T: Into<LinearExpr>> Objective for T {
+    fn set(self, model: &mut Model, maximize: bool) {
+        // Like Python, maximizing minimizes `-expr` with a scaling factor
+        // of -1.
+        let expr = self.into();
+        if maximize {
+            model.set_objective(-expr, -1);
+        } else {
+            model.set_objective(expr, 1);
+        }
+    }
+}
+
+impl sealed::Sealed for FloatExpr {}
+impl Objective for FloatExpr {
+    fn set(self, model: &mut Model, maximize: bool) {
+        model.set_float_objective(self, maximize);
+    }
+}
+
+impl sealed::Sealed for f64 {}
+impl Objective for f64 {
+    fn set(self, model: &mut Model, maximize: bool) {
+        model.set_float_objective(self.into(), maximize);
+    }
+}
+
 impl Model {
     /// Minimizes `expr`, replacing any objective.
-    pub fn minimize(&mut self, expr: impl Into<LinearExpr>) {
-        self.set_objective(expr.into(), 1);
+    pub fn minimize(&mut self, expr: impl Objective) {
+        expr.set(self, false);
     }
 
-    /// Maximizes `expr`, replacing any objective. Like Python, this minimizes
-    /// `-expr` with a scaling factor of -1.
-    pub fn maximize(&mut self, expr: impl Into<LinearExpr>) {
-        self.set_objective(-expr.into(), -1);
+    /// Maximizes `expr`, replacing any objective.
+    pub fn maximize(&mut self, expr: impl Objective) {
+        expr.set(self, true);
     }
 
     #[expect(
@@ -34,18 +73,6 @@ impl Model {
             scaling_factor: scaling.into(),
             ..Default::default()
         });
-    }
-
-    /// Minimizes a floating-point `expr`, replacing any objective, like
-    /// Python's `minimize` with float coefficients.
-    pub fn minimize_float(&mut self, expr: impl Into<FloatExpr>) {
-        self.set_float_objective(expr.into(), false);
-    }
-
-    /// Maximizes a floating-point `expr`, replacing any objective, like
-    /// Python's `maximize` with float coefficients.
-    pub fn maximize_float(&mut self, expr: impl Into<FloatExpr>) {
-        self.set_float_objective(expr.into(), true);
     }
 
     fn set_float_objective(&mut self, expr: FloatExpr, maximize: bool) {
