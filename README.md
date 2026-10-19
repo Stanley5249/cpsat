@@ -82,8 +82,8 @@ explains why.
 
 The OR-Tools libraries are shared, so a shipped executable needs them beside it.
 Copy the contents of the OR-Tools runtime directory next to the executable. The
-directory also holds `licenses`, the notices that the Apache-2.0 license of
-OR-Tools requires you to ship with the libraries.
+directory also holds `licenses`, the notices that OR-Tools and its bundled
+libraries require you to ship with them.
 
 The runtime directory is the `runtime` folder in the `cpsat-sys` build output.
 To find it from your own build script, add `cpsat-sys` as a direct dependency

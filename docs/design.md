@@ -4,9 +4,11 @@ Rust owns the model. Protobuf defines the contract. C++ executes the solver. The
 FFI exposes only capabilities that Rust cannot implement directly.
 
 The goal is the functional capabilities of the official Python CP-SAT binding,
-through an idiomatic Rust API that writes into the Protobuf model. A persistent
-incremental solver, OR-Tools subsystems outside CP-SAT, custom propagation, and
-a CP-SAT-only fork are out of scope.
+through an idiomatic Rust API that writes into the Protobuf model. `cargo build`
+acquires OR-Tools and builds the bridge, with no manual OR-Tools, Conda, or
+Python install, and normal builds regenerate neither Protobuf code nor OR-Tools.
+A persistent incremental solver, OR-Tools subsystems outside CP-SAT, custom
+propagation, and a CP-SAT-only fork are out of scope.
 
 ## Architecture
 
