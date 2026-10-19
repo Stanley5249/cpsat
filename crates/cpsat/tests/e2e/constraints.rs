@@ -228,3 +228,46 @@ fn table_rejects_a_ragged_row() {
         [vec![1, 2, 3], vec![4]],
     ));
 }
+
+#[test]
+fn min_equality_takes_the_smallest() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=10);
+    let y = model.int_var(0..=10);
+    let target = model.int_var(-10..=10);
+    model.add(x.eq(7));
+    model.add(y.eq(4));
+    model.add(Constraint::min_equality(target, [x + 1, y - 2]));
+    assert_eq!(solve_optimal(&model).value(target), Some(2));
+}
+
+#[test]
+fn abs_equality_drops_the_sign() {
+    let mut model = Model::new();
+    let x = model.int_var(-10..=10);
+    let target = model.int_var(0..=10);
+    model.add(x.eq(-6));
+    model.add(Constraint::abs_equality(target, x));
+    assert_eq!(solve_optimal(&model).value(target), Some(6));
+}
+
+#[test]
+fn modulo_equality_keeps_the_sign_of_the_dividend() {
+    let mut model = Model::new();
+    let x = model.int_var(-10..=10);
+    let target = model.int_var(-10..=10);
+    model.add(x.eq(-7));
+    model.add(Constraint::modulo_equality(target, x, 3));
+    assert_eq!(solve_optimal(&model).value(target), Some(-1));
+}
+
+#[test]
+fn bool_xor_needs_an_odd_count() {
+    let mut model = Model::new();
+    let literals = [(); 3].map(|()| model.bool_var());
+    model.add(Constraint::bool_xor(literals));
+    model.add(literals[0].eq(1));
+    model.add(literals[1].eq(1));
+    let response = solve_optimal(&model);
+    assert_eq!(response.value(literals[2]), Some(true));
+}
