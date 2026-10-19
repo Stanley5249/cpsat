@@ -5,7 +5,7 @@ use buffa::Message;
 use cpsat_sys::CpsatBuffer;
 
 use crate::error::{Error, Result};
-use crate::native::Buffer;
+use crate::ffi::Buffer;
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
 
 fn call(
@@ -24,7 +24,7 @@ fn call(
             error.as_mut_ptr(),
         )
     };
-    crate::native::check(code, &error)?;
+    crate::ffi::check(code, &error)?;
     Ok(output.text().into_owned())
 }
 
@@ -37,7 +37,7 @@ impl CpModelProto {
     /// Returns [`Error::InvalidModel`] with OR-Tools' message when the model
     /// is invalid.
     pub fn validate(&self) -> Result<()> {
-        let message = call(cpsat_sys::cpsat_validate_model, &self.encode_to_vec())?;
+        let message = call(cpsat_sys::cpsat_model_validate, &self.encode_to_vec())?;
         if message.is_empty() {
             Ok(())
         } else {
@@ -50,7 +50,7 @@ impl CpModelProto {
     ///
     /// # Errors
     ///
-    /// Returns an error if the native call fails.
+    /// Returns an error if the bridge call fails.
     pub fn stats(&self) -> Result<String> {
         call(cpsat_sys::cpsat_model_stats, &self.encode_to_vec())
     }
@@ -62,7 +62,7 @@ impl CpSolverResponse {
     ///
     /// # Errors
     ///
-    /// Returns an error if the native call fails.
+    /// Returns an error if the bridge call fails.
     pub fn stats(&self) -> Result<String> {
         call(cpsat_sys::cpsat_response_stats, &self.encode_to_vec())
     }
@@ -77,13 +77,13 @@ impl CpSolverResponse {
 ///
 /// # Errors
 ///
-/// Returns an error if the native call fails or its output does not decode.
+/// Returns an error if the bridge call fails or its output does not decode.
 pub fn default_parameters() -> Result<SatParameters> {
     let mut parameters = Buffer::new();
     let mut error = Buffer::new();
     // SAFETY: both buffers are empty bridge buffers.
     let code =
-        unsafe { cpsat_sys::cpsat_default_parameters(parameters.as_mut_ptr(), error.as_mut_ptr()) };
-    crate::native::check(code, &error)?;
+        unsafe { cpsat_sys::cpsat_parameters_default(parameters.as_mut_ptr(), error.as_mut_ptr()) };
+    crate::ffi::check(code, &error)?;
     Ok(SatParameters::decode_from_slice(parameters.bytes())?)
 }

@@ -1,4 +1,4 @@
-//! Ownership wrappers for bridge resources.
+//! Owners of bridge resources, the safe side of the `cpsat-sys` FFI.
 
 use std::borrow::Cow;
 
@@ -47,10 +47,10 @@ pub fn check(code: i32, error: &Buffer) -> Result<()> {
         text if text.is_empty() => "no message".into(),
         text => text.into_owned(),
     };
-    Err(Error::Native(message))
+    Err(Error::OrTools(message))
 }
 
-/// Owns one native session, which serves one solve.
+/// Owns one bridge session, which serves one solve.
 pub struct Session(*mut CpsatSession);
 
 impl Session {
@@ -58,7 +58,7 @@ impl Session {
         // SAFETY: no preconditions.
         let session = unsafe { cpsat_sys::cpsat_session_new() };
         if session.is_null() {
-            return Err(Error::Native("failed to allocate a session".into()));
+            return Err(Error::OrTools("failed to allocate a session".into()));
         }
         Ok(Self(session))
     }

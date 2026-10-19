@@ -6,7 +6,7 @@ use std::sync::LazyLock;
 use buffa::Message;
 
 use crate::error::Result;
-use crate::native::{Buffer, Session};
+use crate::ffi::{Buffer, Session};
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
 use crate::solver::callback::{State, trampoline};
 use crate::solver::event::{Event, EventSet};
@@ -21,7 +21,7 @@ impl CpModelProto {
     ///
     /// # Errors
     ///
-    /// Returns an error if the native bridge fails. An invalid model is not an
+    /// Returns an error if the bridge fails. An invalid model is not an
     /// error; the response status is `MODEL_INVALID`.
     pub fn solve(&self, parameters: &SatParameters) -> Result<CpSolverResponse> {
         run(self, parameters, EventSet::NONE, None, |_| {
@@ -120,7 +120,7 @@ impl<'a, F> Solver<'a, F> {
     ///
     /// # Errors
     ///
-    /// Returns an error if the native bridge fails. An invalid model is not an
+    /// Returns an error if the bridge fails. An invalid model is not an
     /// error; the response status is `MODEL_INVALID`.
     pub fn solve(&mut self, model: impl AsRef<CpModelProto>) -> Result<CpSolverResponse>
     where
@@ -177,6 +177,6 @@ where
     if let Some(payload) = state.panic {
         resume_unwind(payload);
     }
-    crate::native::check(code, &error)?;
+    crate::ffi::check(code, &error)?;
     Ok(CpSolverResponse::decode_from_slice(response.bytes())?)
 }

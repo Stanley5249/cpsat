@@ -61,7 +61,7 @@ jobs:
   docs:
     runs-on: ubuntu-24.04
     env:
-      # Also proves the docs.rs path, which builds without native work.
+      # Also proves the docs.rs path, which skips the OR-Tools download and the bridge build.
       DOCS_RS: "1"
       RUSTDOCFLAGS: -D warnings
     steps:

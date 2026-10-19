@@ -41,7 +41,7 @@ const CMAKE_TARGETS: &str = "cmake/ortools/ortoolsTargets.cmake";
 const LIB_DIRS: [&str; 2] = ["lib", "lib64"];
 
 fn main() -> Result<()> {
-    for path in ["build.rs", "build", "native"] {
+    for path in ["build.rs", "build", "bridge"] {
         println!("cargo::rerun-if-changed={path}");
     }
     for var in ["CPSAT_ORTOOLS", "CPSAT_CACHE_DIR", "DOCS_RS"] {
@@ -177,8 +177,8 @@ fn compile_bridge(root: &Path, lib: &Path, toolchain: &Toolchain) -> Result<()> 
     let mut build = cc::Build::new();
     build
         .cpp(true)
-        .file("native/bridge.cc")
-        .include("native")
+        .file("bridge/bridge.cc")
+        .include("bridge")
         .include(root.join("include"));
     // Match the definitions OR-Tools exports to its CMake consumers, because
     // some of them change declarations in the installed headers.

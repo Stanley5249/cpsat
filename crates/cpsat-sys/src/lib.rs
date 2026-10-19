@@ -1,6 +1,6 @@
 //! Raw FFI declarations for the CP-SAT bridge.
 //!
-//! `native/bridge.h` is the contract: it documents each function, the
+//! `bridge/bridge.h` is the contract: it documents each function, the
 //! preconditions every call must meet, and buffer ownership. Use the `cpsat`
 //! crate for a safe interface.
 
@@ -28,7 +28,7 @@ impl CpsatBuffer {
     };
 }
 
-/// One solver event; see `CpsatEvent` in `native/bridge.h`.
+/// One solver event; see `CpsatEvent` in `bridge/bridge.h`.
 #[repr(C)]
 #[derive(Debug)]
 pub struct CpsatEvent {
@@ -38,10 +38,10 @@ pub struct CpsatEvent {
     pub bound: f64,
 }
 
-/// Event callback; see `CpsatEventFn` in `native/bridge.h`.
+/// Event callback; see `CpsatEventFn` in `bridge/bridge.h`.
 pub type CpsatEventFn = unsafe extern "C" fn(context: *mut c_void, event: *const CpsatEvent) -> i32;
 
-/// Opaque native session for one solve.
+/// Opaque bridge session for one solve.
 #[repr(C)]
 pub struct CpsatSession {
     _private: [u8; 0],
@@ -63,7 +63,7 @@ unsafe extern "C" {
         response: *mut CpsatBuffer,
         error: *mut CpsatBuffer,
     ) -> i32;
-    pub fn cpsat_validate_model(
+    pub fn cpsat_model_validate(
         model: *const u8,
         model_len: usize,
         message: *mut CpsatBuffer,
@@ -81,6 +81,6 @@ unsafe extern "C" {
         stats: *mut CpsatBuffer,
         error: *mut CpsatBuffer,
     ) -> i32;
-    pub fn cpsat_default_parameters(params: *mut CpsatBuffer, error: *mut CpsatBuffer) -> i32;
+    pub fn cpsat_parameters_default(params: *mut CpsatBuffer, error: *mut CpsatBuffer) -> i32;
     pub fn cpsat_buffer_free(buffer: *mut CpsatBuffer);
 }

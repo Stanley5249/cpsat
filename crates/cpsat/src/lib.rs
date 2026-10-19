@@ -9,7 +9,7 @@
 //! constraints, like Python's `CpModel`. It stores the model as the Buffa
 //! type `CpModelProto` from [`proto`], so every schema field stays available
 //! and a model stays plain, mutable data between solves. Parameters and
-//! responses are Buffa types too. The solver runs in native OR-Tools behind a
+//! responses are Buffa types too. The solver runs in OR-Tools behind a
 //! small C ABI.
 //!
 //! ```no_run
@@ -44,9 +44,9 @@ mod diagnostics;
 mod domain;
 mod error;
 mod expr;
+mod ffi;
 mod float_expr;
 mod model;
-mod native;
 pub mod prelude;
 #[expect(
     clippy::all,

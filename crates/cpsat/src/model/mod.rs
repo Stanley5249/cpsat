@@ -129,7 +129,7 @@ impl Model {
     ///
     /// # Errors
     ///
-    /// Returns an error if the native bridge fails.
+    /// Returns an error if the bridge fails.
     pub fn solve(&self, parameters: &SatParameters) -> Result<CpSolverResponse> {
         self.0.solve(parameters)
     }
@@ -149,7 +149,7 @@ impl Model {
     ///
     /// # Errors
     ///
-    /// Returns an error if the native call fails.
+    /// Returns an error if the bridge call fails.
     pub fn stats(&self) -> Result<String> {
         self.0.stats()
     }

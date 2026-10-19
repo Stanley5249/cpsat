@@ -70,7 +70,7 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
                             CpsatBuffer* response, CpsatBuffer* error);
 
 // *message is empty when the model is valid.
-int32_t cpsat_validate_model(const uint8_t* model, size_t model_len,
+int32_t cpsat_model_validate(const uint8_t* model, size_t model_len,
                              CpsatBuffer* message, CpsatBuffer* error);
 
 int32_t cpsat_model_stats(const uint8_t* model, size_t model_len,
@@ -80,7 +80,7 @@ int32_t cpsat_response_stats(const uint8_t* response, size_t response_len,
                              CpsatBuffer* stats, CpsatBuffer* error);
 
 // *params is a SatParameters with every singular field set to its default.
-int32_t cpsat_default_parameters(CpsatBuffer* params, CpsatBuffer* error);
+int32_t cpsat_parameters_default(CpsatBuffer* params, CpsatBuffer* error);
 
 void cpsat_buffer_free(CpsatBuffer* buffer);
 

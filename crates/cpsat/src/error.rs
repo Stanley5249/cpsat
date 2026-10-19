@@ -1,6 +1,6 @@
 //! The crate's error type.
 
-/// An error from the native bridge or from decoding its output.
+/// An error from OR-Tools, the bridge, or decoding the bridge's output.
 ///
 /// An invalid model is not an error of a solve, which reports it as the
 /// `MODEL_INVALID` status, but [`Model::validate`](crate::prelude::Model::validate)
@@ -10,7 +10,7 @@
 pub enum Error {
     /// OR-Tools or the bridge failed, for example by throwing a C++ exception.
     #[error("OR-Tools failed: {0}")]
-    Native(String),
+    OrTools(String),
     /// OR-Tools' validation rejected the model.
     #[error("invalid model: {0}")]
     InvalidModel(String),
