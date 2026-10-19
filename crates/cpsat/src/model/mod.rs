@@ -57,7 +57,7 @@ impl Hint for BoolVar {
 /// The model only appends variables and constraints, so a handle stays valid
 /// unless the caller removes entries through [`proto_mut`](Self::proto_mut).
 /// Indexing with a handle returns its Protobuf message, for example to set a
-/// name.
+/// name, and panics like a slice when the model lacks the handle.
 ///
 /// ```
 /// use cpsat::prelude::*;
@@ -102,6 +102,7 @@ fn next_index(len: usize, what: &str) -> i32 {
 }
 
 impl Model {
+    /// An empty model, like Python's `CpModel()`.
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -179,6 +180,10 @@ impl Model {
     /// Use it where the schema needs a variable, such as in
     /// [`Constraint::inverse`]. An expression takes a plain `i64` or
     /// [`LinearExpr::constant`], which adds no variable.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the model already holds `i32::MAX` variables.
     pub fn constant(&mut self, value: i64) -> IntVar {
         if let Some(&index) = self.1.get(&value)
             && self
@@ -197,6 +202,10 @@ impl Model {
     /// A literal fixed to `value`, which Python writes as `True` or `False`.
     /// Use it where the schema needs a literal, such as in
     /// [`Constraint::only_if`] or [`Constraint::bool_or`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the model already holds `i32::MAX` variables.
     pub fn bool_constant(&mut self, value: bool) -> BoolVar {
         BoolVar(self.constant(value.into()).0)
     }
@@ -258,7 +267,8 @@ impl Model {
         });
     }
 
-    /// Clears the names of the model, its variables, and its constraints.
+    /// Clears the names of the model, its variables, and its constraints, like
+    /// Python's `remove_all_names`.
     pub fn remove_all_names(&mut self) {
         self.0.name.clear();
         for variable in &mut self.0.variables {

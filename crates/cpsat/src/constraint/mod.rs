@@ -51,6 +51,7 @@ impl Constraint {
         self
     }
 
+    /// Names the constraint, like Python's `with_name`.
     #[must_use]
     pub fn with_name(mut self, name: impl Into<String>) -> Self {
         self.0.name = name.into();

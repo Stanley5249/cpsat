@@ -11,7 +11,7 @@ use crate::proto::{
 use crate::variable::{BoolVar, IntervalVar};
 
 impl Constraint {
-    /// The present intervals do not overlap.
+    /// The present intervals do not overlap, like Python's `add_no_overlap`.
     #[must_use]
     pub fn no_overlap(intervals: impl IntoIterator<Item = IntervalVar>) -> Self {
         Self::of(NoOverlapConstraintProto {
@@ -21,7 +21,8 @@ impl Constraint {
     }
 
     /// The present rectangles do not overlap. Each rectangle is an `(x, y)`
-    /// pair of intervals, and it is absent when either interval is.
+    /// pair of intervals, and it is absent when either interval is, like
+    /// Python's `add_no_overlap_2d`.
     #[must_use]
     pub fn no_overlap_2d(rectangles: impl IntoIterator<Item = (IntervalVar, IntervalVar)>) -> Self {
         let (x_intervals, y_intervals) = rectangles

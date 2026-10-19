@@ -23,7 +23,7 @@ impl Constraint {
         bool_argument(Kind::BoolOr, literals)
     }
 
-    /// Every literal is true. With no literals it is always true, like
+    /// Every literal is true, like Python's `add_bool_and`. With no literals it is always true, like
     /// Python's `add(True)`.
     #[must_use]
     pub fn bool_and(literals: impl IntoIterator<Item = BoolVar>) -> Self {
@@ -42,13 +42,14 @@ impl Constraint {
         bool_argument(Kind::ExactlyOne, literals)
     }
 
-    /// An odd number of literals is true.
+    /// An odd number of literals is true, like Python's `add_bool_xor`.
     #[must_use]
     pub fn bool_xor(literals: impl IntoIterator<Item = BoolVar>) -> Self {
         bool_argument(Kind::BoolXor, literals)
     }
 
-    /// `a` implies `b`, which Python writes as `b` enforced by `a`.
+    /// `a` implies `b`, like Python's `add_implication`, which writes `b`
+    /// enforced by `a`.
     #[must_use]
     pub fn implication(a: BoolVar, b: BoolVar) -> Self {
         Self::bool_and([b]).only_if(a)
