@@ -137,3 +137,29 @@ fn converts_rust_ranges() {
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::MODEL_INVALID);
 }
+
+/// The linear set operations agree with the definitions on touching,
+/// nested, and limit-reaching intervals.
+#[test]
+fn set_operations_handle_touching_and_limit_intervals() {
+    let low = Domain::from_intervals([(i64::MIN, -5), (0, 2)]);
+    let high = Domain::from_intervals([(3, 4), (10, i64::MAX)]);
+    assert_eq!(
+        low.union_with(&high).intervals(),
+        [(i64::MIN, -5), (0, 4), (10, i64::MAX)]
+    );
+    assert!(low.intersection_with(&high).is_empty());
+    assert!(!low.overlaps_with(&high));
+
+    let wide = Domain::from_intervals([(i64::MIN, 0), (5, 20)]);
+    let parts = Domain::from_intervals([(-3, -1), (6, 7), (19, 25)]);
+    assert_eq!(
+        wide.intersection_with(&parts).intervals(),
+        [(-3, -1), (6, 7), (19, 20)]
+    );
+    assert!(!parts.is_included_in(&wide));
+    assert!(Domain::from_intervals([(-3, -1), (6, 7)]).is_included_in(&wide));
+    assert!(!Domain::new(0, 5).is_included_in(&wide), "spans a gap");
+    assert_eq!(Domain::all().intersection_with(&wide), wide);
+    assert_eq!(wide.union_with(&wide.complement()), Domain::all());
+}

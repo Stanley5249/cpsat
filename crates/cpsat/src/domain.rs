@@ -45,14 +45,9 @@ impl Domain {
             .filter(|&(lower, upper)| lower <= upper)
             .collect();
         intervals.sort_unstable();
-        let mut merged: Vec<(i64, i64)> = Vec::with_capacity(intervals.len());
-        for (lower, upper) in intervals {
-            match merged.last_mut() {
-                Some(last) if last.1.checked_add(1).is_none_or(|next| lower <= next) => {
-                    last.1 = last.1.max(upper);
-                }
-                _ => merged.push((lower, upper)),
-            }
+        let mut merged = Vec::with_capacity(intervals.len());
+        for interval in intervals {
+            push_merged(&mut merged, interval);
         }
         Self(merged)
     }
@@ -126,28 +121,61 @@ impl Domain {
         Self(gaps)
     }
 
-    /// Whether every value of this domain is in `other`.
+    /// Whether every value of this domain is in `other`. Each interval must
+    /// fit in one interval of `other`, because `other` has gaps between its
+    /// intervals.
     #[must_use]
     pub fn is_included_in(&self, other: &Self) -> bool {
-        self.intersection_with(other) == *self
+        let mut rest = other.0.as_slice();
+        self.0.iter().all(|&(lower, upper)| {
+            while rest
+                .first()
+                .is_some_and(|&(_, other_upper)| other_upper < lower)
+            {
+                rest = &rest[1..];
+            }
+            rest.first().is_some_and(|&(other_lower, other_upper)| {
+                other_lower <= lower && upper <= other_upper
+            })
+        })
     }
 
     /// Whether this domain and `other` share a value.
     #[must_use]
     pub fn overlaps_with(&self, other: &Self) -> bool {
-        !self.intersection_with(other).is_empty()
+        Overlaps {
+            left: &self.0,
+            right: &other.0,
+        }
+        .next()
+        .is_some()
     }
 
     #[must_use]
     pub fn union_with(&self, other: &Self) -> Self {
-        Self::from_intervals(self.0.iter().chain(&other.0).copied())
+        let mut merged = Vec::with_capacity(self.0.len() + other.0.len());
+        let (mut left, mut right) = (self.0.iter().peekable(), other.0.iter().peekable());
+        // Both sides are sorted, so taking the smaller start keeps the output
+        // sorted and lets each interval merge into the last one.
+        while let Some(&interval) = match (left.peek(), right.peek()) {
+            (Some(a), Some(b)) if b < a => right.next(),
+            (Some(_), _) => left.next(),
+            (None, _) => right.next(),
+        } {
+            push_merged(&mut merged, interval);
+        }
+        Self(merged)
     }
 
     #[must_use]
     pub fn intersection_with(&self, other: &Self) -> Self {
-        self.complement()
-            .union_with(&other.complement())
-            .complement()
+        Self(
+            Overlaps {
+                left: &self.0,
+                right: &other.0,
+            }
+            .collect(),
+        )
     }
 
     /// `-x` for every `x` in this domain, like Python's `negation`. `i64::MIN`
@@ -240,5 +268,44 @@ impl From<RangeToInclusive<i64>> for Domain {
     /// variable.
     fn from(range: RangeToInclusive<i64>) -> Self {
         Self::new(i64::MIN, range.end)
+    }
+}
+
+/// Appends `interval`, which starts no earlier than the last one, merging it
+/// into the last one when they overlap or touch.
+fn push_merged(merged: &mut Vec<(i64, i64)>, (lower, upper): (i64, i64)) {
+    match merged.last_mut() {
+        Some(last) if last.1.checked_add(1).is_none_or(|next| lower <= next) => {
+            last.1 = last.1.max(upper);
+        }
+        _ => merged.push((lower, upper)),
+    }
+}
+
+/// The nonempty intersections of two normalized interval lists, in order.
+/// Each step drops the interval that ends first, because it meets nothing
+/// further on the other side.
+struct Overlaps<'a> {
+    left: &'a [(i64, i64)],
+    right: &'a [(i64, i64)],
+}
+
+impl Iterator for Overlaps<'_> {
+    type Item = (i64, i64);
+
+    fn next(&mut self) -> Option<(i64, i64)> {
+        loop {
+            let (&(a_lower, a_upper), &(b_lower, b_upper)) =
+                (self.left.first()?, self.right.first()?);
+            if a_upper < b_upper {
+                self.left = &self.left[1..];
+            } else {
+                self.right = &self.right[1..];
+            }
+            let (lower, upper) = (a_lower.max(b_lower), a_upper.min(b_upper));
+            if lower <= upper {
+                return Some((lower, upper));
+            }
+        }
     }
 }
