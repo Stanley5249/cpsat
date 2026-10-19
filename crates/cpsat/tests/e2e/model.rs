@@ -332,6 +332,21 @@ fn interval_parts_panic_on_a_replaced_interval() {
 }
 
 #[test]
+#[should_panic(expected = "vars and coeffs of unequal lengths")]
+fn interval_parts_panic_on_a_ragged_expression() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=9);
+    let y = model.int_var(0..=9);
+    let interval = model.fixed_size_interval_var(x, 3);
+    let Some(Kind::Interval(proto)) = &mut model[interval].constraint else {
+        unreachable!("fixed_size_interval_var writes an interval");
+    };
+    proto.start.get_or_insert_default().vars.push(y.index());
+    assert!(model.validate().is_err());
+    let _ = model.interval_start(interval);
+}
+
+#[test]
 fn integer_and_float_objectives_replace_each_other() {
     let mut model = Model::new();
     let x = model.int_var(0..=5);

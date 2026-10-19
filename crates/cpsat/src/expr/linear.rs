@@ -141,12 +141,19 @@ impl From<LinearExpr> for LinearExpressionProto {
     }
 }
 
-impl From<LinearExpressionProto> for LinearExpr {
-    fn from(proto: LinearExpressionProto) -> Self {
-        Self {
-            terms: proto.vars.into_iter().zip(proto.coeffs).collect(),
+impl LinearExpr {
+    /// The expression that `proto` writes, or `None` if its `vars` and
+    /// `coeffs` differ in length, which `validate` rejects.
+    pub(crate) fn from_proto(proto: &LinearExpressionProto) -> Option<Self> {
+        (proto.vars.len() == proto.coeffs.len()).then(|| Self {
+            terms: proto
+                .vars
+                .iter()
+                .copied()
+                .zip(proto.coeffs.iter().copied())
+                .collect(),
             offset: proto.offset,
-        }
+        })
     }
 }
 

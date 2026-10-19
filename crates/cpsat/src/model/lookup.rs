@@ -7,7 +7,9 @@ use super::{Model, slot};
 use crate::constraint::ConstraintRef;
 use crate::expr::{BoolVar, IntVar, IntervalVar, LinearExpr};
 use crate::proto::constraint_proto::Constraint as Kind;
-use crate::proto::{ConstraintProto, IntegerVariableProto, IntervalConstraintProto};
+use crate::proto::{
+    ConstraintProto, IntegerVariableProto, IntervalConstraintProto, LinearExpressionProto,
+};
 
 impl Model {
     /// The variable at `index`, like Python's `get_int_var_from_proto_index`.
@@ -44,30 +46,33 @@ impl Model {
     ///
     /// # Panics
     ///
-    /// If `interval` is not an interval of this model.
+    /// If `interval` is not an interval of this model, or if its start has
+    /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
     #[must_use]
     pub fn interval_start(&self, interval: IntervalVar) -> LinearExpr {
-        LinearExpr::from((*self.interval_proto(interval).start).clone())
+        interval_part(interval, &self.interval_proto(interval).start)
     }
 
     /// The size of `interval`, like Python's `IntervalVar.size_expr`.
     ///
     /// # Panics
     ///
-    /// If `interval` is not an interval of this model.
+    /// If `interval` is not an interval of this model, or if its size has
+    /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
     #[must_use]
     pub fn interval_size(&self, interval: IntervalVar) -> LinearExpr {
-        LinearExpr::from((*self.interval_proto(interval).size).clone())
+        interval_part(interval, &self.interval_proto(interval).size)
     }
 
     /// The end of `interval`, like Python's `IntervalVar.end_expr`.
     ///
     /// # Panics
     ///
-    /// If `interval` is not an interval of this model.
+    /// If `interval` is not an interval of this model, or if its end has
+    /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
     #[must_use]
     pub fn interval_end(&self, interval: IntervalVar) -> LinearExpr {
-        LinearExpr::from((*self.interval_proto(interval).end).clone())
+        interval_part(interval, &self.interval_proto(interval).end)
     }
 
     /// The literals that make `interval` present, none for an interval that is
@@ -98,6 +103,14 @@ impl Model {
     fn variable(&self, index: i32) -> Option<&IntegerVariableProto> {
         self.0.variables.get(usize::try_from(index).ok()?)
     }
+}
+
+/// Converts a part of `interval`, which only a hand-edited message leaves
+/// ragged.
+fn interval_part(interval: IntervalVar, expr: &LinearExpressionProto) -> LinearExpr {
+    LinearExpr::from_proto(expr).unwrap_or_else(|| {
+        panic!("{interval:?} has an expression with vars and coeffs of unequal lengths")
+    })
 }
 
 impl Index<IntVar> for Model {
