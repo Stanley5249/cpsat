@@ -30,12 +30,16 @@ mod sealed {
     pub trait Sealed {}
 }
 
-/// What `value` reads: a variable, a literal, a constant, or an expression.
-/// A handle reads its slot directly, so no expression is built.
+/// What `value` reads, and the type it reads as: an integer for a variable,
+/// a constant, or an expression, a `bool` for a literal, and an `f64` for a
+/// floating-point expression. A handle reads its slot directly, so no
+/// expression is built.
 pub trait Evaluate: sealed::Sealed {
+    type Output;
+
     /// The value under `solution`, or `None` if a variable has no value.
     #[doc(hidden)]
-    fn evaluate(&self, solution: &[i64]) -> Option<i64>;
+    fn evaluate(&self, solution: &[i64]) -> Option<Self::Output>;
 }
 
 fn slot(solution: &[i64], index: i32) -> Option<i64> {
@@ -44,6 +48,8 @@ fn slot(solution: &[i64], index: i32) -> Option<i64> {
 
 impl sealed::Sealed for IntVar {}
 impl Evaluate for IntVar {
+    type Output = i64;
+
     fn evaluate(&self, solution: &[i64]) -> Option<i64> {
         slot(solution, self.index())
     }
@@ -51,13 +57,18 @@ impl Evaluate for IntVar {
 
 impl sealed::Sealed for BoolVar {}
 impl Evaluate for BoolVar {
-    fn evaluate(&self, solution: &[i64]) -> Option<i64> {
-        boolean_value(solution, *self).map(i64::from)
+    type Output = bool;
+
+    fn evaluate(&self, solution: &[i64]) -> Option<bool> {
+        let value = slot(solution, self.variable().index())?;
+        Some((value != 0) != self.is_negated())
     }
 }
 
 impl sealed::Sealed for i64 {}
 impl Evaluate for i64 {
+    type Output = i64;
+
     fn evaluate(&self, _: &[i64]) -> Option<i64> {
         Some(*self)
     }
@@ -65,22 +76,38 @@ impl Evaluate for i64 {
 
 impl sealed::Sealed for LinearExpr {}
 impl Evaluate for LinearExpr {
+    type Output = i64;
+
     fn evaluate(&self, solution: &[i64]) -> Option<i64> {
+        self.value_in(solution)
+    }
+}
+
+impl sealed::Sealed for f64 {}
+impl Evaluate for f64 {
+    type Output = f64;
+
+    fn evaluate(&self, _: &[i64]) -> Option<f64> {
+        Some(*self)
+    }
+}
+
+impl sealed::Sealed for FloatExpr {}
+impl Evaluate for FloatExpr {
+    type Output = f64;
+
+    fn evaluate(&self, solution: &[i64]) -> Option<f64> {
         self.value_in(solution)
     }
 }
 
 impl<T: Evaluate> sealed::Sealed for &T {}
 impl<T: Evaluate> Evaluate for &T {
-    fn evaluate(&self, solution: &[i64]) -> Option<i64> {
+    type Output = T::Output;
+
+    fn evaluate(&self, solution: &[i64]) -> Option<T::Output> {
         T::evaluate(self, solution)
     }
-}
-
-/// The value of `literal` under `solution`, or `None` without a solution.
-fn boolean_value(solution: &[i64], literal: BoolVar) -> Option<bool> {
-    let value = slot(solution, literal.variable().index())?;
-    Some((value != 0) != literal.is_negated())
 }
 
 impl CpSolverResponse {
@@ -90,32 +117,19 @@ impl CpSolverResponse {
         self.status.as_known().unwrap_or(CpSolverStatus::UNKNOWN)
     }
 
-    /// The value of a variable or expression in the solution, like Python's
-    /// `CpSolver.value`, or `None` if a variable has no value, such as without
-    /// a solution. A constant has its value even without a solution, as in
-    /// Python. Handles do not know their model, so a handle from another
-    /// model reads `None` when out of range and another variable otherwise.
+    /// The value of a variable, literal, or expression in the solution, like
+    /// Python's `CpSolver.value`, `boolean_value`, and `float_value`, or
+    /// `None` if a variable has no value, such as without a solution. A
+    /// constant has its value even without a solution, as in Python. Handles
+    /// do not know their model, so a handle from another model reads `None`
+    /// when out of range and another variable otherwise.
     ///
     /// # Panics
     ///
-    /// If the value overflows `i64`.
+    /// If an integer value overflows `i64`.
     #[must_use]
-    pub fn value(&self, expr: impl Evaluate) -> Option<i64> {
+    pub fn value<E: Evaluate>(&self, expr: E) -> Option<E::Output> {
         expr.evaluate(&self.solution)
-    }
-
-    /// The value of a floating-point expression in the solution, like
-    /// Python's `CpSolver.float_value`, or `None` if a variable has no value.
-    #[must_use]
-    pub fn float_value(&self, expr: impl Into<FloatExpr>) -> Option<f64> {
-        expr.into().evaluate(&self.solution)
-    }
-
-    /// The value of a literal in the solution, like Python's
-    /// `CpSolver.boolean_value`, or `None` without a solution.
-    #[must_use]
-    pub fn boolean_value(&self, literal: BoolVar) -> Option<bool> {
-        boolean_value(&self.solution, literal)
     }
 }
 
@@ -126,28 +140,15 @@ impl CpSolverResponseView<'_> {
         self.status.as_known().unwrap_or(CpSolverStatus::UNKNOWN)
     }
 
-    /// The value of a variable or expression in the solution, like Python's
-    /// `CpSolverSolutionCallback.value`.
+    /// The value of a variable, literal, or expression in the solution, like
+    /// Python's `CpSolverSolutionCallback.value`, `boolean_value`, and
+    /// `float_value`. See [`CpSolverResponse::value`].
     ///
     /// # Panics
     ///
-    /// If the value overflows `i64`.
+    /// If an integer value overflows `i64`.
     #[must_use]
-    pub fn value(&self, expr: impl Evaluate) -> Option<i64> {
+    pub fn value<E: Evaluate>(&self, expr: E) -> Option<E::Output> {
         expr.evaluate(&self.solution)
-    }
-
-    /// The value of a floating-point expression in the solution, like
-    /// Python's `CpSolverSolutionCallback.float_value`.
-    #[must_use]
-    pub fn float_value(&self, expr: impl Into<FloatExpr>) -> Option<f64> {
-        expr.into().evaluate(&self.solution)
-    }
-
-    /// The value of a literal in the solution, like Python's
-    /// `CpSolverSolutionCallback.boolean_value`.
-    #[must_use]
-    pub fn boolean_value(&self, literal: BoolVar) -> Option<bool> {
-        boolean_value(&self.solution, literal)
     }
 }

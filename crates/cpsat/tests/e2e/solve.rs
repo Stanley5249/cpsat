@@ -43,9 +43,10 @@ fn reads_negated_literals_and_expressions() {
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.value(-x), Some(-4));
     assert_eq!(response.value(7), Some(7));
-    assert_eq!(response.boolean_value(b), Some(true));
-    assert_eq!(response.boolean_value(!b), Some(false));
-    assert_eq!(response.value(!b), Some(0));
+    assert_eq!(response.value(b), Some(true));
+    assert_eq!(response.value(!b), Some(false));
+    // In an expression, `!b` counts as `1 - b`.
+    assert_eq!(response.value(LinearExpr::from(!b)), Some(0));
 
     // A handle from a larger model is out of range here.
     let mut larger = Model::new();
@@ -169,7 +170,7 @@ fn solves_a_float_objective_like_python() {
     // Python's OR-Tools 9.15 reports -8.75 at x = 0, y = 7.
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert!((response.objective_value + 8.75).abs() < 1e-9);
-    assert_eq!(response.float_value(0.5 * x + y), Some(7.0));
+    assert_eq!(response.value(0.5 * x + y), Some(7.0));
 }
 
 /// Search counters vary between runs, so they are checked for sanity, not
@@ -219,9 +220,9 @@ fn evaluates_collections_in_order() {
         .map(|&var| response.value(var))
         .collect();
     assert_eq!(values, [Some(3), Some(1), Some(2), None]);
-    let booleans = literals.map(|literal| response.boolean_value(literal));
+    let booleans = literals.map(|literal| response.value(literal));
     assert_eq!(booleans, [Some(true), Some(false)]);
-    let floats = vars.map(|var| response.float_value(0.5 * var));
+    let floats = vars.map(|var| response.value(0.5 * var));
     assert_eq!(floats, [Some(1.5), Some(0.5), Some(1.0)]);
 
     // A weighted sum zips variables with weights. `zip` stops at the shorter

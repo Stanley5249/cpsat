@@ -102,8 +102,8 @@ fn constants_and_true_literals_solve_to_their_values() {
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_eq!(response.value(x), Some(8));
-    assert_eq!(response.boolean_value(yes), Some(true));
-    assert_eq!(response.boolean_value(no), Some(false));
+    assert_eq!(response.value(yes), Some(true));
+    assert_eq!(response.value(no), Some(false));
 }
 
 #[test]
@@ -314,8 +314,8 @@ fn float_operators_mix_constants_and_expressions() {
         solution: vec![3],
         ..Default::default()
     };
-    assert_eq!(response.float_value(&expr), Some(13.5));
-    assert_eq!(response.float_value(x - 0.5), Some(2.5));
+    assert_eq!(response.value(&expr), Some(13.5));
+    assert_eq!(response.value(x - 0.5), Some(2.5));
 }
 
 #[test]

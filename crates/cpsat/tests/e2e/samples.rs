@@ -485,9 +485,6 @@ fn ranking_circuit() {
     let response = solve_optimal(&model);
     assert!((response.objective_value + 9.0).abs() < 1e-9);
     assert_eq!(response.value(makespan), Some(6));
-    let performed: Vec<_> = presences
-        .iter()
-        .map(|&p| response.boolean_value(p))
-        .collect();
+    let performed: Vec<_> = presences.iter().map(|&p| response.value(p)).collect();
     assert_eq!(performed, [Some(true), Some(true), Some(true), Some(false)]);
 }

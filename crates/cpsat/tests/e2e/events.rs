@@ -271,8 +271,8 @@ fn solution_view_accessors_match_the_owned_response() {
             if let Event::Solution(view) = event {
                 seen = Some(read(
                     &|expr| view.value(expr),
-                    &|literal| view.boolean_value(literal),
-                    &|expr| view.float_value(expr),
+                    &|literal| view.value(literal),
+                    &|expr| view.value(expr),
                 ));
             }
             ControlFlow::Continue(())
@@ -281,8 +281,8 @@ fn solution_view_accessors_match_the_owned_response() {
         .unwrap();
     let owned = read(
         &|expr| response.value(expr),
-        &|literal| response.boolean_value(literal),
-        &|expr| response.float_value(expr),
+        &|literal| response.value(literal),
+        &|expr| response.value(expr),
     );
     assert_eq!(seen, Some(owned));
     assert_eq!(

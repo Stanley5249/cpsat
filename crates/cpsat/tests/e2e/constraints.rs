@@ -145,7 +145,7 @@ fn multiple_circuit_takes_two_routes_through_the_depot() {
             .sum::<LinearExpr>(),
     );
     let response = solve_optimal(&model);
-    let used = arcs.map(|(_, _, arc)| response.boolean_value(arc).unwrap());
+    let used = arcs.map(|(_, _, arc)| response.value(arc).unwrap());
     assert_eq!(used, [true, true, true, true, false, false]);
 }
 
@@ -175,7 +175,7 @@ fn map_domain_sets_only_the_literal_of_the_value() {
         model.add(x.eq(fixed));
         let response = solve_optimal(&model);
         assert_eq!(
-            literals.map(|literal| response.boolean_value(literal).unwrap()),
+            literals.map(|literal| response.value(literal).unwrap()),
             expected,
             "x = {fixed}"
         );
@@ -212,7 +212,7 @@ fn enforced_empty_bool_or_forces_its_literal_false() {
     let b = model.bool_var();
     model.add(Constraint::bool_or([]).only_if(b));
     model.maximize(b);
-    assert_eq!(solve_optimal(&model).boolean_value(b), Some(false));
+    assert_eq!(solve_optimal(&model).value(b), Some(false));
 }
 
 #[test]

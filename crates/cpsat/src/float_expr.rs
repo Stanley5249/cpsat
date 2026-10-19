@@ -12,7 +12,7 @@ use crate::variable::{BoolVar, IntVar};
 /// Multiplying a variable or a [`LinearExpr`] by an `f64` builds one, as
 /// `0.5 * x` does in Python. CP-SAT accepts floating-point coefficients only
 /// in the objective, so a `FloatExpr` serves
-/// [`Model::minimize_float`](crate::Model::minimize_float) and `float_value`
+/// [`Model::minimize_float`](crate::Model::minimize_float) and `value`
 /// and converts into no constraint.
 ///
 /// ```
@@ -73,7 +73,7 @@ impl FloatExpr {
         clippy::cast_precision_loss,
         reason = "Python evaluates float expressions in doubles too"
     )]
-    pub(crate) fn evaluate(&self, solution: &[i64]) -> Option<f64> {
+    pub(crate) fn value_in(&self, solution: &[i64]) -> Option<f64> {
         self.terms
             .iter()
             .try_fold(self.offset, |sum, &(var, coeff)| {
@@ -113,7 +113,7 @@ impl From<&LinearExpr> for FloatExpr {
 }
 
 impl From<&Self> for FloatExpr {
-    /// Clones the expression, so `response.float_value(&expr)` keeps `expr`.
+    /// Clones the expression, so `response.value(&expr)` keeps `expr`.
     fn from(expr: &Self) -> Self {
         expr.clone()
     }
