@@ -4,8 +4,11 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 description = "C ABI bridge to the OR-Tools CP-SAT solver"
+readme = "../../README.md"
 repository.workspace = true
 license.workspace = true
+keywords = ["cp-sat", "ffi", "or-tools", "solver"]
+categories = ["algorithms", "external-ffi-bindings"]
 links = "ortools"
 
 [build-dependencies]

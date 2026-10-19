@@ -4,8 +4,11 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 description = "Rust binding for the OR-Tools CP-SAT solver"
+readme = "../../README.md"
 repository.workspace = true
 license.workspace = true
+keywords = ["constraint", "cp-sat", "optimization", "or-tools", "solver"]
+categories = ["algorithms", "api-bindings", "mathematics", "science"]
 
 [dependencies]
 buffa.workspace = true
