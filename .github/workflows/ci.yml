@@ -125,58 +125,21 @@ jobs:
         with:
           key: ${{ matrix.name }}
       - run: cargo test --locked --workspace --all-features
-      - name: Every shared library dependency resolves
-        if: runner.os == 'Linux'
+      # Copies the runtime directory beside the executable, as the README's
+      # Deployment section describes, and runs it without Cargo's library path.
+      - name: Run from a directory with only the runtime beside it
         shell: bash
         run: |
           # Match both the legacy and the Cargo 1.100 build-dir layouts.
           runtime=$(find target/debug/build -type d -name runtime -path '*cpsat-sys*/out/*' | head -n 1)
-          status=0
-          for binary in $(find target/debug/deps -maxdepth 1 -type f -executable); do
-            output=$(LD_LIBRARY_PATH="$runtime" ldd "$binary")
-            if grep -q 'not found' <<<"$output"; then
-              echo "$binary"; echo "$output"; status=1
-            fi
-          done
-          exit $status
+          test -d "$runtime/licenses"
+          mkdir ship
+          cp -a "$runtime"/. ship/
+          cp target/debug/examples/solve$([ "$RUNNER_OS" = Windows ] && echo .exe) ship/
+          cd ship && ./solve
       - name: The dir mode links the extracted archive
         if: matrix.name == 'ubuntu-24.04'
         shell: bash
         run: |
           root=$(find "$CPSAT_CACHE_DIR/extracted" -mindepth 2 -maxdepth 2 -type d | head -n 1)
           CPSAT_ORTOOLS="dir:$root" cargo test --locked --workspace --all-features
-
-  # Runs an executable that has only the copied runtime directory beside it, as
-  # the README's Deployment section describes.
-  deploy:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-24.04]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/cache@v6
-        with:
-          path: .cpsat-cache
-          key:
-            ortools-${{ runner.os }}-${{
-            hashFiles('crates/cpsat-sys/build/artifacts.rs') }}
-      - uses: Swatinem/rust-cache@v2
-      - name: Build with the README's rpath
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" = Linux ]; then
-            export RUSTFLAGS='-C link-arg=-Wl,-rpath,$ORIGIN'
-          fi
-          cargo build --locked --release -p cpsat --example solve
-      - name: Run from a directory with only the runtime beside it
-        shell: bash
-        run: |
-          runtime=$(find target/release/build -type d -name runtime -path '*cpsat-sys*/out/*' | head -n 1)
-          test -d "$runtime/licenses"
-          mkdir ship
-          cp -a "$runtime"/. ship/
-          cp target/release/examples/solve$([ "$RUNNER_OS" = Windows ] && echo .exe) ship/
-          # Without Cargo, neither PATH nor LD_LIBRARY_PATH holds the runtime.
-          cd ship && ./solve

@@ -99,7 +99,9 @@ rpath, which a library cannot set for your binary, so add it to
 rustflags = ["-C", "link-arg=-Wl,-rpath,$ORIGIN"]
 ```
 
-The `deploy` CI job runs `crates/cpsat/examples/solve.rs` this way.
+This repository's `.cargo/config.toml` does the same, and the CI `test` job runs
+`crates/cpsat/examples/solve.rs` from a directory that holds only the copied
+runtime. A `RUSTFLAGS` environment variable replaces these `rustflags`.
 
 ## Requirements
 
