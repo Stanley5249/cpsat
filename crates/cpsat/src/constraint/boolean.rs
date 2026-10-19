@@ -1,8 +1,8 @@
 //! Boolean constraints, like Python's `add_bool_or` and its relatives.
 
 use super::{Constraint, Kind, literals};
+use crate::expr::BoolVar;
 use crate::proto::BoolArgumentProto;
-use crate::variable::BoolVar;
 
 fn bool_argument(
     kind: fn(Box<BoolArgumentProto>) -> Kind,

@@ -3,12 +3,11 @@
 use buffa::MessageField;
 
 use super::Constraint;
-use crate::expr::LinearExpr;
+use crate::expr::{BoolVar, IntervalVar, LinearExpr};
 use crate::proto::{
     CumulativeConstraintProto, LinearExpressionProto, NoOverlap2DConstraintProto,
     NoOverlapConstraintProto, ReservoirConstraintProto,
 };
-use crate::variable::{BoolVar, IntervalVar};
 
 impl Constraint {
     /// The present intervals do not overlap, like Python's `add_no_overlap`.

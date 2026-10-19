@@ -20,11 +20,9 @@ mod circuit;
 mod global;
 mod scheduling;
 
-use crate::domain::Domain;
-use crate::expr::LinearExpr;
+use crate::expr::{BoolVar, Domain, IntVar, LinearExpr};
 use crate::proto::constraint_proto::Constraint as Kind;
 use crate::proto::{ConstraintProto, LinearConstraintProto, LinearExpressionProto};
-use crate::variable::{BoolVar, IntVar};
 
 /// A constraint before insertion, like the `Constraint` that Python's `add_*`
 /// methods return, except that it is configured before insertion.

@@ -5,11 +5,9 @@ use std::fmt;
 
 use buffa::Enumeration;
 
-use crate::expr::LinearExpr;
-use crate::float_expr::FloatExpr;
+use crate::expr::{BoolVar, FloatExpr, IntVar, LinearExpr};
 use crate::proto::view::CpSolverResponseView;
 use crate::proto::{CpSolverResponse, CpSolverStatus};
-use crate::variable::{BoolVar, IntVar};
 
 impl fmt::Display for CpSolverStatus {
     /// Writes the schema name, such as `OPTIMAL`, like Python's `status_name`.

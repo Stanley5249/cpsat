@@ -4,9 +4,8 @@ use buffa::MessageField;
 
 use super::Model;
 use crate::constraint::Constraint;
-use crate::expr::LinearExpr;
+use crate::expr::{BoolVar, IntervalVar, LinearExpr};
 use crate::proto::{ConstraintProto, IntervalConstraintProto};
-use crate::variable::{BoolVar, IntervalVar};
 
 impl Model {
     /// An interval with `start + size == end`, like Python's

@@ -5,10 +5,9 @@ use std::ops::{Index, IndexMut};
 
 use super::{Model, slot};
 use crate::constraint::ConstraintRef;
-use crate::expr::LinearExpr;
+use crate::expr::{BoolVar, IntVar, IntervalVar, LinearExpr};
 use crate::proto::constraint_proto::Constraint as Kind;
 use crate::proto::{ConstraintProto, IntegerVariableProto, IntervalConstraintProto};
-use crate::variable::{BoolVar, IntVar, IntervalVar};
 
 impl Model {
     /// The variable at `index`, like Python's `get_int_var_from_proto_index`.

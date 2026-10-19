@@ -3,12 +3,11 @@
 use buffa::MessageField;
 
 use super::{Constraint, exprs, variables};
-use crate::expr::LinearExpr;
+use crate::expr::{IntVar, LinearExpr};
 use crate::proto::{
     AllDifferentConstraintProto, AutomatonConstraintProto, ElementConstraintProto,
     InverseConstraintProto, TableConstraintProto,
 };
-use crate::variable::IntVar;
 
 impl Constraint {
     /// Every expression takes a different value. CP-SAT accepts affine

@@ -4,9 +4,8 @@ use std::iter::Sum;
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::constraint::{self, Constraint};
-use crate::domain::Domain;
+use crate::expr::{BoolVar, Domain, IntVar};
 use crate::proto::LinearExpressionProto;
-use crate::variable::{BoolVar, IntVar};
 
 /// `sum(coeff * var) + offset` with `i64` coefficients.
 ///

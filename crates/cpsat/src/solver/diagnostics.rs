@@ -5,8 +5,8 @@ use buffa::Message;
 use cpsat_sys::CpsatBuffer;
 
 use crate::error::{Error, Result};
-use crate::ffi::Buffer;
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
+use crate::solver::ffi::Buffer;
 
 fn call(
     helper: unsafe extern "C" fn(*const u8, usize, *mut CpsatBuffer, *mut CpsatBuffer) -> i32,
@@ -24,7 +24,7 @@ fn call(
             error.as_mut_ptr(),
         )
     };
-    crate::ffi::check(code, &error)?;
+    crate::solver::ffi::check(code, &error)?;
     Ok(output.text().into_owned())
 }
 
@@ -84,6 +84,6 @@ pub fn default_parameters() -> Result<SatParameters> {
     // SAFETY: both buffers are empty bridge buffers.
     let code =
         unsafe { cpsat_sys::cpsat_parameters_default(parameters.as_mut_ptr(), error.as_mut_ptr()) };
-    crate::ffi::check(code, &error)?;
+    crate::solver::ffi::check(code, &error)?;
     Ok(SatParameters::decode_from_slice(parameters.bytes())?)
 }

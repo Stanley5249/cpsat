@@ -4,8 +4,7 @@
 use buffa::MessageField;
 
 use super::Model;
-use crate::expr::LinearExpr;
-use crate::float_expr::FloatExpr;
+use crate::expr::{FloatExpr, LinearExpr};
 use crate::proto::{CpObjectiveProto, FloatObjectiveProto};
 
 mod sealed {

@@ -4,8 +4,7 @@
 use std::iter::Sum;
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use crate::expr::LinearExpr;
-use crate::variable::{BoolVar, IntVar};
+use crate::expr::{BoolVar, IntVar, LinearExpr};
 
 /// `sum(coeff * var) + offset` with `f64` coefficients.
 ///

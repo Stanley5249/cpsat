@@ -1,8 +1,8 @@
 //! Circuit and multiple-circuit constraints over a graph of literal arcs.
 
 use super::{Constraint, literals};
+use crate::expr::BoolVar;
 use crate::proto::{CircuitConstraintProto, RoutesConstraintProto};
-use crate::variable::BoolVar;
 
 /// Splits `(tail, head, literal)` arcs into the schema's parallel lists.
 fn arcs(arcs: impl IntoIterator<Item = (i32, i32, BoolVar)>) -> (Vec<i32>, Vec<i32>, Vec<i32>) {

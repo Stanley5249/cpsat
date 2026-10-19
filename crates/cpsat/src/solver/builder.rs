@@ -6,10 +6,10 @@ use std::sync::LazyLock;
 use buffa::Message;
 
 use crate::error::Result;
-use crate::ffi::{Buffer, Session};
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
 use crate::solver::callback::{State, trampoline};
 use crate::solver::event::{Event, EventSet};
+use crate::solver::ffi::{Buffer, Session};
 use crate::solver::stop::StopHandle;
 
 /// The callback type of a [`Solver`] without events.
@@ -177,6 +177,6 @@ where
     if let Some(payload) = state.panic {
         resume_unwind(payload);
     }
-    crate::ffi::check(code, &error)?;
+    crate::solver::ffi::check(code, &error)?;
     Ok(CpSolverResponse::decode_from_slice(response.bytes())?)
 }

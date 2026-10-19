@@ -11,14 +11,12 @@ use std::collections::BTreeMap;
 use buffa::MessageField;
 
 use crate::constraint::{Constraint, ConstraintRef};
-use crate::domain::Domain;
 use crate::error::Result;
-use crate::expr::LinearExpr;
+use crate::expr::{BoolVar, Domain, IntVar, LinearExpr};
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use crate::proto::{
     CpModelProto, CpSolverResponse, DecisionStrategyProto, IntegerVariableProto, SatParameters,
 };
-use crate::variable::{BoolVar, IntVar};
 
 mod sealed {
     pub trait Sealed {}
