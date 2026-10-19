@@ -165,7 +165,8 @@ fn solves_a_float_objective_like_python() {
     let x = model.int_var(0..=10);
     let y = model.int_var(0..=10);
     model.add((x + y).le(7));
-    model.minimize(0.5 * x - 1.25 * y);
+    let objective = 0.5 * x - 1.25 * y;
+    model.minimize(&objective);
     let response = model.solve(&SatParameters::default()).unwrap();
     // Python's OR-Tools 9.15 reports -8.75 at x = 0, y = 7.
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);

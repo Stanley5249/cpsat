@@ -41,6 +41,13 @@ impl Objective for FloatExpr {
     }
 }
 
+impl sealed::Sealed for &FloatExpr {}
+impl Objective for &FloatExpr {
+    fn set(self, model: &mut Model, maximize: bool) {
+        model.set_float_objective(self.clone(), maximize);
+    }
+}
+
 impl sealed::Sealed for f64 {}
 impl Objective for f64 {
     fn set(self, model: &mut Model, maximize: bool) {
