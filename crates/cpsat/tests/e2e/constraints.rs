@@ -3,7 +3,7 @@
 
 use cpsat::prelude::*;
 
-use crate::common::solve_optimal;
+use crate::common::{map_domain, solve_optimal};
 
 fn values(response: &CpSolverResponse, vars: impl IntoIterator<Item = IntVar>) -> Vec<i64> {
     vars.into_iter()
@@ -163,15 +163,6 @@ fn cumulative_runs_two_tasks_at_a_time() {
     let mut starts = values(&response, starts);
     starts.sort_unstable();
     assert_eq!(starts, [0, 0, 2]);
-}
-
-/// The encoding of Python's `add_map_domain(x, literals, 3)`, which
-/// `equivalence.rs::map_domain` compares with Python's model.
-fn map_domain(model: &mut Model, x: IntVar, literals: [BoolVar; 2]) {
-    for (value, literal) in (3..).zip(literals) {
-        model.add(x.eq(value).only_if(literal));
-        model.add(x.ne(value).only_if(!literal));
-    }
 }
 
 #[test]

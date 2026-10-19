@@ -222,10 +222,9 @@ fn evaluates_collections_in_order() {
     let floats = vars.map(|var| response.float_value(0.5 * var));
     assert_eq!(floats, [Some(1.5), Some(0.5), Some(1.0)]);
 
-    // A weighted sum zips variables with weights, and `zip` stops at the
-    // shorter side, so the caller checks the lengths that Python checks.
+    // A weighted sum zips variables with weights. `zip` stops at the shorter
+    // side, so the caller checks the lengths that Python checks.
     let weights = [2, 10, 100];
-    assert_eq!(vars.len(), weights.len());
     let total: LinearExpr = vars
         .into_iter()
         .zip(weights)

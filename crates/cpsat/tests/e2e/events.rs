@@ -266,7 +266,7 @@ fn solution_view_accessors_match_the_owned_response() {
         )
     };
     let mut seen = None;
-    let response = Solver::default()
+    let response = Solver::new(&SatParameters::default().with_num_workers(1))
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 seen = Some(read(
@@ -300,7 +300,7 @@ fn solution_view_carries_search_statistics() {
     let model = Model::from(tiny_model());
     let x = model.int_var_from_index(0).unwrap();
     let mut checked = false;
-    Solver::default()
+    Solver::new(&SatParameters::default().with_num_workers(1))
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 // The objective is x, maximized.

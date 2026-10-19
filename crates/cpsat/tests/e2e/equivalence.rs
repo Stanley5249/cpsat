@@ -217,9 +217,6 @@ fn constants() {
 fn map_domain() {
     let mut model = Model::new();
     let (x, _, b, c) = variables(&mut model);
-    for (value, literal) in (3..).zip([b, c]) {
-        model.add(x.eq(value).only_if(literal));
-        model.add(x.ne(value).only_if(!literal));
-    }
+    crate::common::map_domain(&mut model, x, [b, c]);
     assert_matches_python(&model, "map_domain");
 }
