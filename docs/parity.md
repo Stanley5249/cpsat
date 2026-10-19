@@ -21,7 +21,7 @@ is marked as such. `equivalence.rs` compares committed Python-generated model
 fixtures, while solve tests check results. Neither implies exhaustive argument
 or error-path parity. The fixture generator pins `ortools==9.15.6755` through
 `just fixtures`, and `samples.rs` ports selected official samples. Rust naming
-follows the Methods and Names decisions in `docs/plan.md`.
+follows the Methods and Names rules in `docs/design.md`.
 
 ## Solver
 

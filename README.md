@@ -121,7 +121,8 @@ Run `just` to list the recipes. `just check` is the fast local gate, and
 
 ## Documents
 
-- [Plan](docs/plan.md)
+- [Design](docs/design.md)
+- [Roadmap](docs/roadmap.md)
 - [Python parity](docs/parity.md)
 - [Proto2 defaults in Buffa](docs/buffa-proto2-defaults.md)
 
