@@ -5,7 +5,6 @@ use std::ops::{Index, IndexMut};
 
 use super::{Model, slot};
 use crate::constraint::ConstraintRef;
-use crate::domain::Domain;
 use crate::expr::LinearExpr;
 use crate::proto::constraint_proto::Constraint as Kind;
 use crate::proto::{ConstraintProto, IntegerVariableProto, IntervalConstraintProto};
@@ -24,13 +23,14 @@ impl Model {
     /// `get_bool_var_from_proto_index`.
     #[must_use]
     pub fn to_literal(&self, var: IntVar) -> Option<BoolVar> {
-        let variable = self.variable(var.0)?;
-        let domain = Domain::from_flat_intervals(&variable.domain)?;
-        let within = domain
-            .intervals()
+        // Reads the flat field in place: a nonempty list of pairs with every
+        // nonempty pair inside [0, 1].
+        let (pairs, rest) = self.variable(var.0)?.domain.as_chunks::<2>();
+        let within = pairs
             .iter()
-            .all(|&(lower, upper)| lower >= 0 && upper <= 1);
-        (within && !domain.is_empty()).then_some(BoolVar(var.0))
+            .all(|&[lower, upper]| lower > upper || (lower >= 0 && upper <= 1));
+        let nonempty = pairs.iter().any(|&[lower, upper]| lower <= upper);
+        (rest.is_empty() && within && nonempty).then_some(BoolVar(var.0))
     }
 
     /// The interval at constraint `index`, like Python's
