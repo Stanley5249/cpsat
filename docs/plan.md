@@ -12,7 +12,7 @@ idiomatic Rust modeling API that writes into the Protobuf model.
 ### Hard requirements
 
 - The platforms that the README's Installation section lists.
-- `cargo build` automatically acquires OR-Tools and builds the native bridge.
+- `cargo build` automatically acquires OR-Tools and builds the bridge.
 - No manually installed OR-Tools, Conda, or Python runtime.
 - Official prebuilt OR-Tools archives by default, a reproducible source build as
   an opt-in, and a local directory as a third mode.
@@ -63,16 +63,36 @@ crates/cpsat          Model, Buffa types, Solver, StopHandle, diagnostics
    |  (safe Rust, owns the model)
 crates/cpsat-sys      build.rs, raw extern "C" declarations, links = "ortools"
    |  (serialized bytes, fn pointer + context, opaque session)
-cpsat-sys/native      extern "C" over SolveWrapper and CpSatHelper
+cpsat-sys/bridge      extern "C" over SolveWrapper and CpSatHelper
    |
 ortools.dll / libortools.so  (SolveCpModel)
 ```
 
 Rust owns the model and parameter representation, serialization, every model
 change, callback handling, and error interpretation. C++ owns solver execution,
-callback registration, the active solve and its stop mechanism, and native
-diagnostics. A native session lives for one solve and never holds a second copy
+callback registration, the active solve and its stop mechanism, and OR-Tools
+diagnostics. A bridge session lives for one solve and never holds a second copy
 of the model.
+
+## Terms
+
+Names follow the
+[Rust API Guidelines](https://rust-lang.github.io/api-guidelines/naming.html),
+the
+[`*-sys` package convention](https://doc.rust-lang.org/cargo/reference/build-scripts.html#-sys-packages),
+and the C library convention `prefix_object_verb`, as in libgit2's
+`git_repository_open`. These terms name the parts of this project.
+
+| Term     | Meaning                                                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| OR-Tools | The upstream C++ library and its files                                                                                          |
+| bridge   | Our C++ code and the C ABI it exports, in `crates/cpsat-sys/bridge/`. Its functions are named `cpsat_<object>_<verb>`           |
+| FFI      | The Rust side of the C ABI: the `cpsat-sys` declarations and the owners in `cpsat`'s private `ffi` module                       |
+| session  | The bridge object that serves one solve                                                                                         |
+| mode     | How the build acquires OR-Tools: `prebuilt`, `source`, or `dir:<path>`                                                          |
+| wrapper  | A hand-written type that owns a Protobuf message, such as `Model` or `Constraint`. OR-Tools' `SolveWrapper` keeps its full name |
+| handle   | `IntVar`, `BoolVar`, `IntervalVar`, or `ConstraintRef`                                                                          |
+| literal  | A `BoolVar`, negated or not                                                                                                     |
 
 ## Rules
 
@@ -86,7 +106,7 @@ choices.
 | Entry points   | One method per meaning. A constructor whose return type differs may name its type, such as `int_var` and `bool_var`, or `constant` and `bool_constant`. Methods with one meaning over several input types are one method over a sealed trait, with an associated type wherever the input fixes the type of a value or result, such as `value` over `Evaluate`, `minimize` and `maximize` over `Objective`, and `add_hint` over `Hint`. A method takes `impl IntoIterator` instead of a single-item twin, and conversions use `From`/`Into`. A wrapper may add `into_proto` beside its `From`, as `String::into_bytes` sits beside `From<String>`. The one exception is `Model` forwarding `solve`, `validate`, and `stats` to its message, which the Methods decision keeps so both a `Model` and a bare `CpModelProto` can solve | Fewer names to learn, the compiler rejects a wrong pairing such as a `bool` hint on an integer variable, and the input type replaces Python's runtime dispatch                          |
 | Allocation     | Reads, predicates, and lookups allocate nothing, such as `value` on a handle, `Domain::is_included_in`, and `Model::to_literal`. An operation that returns a new value allocates once for it and builds no intermediate collections. The exceptions are building owned model data (expressions, constraints, and the `Vec` fields a constructor collects from an iterator), clones the schema needs because it stores one expression twice, encoding the model and parameters for each solve, and rarely called accessors that return an owned `LinearExpr` from a borrowed message, such as `Model::interval_start`                                                                                                                                                                                                              | Solution callbacks and model-building loops call these paths often, and allocation is the main cost a thin wrapper can add                                                              |
 | Ownership      | Data the model stores is taken by value through `impl Into<T>`, and read-only data is borrowed, such as `Solver::new(&SatParameters)` and `Model::solve(&self)`. A method takes ownership only when it keeps the value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | The caller decides when to clone, and the API adds no hidden copies                                                                                                                     |
-| Failure        | A caller's programming error panics, with a `# Panics` section on the public item: `i64` overflow, a table row of the wrong length, or a handle of the wrong kind. A broken internal invariant, such as the bridge returning bytes that are not a response, panics with a message naming the invariant. A native failure the caller can cause returns `Error`. `validate` returns `Error::InvalidModel` for an invalid model, while `solve` reports one through the `MODEL_INVALID` status. The modeling API checks eagerly only what the validator cannot see, such as a ragged table row that the flat schema would silently split into other rows                                                                                                                                                                              | One check per mistake, in the place that can see it, and no silent wrong model                                                                                                          |
+| Failure        | A caller's programming error panics, with a `# Panics` section on the public item: `i64` overflow, a table row of the wrong length, or a handle of the wrong kind. A broken internal invariant, such as the bridge returning bytes that are not a response, panics with a message naming the invariant. An OR-Tools or bridge failure the caller can cause returns `Error`. `validate` returns `Error::InvalidModel` for an invalid model, while `solve` reports one through the `MODEL_INVALID` status. The modeling API checks eagerly only what the validator cannot see, such as a ragged table row that the flat schema would silently split into other rows                                                                                                                                                                 | One check per mistake, in the place that can see it, and no silent wrong model                                                                                                          |
 | Lookup         | A raw schema index returns `Option`, such as `int_var_from_index`. Indexing with a typed handle works like a slice and panics when the model lacks it, while a method that asks about a handle returns `Option`, such as `value` and `to_literal`. Accessors follow the Allocation rule                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | An index comes from data and may be absent, while a handle comes from the model and a missing one is a bug                                                                              |
 | Builders       | A value configured before it enters the model takes `self` and returns `Self` with `#[must_use]`, such as `Constraint::only_if`, `with_name`, and `Solver::on_event`. A change after insertion goes through `model[handle]`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Configuration reads as one expression, and a dropped builder is a warning                                                                                                               |
 | `#[must_use]`  | Every public method without side effects and every builder method carries it. A model method that appends, such as `int_var`, does not, because a caller may want only the new variable in the message                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Warns on a discarded result without flagging deliberate appends                                                                                                                         |
@@ -105,12 +125,12 @@ choices.
 | Cache             | Archives, extractions, and source builds in `CPSAT_CACHE_DIR`, each filled once under a `File::lock`                                                                                  | Survives `cargo clean`, one extraction serves every `OUT_DIR`, and concurrent builds wait instead of racing                                                                                         |
 | MSRV              | 1.89                                                                                                                                                                                  | `File::lock`                                                                                                                                                                                        |
 | Runtime libraries | Hard-linked, or copied across volumes, into `OUT_DIR/runtime`                                                                                                                         | See the `cpsat-sys` build script                                                                                                                                                                    |
-| Errors            | `thiserror` enum in `cpsat`, `anyhow` in the build script                                                                                                                             | Callers can match an invalid model or a native failure, and the build script reports a context chain                                                                                                |
+| Errors            | `thiserror` enum in `cpsat`, `anyhow` in the build script                                                                                                                             | Callers can match an invalid model or an OR-Tools failure, and the build script reports a context chain                                                                                             |
 | Solve API         | `Model::solve` or `CpModelProto::solve` for the plain case, and a `Solver` that borrows its parameters for events and stops                                                           | Mirrors Python's `CpSolver` without a mandatory object for the plain case                                                                                                                           |
 | Methods           | Operations on a model or a response are methods on `Model`, `CpModelProto`, and `CpSolverResponse`, and `Model` forwards to its message. Only `default_parameters` is a free function | Like Python, and code that borrows a message needs no `Model` or clone                                                                                                                              |
 | Events            | One `FnMut(Event) -> ControlFlow<()> + Send` callback with an `EventSet` subscription, stored as the generic parameter of `Solver`                                                    | Mirrors the bridge's tagged dispatcher, and `Break` stops at once. A boxed callback would give `Solver` a nameable type, but its drop glue keeps the closure's borrows alive until the solver drops |
 | Stop              | `StopHandle` stops every solve attached to it, and a stop is sticky                                                                                                                   | Behaves like a cancellation token, so sharing one handle never loses a stop                                                                                                                         |
-| Model transfer    | Each solve encodes the model once in Rust and parses it once in C++                                                                                                                   | Rust owns the model. Skipping the copy needs a native model that lives across solves, so M7 measures the cost first                                                                                 |
+| Model transfer    | Each solve encodes the model once in Rust and parses it once in C++                                                                                                                   | Rust owns the model. Skipping the copy needs a C++ model that lives across solves, so M7 measures the cost first                                                                                    |
 | Solution payload  | `CpSolverResponseView`, zero-copy                                                                                                                                                     | Callers that keep a solution call `to_owned_message`                                                                                                                                                |
 | Formats           | Buffa `text=true` and `json=true` with `gate_impls=true`, as the `text` and `json` features                                                                                           | Pure Rust. `views` is a required feature, because Buffa gates views with the formats                                                                                                                |
 | Defaults          | `default_parameters` fills `SatParameters` through C++ reflection                                                                                                                     | Buffa generates no proto2 default getters                                                                                                                                                           |
@@ -151,11 +171,11 @@ and `dir:` modes, the solver API, the parity matrix, CI, and the modeling API.
 
 | Phase | Deliverable                                | Status                                               |
 | ----- | ------------------------------------------ | ---------------------------------------------------- |
-| M3b   | Source backend                             | Done on Windows, Linux `source` workflow not run yet |
+| M3b   | Source mode                                | Done on Windows, Linux `source` workflow not run yet |
 | M7    | Benchmarks                                 | Open                                                 |
 | M8    | Static linking and CP-SAT-only exploration | Optional                                             |
 
-### M3b source backend
+### M3b source mode
 
 `build/source.rs` holds the CMake options that turn off what CP-SAT does not
 need, and says why MathOpt stays on. Inspect the configured targets instead of
@@ -171,10 +191,10 @@ Compare with direct C++ and Python on the same models. Add zero-copy paths only
 when a benchmark shows a real bottleneck, and never at the cost of safety or
 parity.
 
-### M8 optional native work
+### M8 optional C++ work
 
 Static linking of a reduced source build, a CP-SAT-only target, smaller
-distribution packages, and borrowed native solution buffers. Measure the benefit
+distribution packages, and borrowed C++ solution buffers. Measure the benefit
 before maintaining any of them.
 
 ## Definition of done
