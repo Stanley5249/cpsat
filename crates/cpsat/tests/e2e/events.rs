@@ -3,6 +3,7 @@
 
 use std::ops::ControlFlow;
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -130,12 +131,21 @@ fn stop_handle_works_inside_callback() {
 fn stops_from_another_thread() {
     let stop = StopHandle::new();
     let start = Instant::now();
+    let stop = &stop;
+    let (solved, first) = mpsc::channel();
     let response = thread::scope(|scope| {
-        scope.spawn(|| {
-            thread::sleep(Duration::from_millis(500));
+        // Stopping after the first solution proves that the stop reaches a
+        // running solve, not only one that has yet to start.
+        scope.spawn(move || {
+            first.recv().unwrap();
             stop.stop();
         });
         Solver::new(&long_parameters())
+            .on_event(EventSet::SOLUTION, |_| {
+                // The receiver leaves after the first solution.
+                let _ = solved.send(());
+                ControlFlow::Continue(())
+            })
             .with_stop_handle(&stop)
             .solve(hard_model())
             .unwrap()
@@ -148,11 +158,19 @@ fn stops_from_another_thread() {
 fn one_handle_stops_concurrent_solves() {
     let stop = StopHandle::new();
     let start = Instant::now();
+    let stop = &stop;
+    let (solved, first) = mpsc::channel();
     let statuses: Vec<CpSolverStatus> = thread::scope(|scope| {
         let solves: Vec<_> = (0..2)
             .map(|_| {
-                scope.spawn(|| {
+                let solved = solved.clone();
+                scope.spawn(move || {
                     Solver::new(&long_parameters())
+                        .on_event(EventSet::SOLUTION, move |_| {
+                            // The receiver leaves after both first solutions.
+                            let _ = solved.send(());
+                            ControlFlow::Continue(())
+                        })
                         .with_stop_handle(&stop)
                         .solve(hard_model())
                         .unwrap()
@@ -160,7 +178,9 @@ fn one_handle_stops_concurrent_solves() {
                 })
             })
             .collect();
-        thread::sleep(Duration::from_millis(500));
+        first.recv().unwrap();
+        first.recv().unwrap();
+        drop(first);
         stop.stop();
         solves
             .into_iter()
