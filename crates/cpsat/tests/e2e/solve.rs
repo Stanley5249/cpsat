@@ -3,7 +3,7 @@
 
 use buffa::Message;
 use cpsat::prelude::*;
-use cpsat::proto::CpModelProto;
+use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
 
 /// max 2x + 3y subject to x + y <= 4, x + 3y <= 6, x, y in [0, 10].
 /// The optimum is x = 3, y = 1 with objective 9.

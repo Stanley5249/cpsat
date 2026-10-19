@@ -1,6 +1,7 @@
 //! `Domain`, checked against what OR-Tools' `Domain` returns for the same sets.
 
 use cpsat::prelude::*;
+use cpsat::proto::{CpSolverStatus, SatParameters};
 
 #[test]
 fn normalizes_intervals() {

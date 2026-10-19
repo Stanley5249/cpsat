@@ -1,6 +1,11 @@
 //! Rust binding for the OR-Tools CP-SAT solver.
 //!
-//! [`Model`] builds a model with typed variables, linear expressions, and
+//! Each public item has one path. [`prelude`] holds every hand-written item
+//! except [`Error`] and [`Result`], which stay at the crate root so a glob
+//! import does not shadow `std`'s `Result`. [`proto`] holds the generated
+//! types, and [`buffa`] is their runtime.
+//!
+//! [`Model`](prelude::Model) builds a model with typed variables, linear expressions, and
 //! constraints, like Python's `CpModel`. It stores the model as the Buffa
 //! type `CpModelProto` from [`proto`], so every schema field stays available
 //! and a model stays plain, mutable data between solves. Parameters and
@@ -9,6 +14,7 @@
 //!
 //! ```no_run
 //! use cpsat::prelude::*;
+//! use cpsat::proto::SatParameters;
 //!
 //! let mut model = Model::new();
 //! let x = model.int_var(0..=10);
@@ -22,17 +28,18 @@
 //! # Ok::<(), cpsat::Error>(())
 //! ```
 //!
-//! [`Solver`] adds solution, best-bound, and log events, and a [`StopHandle`]
+//! [`Solver`](prelude::Solver) adds solution, best-bound, and log events, and a
+//! [`StopHandle`](prelude::StopHandle)
 //! stops solves from any thread.
 //!
 //! OR-Tools aborts the process on an internal `CHECK` failure, which Rust
-//! cannot catch. [`Model::validate`] reports invalid models without solving,
+//! cannot catch. [`Model::validate`](prelude::Model::validate) reports invalid models without solving,
 //! and a subprocess keeps an untrusted model from ending the caller.
 
 #[cfg(not(feature = "views"))]
 compile_error!("the `views` feature is required, because solution events are Buffa views");
 
-pub mod constraint;
+mod constraint;
 mod diagnostics;
 mod domain;
 mod error;
@@ -55,13 +62,4 @@ mod variable;
 
 /// The Protobuf runtime, re-exported so callers use the same `Message` trait.
 pub use buffa;
-pub use constraint::{Constraint, ConstraintRef};
-pub use diagnostics::default_parameters;
-pub use domain::Domain;
 pub use error::{Error, Result};
-pub use expr::LinearExpr;
-pub use float_expr::FloatExpr;
-pub use model::{Hint, Model, Objective};
-pub use response::Evaluate;
-pub use solver::{Event, EventSet, NoEvents, Solver, StopHandle};
-pub use variable::{BoolVar, IntVar, IntervalVar};

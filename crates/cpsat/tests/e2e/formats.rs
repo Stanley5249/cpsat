@@ -2,7 +2,7 @@
 //! `CpModel.export_to_file("model.txt")` and `json_format.MessageToJson`.
 
 use cpsat::prelude::*;
-use cpsat::proto::CpModelProto;
+use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
 
 /// x + y <= 4, maximize 2x + 3y over x, y in [0, 10]. The optimum is 12.
 #[cfg(feature = "text")]

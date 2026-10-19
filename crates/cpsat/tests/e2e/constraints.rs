@@ -2,6 +2,7 @@
 //! meaning where `equivalence.rs` checks only the message it writes.
 
 use cpsat::prelude::*;
+use cpsat::proto::{CpSolverResponse, CpSolverStatus, SatParameters};
 
 use crate::common::{map_domain, solve_optimal};
 

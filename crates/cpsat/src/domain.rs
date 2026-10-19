@@ -9,7 +9,7 @@ use std::ops::{Range, RangeFrom, RangeInclusive, RangeToInclusive};
 /// schema's `domain` fields, so it can build a variable or a linear constraint.
 ///
 /// ```
-/// use cpsat::Domain;
+/// use cpsat::prelude::*;
 ///
 /// // x != 0, the domain Python builds for `x != 0`.
 /// let domain = Domain::from_values([0]).complement();

@@ -61,6 +61,7 @@ impl Hint for BoolVar {
 ///
 /// ```
 /// use cpsat::prelude::*;
+/// use cpsat::proto::{CpSolverStatus, SatParameters};
 ///
 /// let mut model = Model::new();
 /// let x = model.int_var(0..=10);
@@ -295,7 +296,7 @@ impl AsRef<CpModelProto> for Model {
 }
 
 impl AsRef<Self> for CpModelProto {
-    /// Lets [`Solver::solve`](crate::Solver::solve) take a model or its
+    /// Lets [`Solver::solve`](crate::prelude::Solver::solve) take a model or its
     /// message.
     fn as_ref(&self) -> &Self {
         self

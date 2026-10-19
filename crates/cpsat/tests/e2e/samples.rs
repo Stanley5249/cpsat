@@ -7,6 +7,7 @@ use std::ops::ControlFlow;
 use cpsat::prelude::*;
 use cpsat::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use cpsat::proto::sat_parameters::SearchBranching;
+use cpsat::proto::{CpSolverStatus, SatParameters};
 
 use crate::common::solve_optimal;
 

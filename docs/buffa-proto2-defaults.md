@@ -19,8 +19,8 @@ optional fields with pattern matching or `.unwrap_or(X)`. So an unset
 every unset field. It matters only to code that reads a parameter, and that code
 has two options:
 
-- `cpsat::default_parameters()` returns `SatParameters` with every singular
-  field set to its OR-Tools default, read through C++ reflection, so the values
-  follow the pinned OR-Tools version instead of a copy.
+- `cpsat::prelude::default_parameters()` returns `SatParameters` with every
+  singular field set to its OR-Tools default, read through C++ reflection, so
+  the values follow the pinned OR-Tools version instead of a copy.
 - `.unwrap_or(X)` on one field, which copies `X` from the `.proto` and drifts
   when the schema changes.

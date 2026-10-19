@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 
 use buffa::MessageView;
 use cpsat::prelude::*;
-use cpsat::proto::CpModelProto;
+use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
 
 use crate::common::{hard_model, long_parameters};
 

@@ -2,8 +2,8 @@
 //! objectives, and expression arithmetic.
 
 use cpsat::prelude::*;
-use cpsat::proto::LinearExpressionProto;
 use cpsat::proto::constraint_proto::Constraint as Kind;
+use cpsat::proto::{CpSolverResponse, CpSolverStatus, LinearExpressionProto, SatParameters};
 
 #[test]
 fn literals_negate_and_name_their_variable() {

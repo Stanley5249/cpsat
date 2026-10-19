@@ -1,4 +1,4 @@
-//! Constraints, built before [`Model::add`](crate::Model::add) inserts them.
+//! Constraints, built before [`Model::add`](crate::prelude::Model::add) inserts them.
 //!
 //! Every constraint is a [`Constraint`], which owns its `ConstraintProto`, so
 //! inserting it moves the message into the model. Each family is a

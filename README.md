@@ -27,6 +27,7 @@ compiler (MSVC 2022 or GCC 11 or newer), `curl`, and `tar`, plus CMake for
 use std::ops::ControlFlow;
 
 use cpsat::prelude::*;
+use cpsat::proto::SatParameters;
 
 let mut model = Model::new();
 let x = model.int_var(0..=10);
