@@ -164,3 +164,62 @@ fn cumulative_runs_two_tasks_at_a_time() {
     starts.sort_unstable();
     assert_eq!(starts, [0, 0, 2]);
 }
+
+/// The encoding of Python's `add_map_domain(x, literals, 3)`, which
+/// `equivalence.rs::map_domain` compares with Python's model.
+fn map_domain(model: &mut Model, x: IntVar, literals: [BoolVar; 2]) {
+    for (value, literal) in (3..).zip(literals) {
+        model.add(x.eq(value).only_if(literal));
+        model.add(x.ne(value).only_if(!literal));
+    }
+}
+
+#[test]
+fn map_domain_sets_only_the_literal_of_the_value() {
+    for (fixed, expected) in [(3, [true, false]), (4, [false, true]), (7, [false, false])] {
+        let mut model = Model::new();
+        let x = model.int_var(0..=10);
+        let literals = [model.bool_var(), model.bool_var()];
+        map_domain(&mut model, x, literals);
+        model.add(x.eq(fixed));
+        let response = solve_optimal(&model);
+        assert_eq!(
+            literals.map(|literal| response.boolean_value(literal).unwrap()),
+            expected,
+            "x = {fixed}"
+        );
+    }
+}
+
+#[test]
+fn map_domain_fixes_the_value_of_a_true_literal() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=10);
+    let literals = [model.bool_var(), model.bool_var()];
+    map_domain(&mut model, x, literals);
+    model.add(literals[1].eq(1));
+    model.maximize(x);
+    assert_eq!(solve_optimal(&model).value(x), Some(4));
+}
+
+/// Python's `add(True)` and `add(False)` write a constraint on a constant
+/// literal, so these compare results rather than messages.
+#[test]
+fn empty_bool_and_holds_and_empty_bool_or_fails() {
+    let mut model = Model::new();
+    model.add(Constraint::bool_and([]));
+    assert_eq!(solve_optimal(&model).status(), CpSolverStatus::OPTIMAL);
+
+    model.add(Constraint::bool_or([]));
+    let response = model.solve(&SatParameters::default()).unwrap();
+    assert_eq!(response.status(), CpSolverStatus::INFEASIBLE);
+}
+
+#[test]
+fn enforced_empty_bool_or_forces_its_literal_false() {
+    let mut model = Model::new();
+    let b = model.bool_var();
+    model.add(Constraint::bool_or([]).only_if(b));
+    model.maximize(b);
+    assert_eq!(solve_optimal(&model).boolean_value(b), Some(false));
+}

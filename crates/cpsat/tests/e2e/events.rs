@@ -233,3 +233,64 @@ fn solver_solves_again() {
     }
     assert!(solutions >= 20);
 }
+
+/// Every accessor on the solution view agrees with the owned response, as
+/// Python's callback and `CpSolver` accessors agree.
+#[test]
+fn solution_view_accessors_match_the_owned_response() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=3);
+    let b = model.bool_var();
+    let c = model.bool_var();
+    model.add(b.eq(1));
+    model.add(c.eq(0));
+    model.maximize(x);
+    // Handles from a larger model are out of range here.
+    let mut larger = Model::new();
+    let far = [(); 4].map(|()| larger.int_var(0..=1))[3];
+    let far_literal = larger.bool_var();
+
+    let read = |value: &dyn Fn(LinearExpr) -> Option<i64>,
+                boolean: &dyn Fn(BoolVar) -> Option<bool>,
+                float: &dyn Fn(FloatExpr) -> Option<f64>| {
+        (
+            [value(x.into()), value(2 * x - 1), value(far.into())],
+            [
+                boolean(b),
+                boolean(!b),
+                boolean(c),
+                boolean(!c),
+                boolean(far_literal),
+            ],
+            [float(0.5 * x + 1.25), float(x + 0.5 * !b), float(0.5 * far)],
+        )
+    };
+    let mut seen = None;
+    let response = Solver::default()
+        .on_event(EventSet::SOLUTION, |event| {
+            if let Event::Solution(view) = event {
+                seen = Some(read(
+                    &|expr| view.value(expr),
+                    &|literal| view.boolean_value(literal),
+                    &|expr| view.float_value(expr),
+                ));
+            }
+            ControlFlow::Continue(())
+        })
+        .solve(model.proto())
+        .unwrap();
+    let owned = read(
+        &|expr| response.value(expr),
+        &|literal| response.boolean_value(literal),
+        &|expr| response.float_value(expr),
+    );
+    assert_eq!(seen, Some(owned));
+    assert_eq!(
+        owned,
+        (
+            [Some(3), Some(5), None],
+            [Some(true), Some(false), Some(false), Some(true), None],
+            [Some(2.75), Some(3.0), None],
+        )
+    );
+}

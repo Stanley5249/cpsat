@@ -1,0 +1,56 @@
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 10
+}
+variables {
+  domain: 0
+  domain: 1
+}
+variables {
+  domain: 0
+  domain: 1
+}
+constraints {
+  enforcement_literal: 2
+  linear {
+    vars: 0
+    coeffs: 1
+    domain: 3
+    domain: 3
+  }
+}
+constraints {
+  enforcement_literal: -3
+  linear {
+    vars: 0
+    coeffs: 1
+    domain: -9223372036854775808
+    domain: 2
+    domain: 4
+    domain: 9223372036854775807
+  }
+}
+constraints {
+  enforcement_literal: 3
+  linear {
+    vars: 0
+    coeffs: 1
+    domain: 4
+    domain: 4
+  }
+}
+constraints {
+  enforcement_literal: -4
+  linear {
+    vars: 0
+    coeffs: 1
+    domain: -9223372036854775808
+    domain: 3
+    domain: 5
+    domain: 9223372036854775807
+  }
+}

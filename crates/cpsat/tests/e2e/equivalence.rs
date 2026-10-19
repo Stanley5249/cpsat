@@ -212,3 +212,14 @@ fn constants() {
     model.add(Constraint::bool_and([no]).only_if(b));
     assert_matches_python(&model, "constants");
 }
+
+#[test]
+fn map_domain() {
+    let mut model = Model::new();
+    let (x, _, b, c) = variables(&mut model);
+    for (value, literal) in (3..).zip([b, c]) {
+        model.add(x.eq(value).only_if(literal));
+        model.add(x.ne(value).only_if(!literal));
+    }
+    assert_matches_python(&model, "map_domain");
+}

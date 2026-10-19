@@ -139,6 +139,13 @@ def constants() -> cp_model.CpModel:
     return model
 
 
+def map_domain() -> cp_model.CpModel:
+    model = cp_model.CpModel()
+    x, _, b, c = variables(model)
+    model.add_map_domain(x, [b, c], 3)
+    return model
+
+
 def main() -> None:
     for build in [
         linear,
@@ -151,6 +158,7 @@ def main() -> None:
         minimize_float,
         maximize_float,
         constants,
+        map_domain,
     ]:
         path = FIXTURES / f"{build.__name__}.txtpb"
         path.write_text(str(build().proto), encoding="utf-8", newline="\n")
