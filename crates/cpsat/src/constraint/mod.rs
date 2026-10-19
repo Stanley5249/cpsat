@@ -37,7 +37,7 @@ use crate::variable::{BoolVar, IntVar};
 /// let enabled = model.bool_var();
 /// model.add(x.ge(5).only_if(enabled).with_name("x is large"));
 /// ```
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Constraint(ConstraintProto);
 
 impl Constraint {

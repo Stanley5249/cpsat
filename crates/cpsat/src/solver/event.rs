@@ -23,7 +23,13 @@ impl EventSet {
     }
 
     #[must_use]
-    pub const fn bits(self) -> u32 {
+    pub const fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+
+    /// The bridge's event mask, kept out of the public API so the C
+    /// constants can change.
+    pub(crate) const fn bits(self) -> u32 {
         self.0
     }
 }
