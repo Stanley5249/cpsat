@@ -52,6 +52,6 @@ impl Constraint {
     /// enforced by `a`.
     #[must_use]
     pub fn implication(a: BoolVar, b: BoolVar) -> Self {
-        Self::bool_and([b]).only_if(a)
+        Self::bool_and([b]).only_enforce_if(a)
     }
 }

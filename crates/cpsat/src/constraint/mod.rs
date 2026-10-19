@@ -10,7 +10,7 @@
 // Alternative if constructors stop scaling: one type per family, such as
 // `AllDifferent::new(exprs)` or `Circuit::new().arc(0, 1, a)`, each wrapping
 // its message and converting into `Constraint`. It would cost about 25 public
-// types, `only_if` and `with_name` on each of them, and wrappers around the
+// types, `only_enforce_if` and `with_name` on each of them, and wrappers around the
 // shared `BoolArgumentProto` and `LinearArgumentProto`. Prefer it only when a
 // family needs state that a tuple cannot express.
 
@@ -34,7 +34,7 @@ use crate::proto::{ConstraintProto, LinearExpressionProto};
 /// let mut model = Model::new();
 /// let x = model.int_var(0..=10);
 /// let enabled = model.bool_var();
-/// model.add(x.ge(5).only_if(enabled).with_name("x is large"));
+/// model.add(x.ge(5).only_enforce_if(enabled).with_name("x is large"));
 /// ```
 #[derive(Clone, Debug, PartialEq)]
 pub struct Constraint(ConstraintProto);
@@ -45,7 +45,7 @@ impl Constraint {
     /// family accepts it, but OR-Tools notes that an enforced circuit,
     /// multiple circuit, no-overlap, or cumulative constraint may solve slower.
     #[must_use]
-    pub fn only_if(mut self, literal: BoolVar) -> Self {
+    pub fn only_enforce_if(mut self, literal: BoolVar) -> Self {
         self.0.enforcement_literal.push(literal.0);
         self
     }

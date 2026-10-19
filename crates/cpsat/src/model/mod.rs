@@ -199,7 +199,7 @@ impl Model {
 
     /// A literal fixed to `value`, which Python writes as `True` or `False`.
     /// Use it where the schema needs a literal, such as in
-    /// [`Constraint::only_if`] or [`Constraint::bool_or`].
+    /// [`Constraint::only_enforce_if`] or [`Constraint::bool_or`].
     ///
     /// # Panics
     ///

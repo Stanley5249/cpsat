@@ -74,7 +74,7 @@ impl Model {
             ..Default::default()
         });
         if let Some(present) = present {
-            constraint = constraint.only_if(present);
+            constraint = constraint.only_enforce_if(present);
         }
         IntervalVar(self.add(constraint).0)
     }

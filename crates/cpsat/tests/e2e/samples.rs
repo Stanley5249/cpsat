@@ -147,9 +147,9 @@ fn assumptions() {
     let mut model = Model::new();
     let [x, y, z] = [(); 3].map(|()| model.int_var(0..=10));
     let [a, b, c] = [(); 3].map(|()| model.bool_var());
-    model.add(x.gt(y).only_if(a));
-    model.add(y.gt(z).only_if(b));
-    model.add(z.gt(x).only_if(c));
+    model.add(x.gt(y).only_enforce_if(a));
+    model.add(y.gt(z).only_enforce_if(b));
+    model.add(z.gt(x).only_enforce_if(c));
     model.add_assumptions([a, b, c]);
 
     let response = model.solve(&SatParameters::default()).unwrap();
@@ -210,10 +210,10 @@ fn channeling() {
     let x = model.int_var(0..=10);
     let y = model.int_var(0..=10);
     let b = model.bool_var();
-    model.add(x.ge(5).only_if(b));
-    model.add(x.lt(5).only_if(!b));
-    model.add(y.eq(10 - x).only_if(b));
-    model.add(y.eq(0).only_if(!b));
+    model.add(x.ge(5).only_enforce_if(b));
+    model.add(x.lt(5).only_enforce_if(!b));
+    model.add(y.eq(10 - x).only_enforce_if(b));
+    model.add(y.eq(0).only_enforce_if(!b));
     model.add_decision_strategy(
         [x],
         VariableSelectionStrategy::CHOOSE_FIRST,
@@ -237,18 +237,18 @@ fn step_function() {
     let b0 = model.bool_var();
     model.add(
         x.in_domain(Domain::from_intervals([(5, 6), (8, 10)]))
-            .only_if(b0),
+            .only_enforce_if(b0),
     );
-    model.add(expr.eq(0).only_if(b0));
+    model.add(expr.eq(0).only_enforce_if(b0));
     let b2 = model.bool_var();
     model.add(
         x.in_domain(Domain::from_intervals([(0, 1), (3, 4), (11, 20)]))
-            .only_if(b2),
+            .only_enforce_if(b2),
     );
-    model.add(expr.eq(2).only_if(b2));
+    model.add(expr.eq(2).only_enforce_if(b2));
     let b3 = model.bool_var();
-    model.add(x.eq(7).only_if(b3));
-    model.add(expr.eq(3).only_if(b3));
+    model.add(x.eq(7).only_enforce_if(b3));
+    model.add(expr.eq(3).only_enforce_if(b3));
     model.add(Constraint::bool_or([b0, b2, b3]));
     model.add_decision_strategy(
         [x],
@@ -349,7 +349,7 @@ fn all_different_except_zero() {
         let mut encoding = Vec::new();
         for (value, literals) in (0..).zip(&mut literals_per_value) {
             let literal = model.bool_var();
-            model.add(var.eq(value).only_if(literal));
+            model.add(var.eq(value).only_enforce_if(literal));
             literals.push(literal);
             encoding.push(literal);
         }
@@ -454,18 +454,22 @@ fn ranking_circuit() {
     for (i, node) in (1..=4).enumerate() {
         let first = model.bool_var();
         arcs.push((0, node, first));
-        model.add(ranks[i].eq(0).only_if(first));
-        model.add(starts[i].eq(0).only_if(first));
+        model.add(ranks[i].eq(0).only_enforce_if(first));
+        model.add(starts[i].eq(0).only_enforce_if(first));
         arcs.push((node, 0, model.bool_var()));
         for (j, next) in (1..=4).enumerate() {
             if i == j {
                 arcs.push((node, node, !presences[i]));
-                model.add(ranks[i].eq(-1).only_if(!presences[i]));
+                model.add(ranks[i].eq(-1).only_enforce_if(!presences[i]));
             } else {
                 let literal = model.bool_var();
                 arcs.push((node, next, literal));
-                model.add(ranks[j].eq(ranks[i] + 1).only_if(literal));
-                model.add(starts[j].ge(starts[i] + durations[i]).only_if(literal));
+                model.add(ranks[j].eq(ranks[i] + 1).only_enforce_if(literal));
+                model.add(
+                    starts[j]
+                        .ge(starts[i] + durations[i])
+                        .only_enforce_if(literal),
+                );
             }
         }
     }
@@ -479,7 +483,7 @@ fn ranking_circuit() {
 
     let makespan = model.int_var(0..=horizon);
     for ((&start, duration), &presence) in starts.iter().zip(durations).zip(&presences) {
-        model.add((start + duration).le(makespan).only_if(presence));
+        model.add((start + duration).le(makespan).only_enforce_if(presence));
     }
     model.minimize(2 * makespan - 7 * presences.iter().copied().sum::<LinearExpr>());
 

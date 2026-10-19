@@ -40,7 +40,7 @@ pub fn solve_optimal(model: &Model) -> CpSolverResponse {
 /// The encoding of Python's `add_map_domain(x, literals, 3)`.
 pub fn map_domain(model: &mut Model, x: IntVar, literals: [BoolVar; 2]) {
     for (value, literal) in (3..).zip(literals) {
-        model.add(x.eq(value).only_if(literal));
-        model.add(x.ne(value).only_if(!literal));
+        model.add(x.eq(value).only_enforce_if(literal));
+        model.add(x.ne(value).only_enforce_if(!literal));
     }
 }

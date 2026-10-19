@@ -50,7 +50,7 @@ fn linear() {
     model.add((x + 1).ne(y));
     model.add(x.lt(y));
     model.add(x.gt(2));
-    model.add((x - y).ge(-2).only_if(b).only_if(!c));
+    model.add((x - y).ge(-2).only_enforce_if(b).only_enforce_if(!c));
     model.add((!b + c).eq(1));
     model.add((3 * (x + 2) - x).le(7));
     model.add((x - x).le(0));
@@ -72,7 +72,7 @@ fn boolean() {
     let mut model = Model::new();
     let (_, _, b, c) = variables(&mut model);
     model.add(Constraint::bool_or([b, !c]));
-    model.add(Constraint::bool_and([b, !c]).only_if(!b));
+    model.add(Constraint::bool_and([b, !c]).only_enforce_if(!b));
     model.add(Constraint::at_most_one([b, !c]));
     model.add(Constraint::exactly_one([b, c]));
     model.add(Constraint::bool_xor([b, c]));
@@ -209,7 +209,7 @@ fn constants() {
     let yes = model.bool_constant(true);
     model.add(Constraint::bool_or([yes, b]));
     let no = model.bool_constant(false);
-    model.add(Constraint::bool_and([no]).only_if(b));
+    model.add(Constraint::bool_and([no]).only_enforce_if(b));
     assert_matches_python(&model, "constants");
 }
 

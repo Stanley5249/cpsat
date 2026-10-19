@@ -211,7 +211,7 @@ fn empty_bool_and_holds_and_empty_bool_or_fails() {
 fn enforced_empty_bool_or_forces_its_literal_false() {
     let mut model = Model::new();
     let b = model.bool_var();
-    model.add(Constraint::bool_or([]).only_if(b));
+    model.add(Constraint::bool_or([]).only_enforce_if(b));
     model.maximize(b);
     assert_eq!(solve_optimal(&model).value(b), Some(false));
 }

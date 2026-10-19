@@ -112,8 +112,8 @@ Every change follows these rules.
 - **Lookup.** A raw schema index returns `Option`. Indexing with a handle panics
   when the model lacks it, like a slice.
 - **Builders.** A value configured before insertion takes `self` and returns
-  `Self` with `#[must_use]`, such as `Constraint::only_if`. Change it after
-  insertion through `model[handle]`.
+  `Self` with `#[must_use]`, such as `Constraint::only_enforce_if`. Change it
+  after insertion through `model[handle]`.
 - **`#[must_use]`.** Every public method without side effects carries it.
   Appending model methods such as `int_var` do not.
 - **Python mapping.** An item that mirrors Python says "like Python's `name`",
@@ -163,7 +163,7 @@ Every change follows these rules.
 model.int_var(0..=10) -----------------------> IntVar(i32)
 model.bool_var() ----------------------------> BoolVar(i32), !b = -i - 1
 x + 2 * y - 3 -------------------------------> LinearExpr { terms, offset }
-(x + 2 * y).le(10).only_if(b) ---------------> Constraint(ConstraintProto)
+(x + 2 * y).le(10).only_enforce_if(b) ---------------> Constraint(ConstraintProto)
 Constraint::circuit([(0, 1, a)]) ------------> Constraint
 model.add(constraint) --- move into model ---> ConstraintRef(i32)
 ```

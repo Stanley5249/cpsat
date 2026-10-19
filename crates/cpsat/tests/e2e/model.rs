@@ -56,7 +56,12 @@ fn constraint_builder_sets_enforcement_and_name() {
     let mut model = Model::new();
     let x = model.int_var(0..=5);
     let [a, b] = [(); 2].map(|()| model.bool_var());
-    let constraint = model.add(x.ge(1).only_if(a).only_if(!b).with_name("positive"));
+    let constraint = model.add(
+        x.ge(1)
+            .only_enforce_if(a)
+            .only_enforce_if(!b)
+            .with_name("positive"),
+    );
     assert_eq!(
         model[constraint].enforcement_literal,
         [a.index(), (!b).index()]
