@@ -128,7 +128,7 @@ Every change follows these rules.
 
 - **Crates.** `cpsat-sys` and `cpsat`, because `links` allows one native link
   per graph.
-- **Codegen.** `just proto-gen` runs `buf generate` with the remote Buffa
+- **Codegen.** `just gen-proto` runs `buf generate` with the remote Buffa
   plugin, and the output is committed, so normal builds need no `protoc`.
 - **Bridge build.** The `cc` crate with definitions read from
   `ortoolsTargets.cmake`, so prebuilt mode needs no CMake.

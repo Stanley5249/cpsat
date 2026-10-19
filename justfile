@@ -35,23 +35,25 @@ doc *args:
 ci: check test doc
 
 # Regenerate Buffa code from the vendored protos
+[group("proto")]
 [working-directory("crates/cpsat/proto")]
-proto-gen *args:
+gen-proto *args:
     buf generate {{ args }}
     cargo fmt -p cpsat
 
-# Fail when the committed Buffa code, new files included, differs from a fresh generation
-proto-check: proto-gen
-    git add --intent-to-add -- crates/cpsat/src/proto
+# Fail when the committed Buffa code differs from a fresh generation
+[group("proto")]
+check-proto: gen-proto
     git diff --exit-code -- crates/cpsat/src/proto
 
 # Regenerate the Python models that tests/e2e/equivalence.rs compares against
-fixtures:
+[group("fixtures")]
+gen-fixtures:
     uv run --quiet --with ortools==9.15.6755 python -I crates/cpsat/tests/e2e/fixtures/generate.py
 
-# Fail when the committed fixtures, new files included, differ from a fresh generation
-fixtures-check: fixtures
-    git add --intent-to-add -- crates/cpsat/tests/e2e/fixtures
+# Fail when the committed fixtures differ from a fresh generation
+[group("fixtures")]
+check-fixtures: gen-fixtures
     git diff --exit-code -- crates/cpsat/tests/e2e/fixtures
 
 _fmt-cargo *args:

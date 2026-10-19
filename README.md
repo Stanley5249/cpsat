@@ -111,10 +111,10 @@ For development, also install:
 - [just](https://github.com/casey/just)
 - [tombi](https://tombi-toml.github.io/tombi/)
 - [Bun](https://bun.sh/) for `bunx oxfmt`
-- [Buf](https://buf.build/docs/cli/installation/), only for `just proto-gen` and
-  `just proto-check`
-- [uv](https://docs.astral.sh/uv/), only for `just fixtures`, which regenerates
-  the Python models in `crates/cpsat/tests/e2e/fixtures`
+- [Buf](https://buf.build/docs/cli/installation/), only for `just gen-proto` and
+  `just check-proto`
+- [uv](https://docs.astral.sh/uv/), only for `just gen-fixtures`, which
+  regenerates the Python models in `crates/cpsat/tests/e2e/fixtures`
 
 ## Commands
 

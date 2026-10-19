@@ -76,7 +76,7 @@ jobs:
         with:
           setup_only: true
       - uses: extractions/setup-just@v4
-      - run: just proto-check
+      - run: just check-proto
       - name: The Buffa plugin matches the buffa crate
         run: |
           plugin=$(sed -n 's|.*buf.build/anthropics/buffa:v\(.*\)|\1|p' crates/cpsat/proto/buf.gen.yaml)
@@ -95,7 +95,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.0 # no major-version tag exists
       - uses: extractions/setup-just@v4
-      - run: just fixtures-check
+      - run: just check-fixtures
 
   test:
     strategy:

@@ -1,6 +1,6 @@
 """Writes the models that `tests/e2e/equivalence.rs` rebuilds with the Rust API.
 
-Run it from the repository root with `just fixtures`.
+Run it from the repository root with `just gen-fixtures`.
 """
 
 import pathlib

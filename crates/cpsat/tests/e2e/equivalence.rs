@@ -1,6 +1,6 @@
 //! The Rust modeling API writes the same `CpModelProto` as Python OR-Tools
 //! 9.15. Each test rebuilds a model from `fixtures/generate.py`, whose output
-//! `just fixtures` writes to `fixtures/*.txtpb`.
+//! `just gen-fixtures` writes to `fixtures/*.txtpb`.
 
 #![cfg(feature = "text")]
 

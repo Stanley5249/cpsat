@@ -20,8 +20,8 @@ only the behavior that test asserts; an available equivalent with no direct test
 is marked as such. `equivalence.rs` compares committed Python-generated model
 fixtures, while solve tests check results. Neither implies exhaustive argument
 or error-path parity. The fixture generator pins `ortools==9.15.6755` through
-`just fixtures`, and `samples.rs` ports selected official samples. Rust naming
-follows the Methods and Names rules in `docs/design.md`.
+`just gen-fixtures`, and `samples.rs` ports selected official samples. Rust
+naming follows the Methods and Names rules in `docs/design.md`.
 
 ## Solver
 
@@ -57,8 +57,8 @@ follows the Methods and Names rules in `docs/design.md`.
 ## Model
 
 `equivalence.rs` checks that each family writes the same `CpModelProto` as
-Python, from the fixtures that `just fixtures` regenerates, and `constraints.rs`
-solves each global and scheduling family.
+Python, from the fixtures that `just gen-fixtures` regenerates, and
+`constraints.rs` solves each global and scheduling family.
 
 | Python                                                                                                                                                                                          | Rust                                                                                                                                                                                                                 | Test                                                                                                                                                                                 |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
