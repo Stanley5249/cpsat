@@ -145,3 +145,38 @@ jobs:
         run: |
           root=$(find "$CPSAT_CACHE_DIR/extracted" -mindepth 2 -maxdepth 2 -type d | head -n 1)
           CPSAT_ORTOOLS="dir:$root" cargo test --locked --workspace --all-features
+
+  # Runs an executable that has only the copied runtime directory beside it, as
+  # the README's Deployment section describes.
+  deploy:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
+        with:
+          path: .cpsat-cache
+          key:
+            ortools-${{ runner.os }}-${{
+            hashFiles('crates/cpsat-sys/build/artifacts.rs') }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Build with the README's rpath
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            export RUSTFLAGS='-C link-arg=-Wl,-rpath,$ORIGIN'
+          fi
+          cargo build --locked --release -p cpsat --example solve
+      - name: Run from a directory with only the runtime beside it
+        shell: bash
+        run: |
+          runtime=$(find target/release/build -type d -name runtime -path '*cpsat-sys*/out/*' | head -n 1)
+          test -d "$runtime/licenses"
+          mkdir ship
+          cp -a "$runtime"/. ship/
+          cp target/release/examples/solve$([ "$RUNNER_OS" = Windows ] && echo .exe) ship/
+          # Without Cargo, neither PATH nor LD_LIBRARY_PATH holds the runtime.
+          cd ship && ./solve

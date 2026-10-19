@@ -76,9 +76,30 @@ Deleting `CPSAT_CACHE_DIR` makes the next build download and extract again. The
 `dir:` path and `CPSAT_CACHE_DIR` must be absolute. `cargo run` and `cargo test`
 find the OR-Tools shared libraries while Cargo's `build.build-dir` stays inside
 the target directory, which is the default. The `cpsat-sys` build script
-explains why. A shipped executable needs the libraries beside it or on the
-library path. A build script that depends on `cpsat-sys` can copy them from
-`DEP_ORTOOLS_RUNTIME`.
+explains why.
+
+## Deployment
+
+The OR-Tools libraries are shared, so a shipped executable needs them beside it.
+Copy the contents of the OR-Tools runtime directory next to the executable. The
+directory also holds `licenses`, the notices that the Apache-2.0 license of
+OR-Tools requires you to ship with the libraries.
+
+The runtime directory is the `runtime` folder in the `cpsat-sys` build output.
+To find it from your own build script, add `cpsat-sys` as a direct dependency
+and read `DEP_ORTOOLS_RUNTIME`, because Cargo passes it only to packages that
+depend on `cpsat-sys` directly.
+
+Windows finds DLLs in the executable's directory. Linux needs an `$ORIGIN`
+rpath, which a library cannot set for your binary, so add it to
+`.cargo/config.toml`:
+
+```toml
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-Wl,-rpath,$ORIGIN"]
+```
+
+The `deploy` CI job runs `crates/cpsat/examples/solve.rs` this way.
 
 ## Requirements
 
