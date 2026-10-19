@@ -45,11 +45,16 @@ impl Domain {
             .filter(|&(lower, upper)| lower <= upper)
             .collect();
         intervals.sort_unstable();
-        let mut merged = Vec::with_capacity(intervals.len());
-        for interval in intervals {
-            push_merged(&mut merged, interval);
-        }
-        Self(merged)
+        // Merges in place: `dedup_by` hands each interval with the last kept
+        // one, which absorbs it when they overlap or touch.
+        intervals.dedup_by(|&mut (lower, upper), last| {
+            let touches = last.1.checked_add(1).is_none_or(|next| lower <= next);
+            if touches {
+                last.1 = last.1.max(upper);
+            }
+            touches
+        });
+        Self(intervals)
     }
 
     /// Reads a schema `domain` field, or `None` if it has an odd length.
