@@ -1,6 +1,6 @@
 //! A set of integers in the interval form that the schema uses.
 
-use std::ops::{RangeFrom, RangeInclusive, RangeToInclusive};
+use std::ops::{Range, RangeFrom, RangeInclusive, RangeToInclusive};
 
 /// A set of integers as sorted, disjoint, non-adjacent closed intervals, like
 /// OR-Tools' `Domain`.
@@ -220,15 +220,30 @@ impl From<RangeInclusive<i64>> for Domain {
     }
 }
 
+impl From<Range<i64>> for Domain {
+    /// The interval `[start, end - 1]`, so `model.int_var(0..n)` reads like
+    /// Rust.
+    fn from(range: Range<i64>) -> Self {
+        range
+            .end
+            .checked_sub(1)
+            .map_or_else(Self::default, |end| Self::new(range.start, end))
+    }
+}
+
 impl From<RangeFrom<i64>> for Domain {
-    /// Every value from `start` on, like Python's `greater_or_equal`.
+    /// Every value from `start` on, like Python's `greater_or_equal`. The
+    /// solver rejects a variable domain that reaches `i64::MAX`, so bound it
+    /// for a variable.
     fn from(range: RangeFrom<i64>) -> Self {
         Self::new(range.start, i64::MAX)
     }
 }
 
 impl From<RangeToInclusive<i64>> for Domain {
-    /// Every value up to `end`, like Python's `lower_or_equal`.
+    /// Every value up to `end`, like Python's `lower_or_equal`. The solver
+    /// rejects a variable domain that reaches `i64::MIN`, so bound it for a
+    /// variable.
     fn from(range: RangeToInclusive<i64>) -> Self {
         Self::new(i64::MIN, range.end)
     }

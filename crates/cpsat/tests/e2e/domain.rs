@@ -119,3 +119,21 @@ fn builds_half_lines_from_ranges() {
     assert_eq!(Domain::from(2..), Domain::new(2, i64::MAX));
     assert_eq!(Domain::from(..=8), Domain::new(i64::MIN, 8));
 }
+
+#[test]
+fn converts_rust_ranges() {
+    assert_eq!(Domain::from(0..3), Domain::new(0, 2));
+    assert_eq!(Domain::from(0..0), Domain::default());
+    #[expect(
+        clippy::reversed_empty_ranges,
+        reason = "i64::MIN has no predecessor to end the interval"
+    )]
+    let below_min = 0..i64::MIN;
+    assert_eq!(Domain::from(below_min), Domain::default());
+
+    // A variable domain must stay inside (i64::MIN, i64::MAX).
+    let mut model = Model::new();
+    model.int_var(0..);
+    let response = model.solve(&SatParameters::default()).unwrap();
+    assert_eq!(response.status(), CpSolverStatus::MODEL_INVALID);
+}
