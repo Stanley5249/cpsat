@@ -227,3 +227,9 @@ decisions as expensive to reverse after a crates.io release.
   Shipping them also requires the license notices of OR-Tools and its bundled
   libraries.
 - A versioning policy that ties crate releases to OR-Tools releases.
+- The Allocation rule covers every read, predicate, and lookup, which made
+  `Model::to_literal` repeat the flat-domain checks of
+  `Domain::from_flat_intervals` and turned `Domain::union_with` into a manual
+  merge, though neither is on a hot path. Decide whether to narrow the rule to
+  hot paths (solution callbacks and model-building loops) and restore the
+  simpler forms, with the M7 benchmarks as evidence.
