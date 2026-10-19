@@ -52,8 +52,13 @@ impl Constraint {
     }
 
     /// The expressions equal one of the rows, like Python's
-    /// `add_allowed_assignments`. Each row lists one value per expression, and
-    /// the validator rejects a row of the wrong length.
+    /// `add_allowed_assignments`. Each row lists one value per expression.
+    ///
+    /// # Panics
+    ///
+    /// If a row's length differs from the number of expressions, as Python
+    /// raises, because the flat schema would split the values into other
+    /// rows without an error.
     ///
     /// ```
     /// use cpsat::prelude::*;
@@ -68,25 +73,24 @@ impl Constraint {
         exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
         rows: impl IntoIterator<Item = impl IntoIterator<Item = i64>>,
     ) -> Self {
-        Self::of(TableConstraintProto {
-            exprs: self::exprs(exprs),
-            values: rows.into_iter().flatten().collect(),
-            ..Default::default()
-        })
+        Self::of(table(exprs, rows))
     }
 
     /// The expressions equal none of the rows, like Python's
     /// `add_forbidden_assignments`.
+    ///
+    /// # Panics
+    ///
+    /// If a row's length differs from the number of expressions, as in
+    /// [`allowed_assignments`](Self::allowed_assignments).
     #[must_use]
     pub fn forbidden_assignments(
         exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
         rows: impl IntoIterator<Item = impl IntoIterator<Item = i64>>,
     ) -> Self {
         Self::of(TableConstraintProto {
-            exprs: self::exprs(exprs),
-            values: rows.into_iter().flatten().collect(),
             negated: true,
-            ..Default::default()
+            ..table(exprs, rows)
         })
     }
 
@@ -122,5 +126,24 @@ impl Constraint {
             automaton.transition_head.push(head);
         }
         Self::of(automaton)
+    }
+}
+
+fn table(
+    exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
+    rows: impl IntoIterator<Item = impl IntoIterator<Item = i64>>,
+) -> TableConstraintProto {
+    let exprs = self::exprs(exprs);
+    let mut values = Vec::new();
+    for row in rows {
+        let start = values.len();
+        values.extend(row);
+        let len = values.len() - start;
+        assert_eq!(len, exprs.len(), "a table row has one value per expression");
+    }
+    TableConstraintProto {
+        exprs,
+        values,
+        ..Default::default()
     }
 }

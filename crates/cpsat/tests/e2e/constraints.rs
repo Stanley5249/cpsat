@@ -214,3 +214,16 @@ fn enforced_empty_bool_or_forces_its_literal_false() {
     model.maximize(b);
     assert_eq!(solve_optimal(&model).boolean_value(b), Some(false));
 }
+
+#[test]
+#[should_panic(expected = "a table row has one value per expression")]
+fn table_rejects_a_ragged_row() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=5);
+    let y = model.int_var(0..=5);
+    // Flattened, these rows would read as [1, 2] and [3, 4].
+    model.add(Constraint::allowed_assignments(
+        [x, y],
+        [vec![1, 2, 3], vec![4]],
+    ));
+}
