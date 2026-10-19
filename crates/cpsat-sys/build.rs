@@ -155,6 +155,29 @@ fn place_runtime(root: &Path, lib: &Path, runtime: &Path, toolchain: &Toolchain)
             place(&entry.path(), &runtime.join(&name))?;
         }
     }
+    // Apache-2.0 requires the notices to travel with redistributed libraries,
+    // so they sit where users copy the libraries from. A `dir:` install may
+    // lack them, which leaves the notices to its owner.
+    for notices in ["share/doc/ortools", "share/licenses"] {
+        let from = root.join(notices);
+        if from.is_dir() {
+            place_tree(&from, &runtime.join("licenses"))?;
+        }
+    }
+    Ok(())
+}
+
+fn place_tree(from: &Path, to: &Path) -> Result<()> {
+    fs::create_dir_all(to)?;
+    for entry in fs::read_dir(from).with_context(|| format!("failed to read {}", from.display()))? {
+        let entry = entry?;
+        let to = to.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            place_tree(&entry.path(), &to)?;
+        } else {
+            place(&entry.path(), &to)?;
+        }
+    }
     Ok(())
 }
 
