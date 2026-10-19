@@ -101,7 +101,7 @@ impl LinearExpr {
     /// # Panics
     ///
     /// If the value overflows `i64`.
-    pub(crate) fn evaluate(&self, solution: &[i64]) -> Option<i64> {
+    pub(crate) fn value_in(&self, solution: &[i64]) -> Option<i64> {
         self.0
             .vars
             .iter()

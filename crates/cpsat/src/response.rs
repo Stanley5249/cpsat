@@ -66,7 +66,7 @@ impl Evaluate for i64 {
 impl sealed::Sealed for LinearExpr {}
 impl Evaluate for LinearExpr {
     fn evaluate(&self, solution: &[i64]) -> Option<i64> {
-        LinearExpr::evaluate(self, solution)
+        self.value_in(solution)
     }
 }
 
