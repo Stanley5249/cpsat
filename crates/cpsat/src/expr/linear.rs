@@ -14,7 +14,7 @@ use crate::proto::LinearExpressionProto;
 /// literal `!b` counts as `1 - b`.
 ///
 /// The arithmetic panics when a coefficient or the offset overflows `i64`,
-/// where Python wraps silently. `eq`, `lt`, and `le` panic on a constant
+/// where Python wraps silently, and leaves the expression unchanged. `eq`, `lt`, and `le` panic on a constant
 /// `i64::MIN`, and `eq`, `ge`, and `gt` on a constant `i64::MAX`, because
 /// domains read these limits as infinity. Python raises on these limits too.
 ///
@@ -28,75 +28,72 @@ use crate::proto::LinearExpressionProto;
 /// model.add((total + 2 * y).le(10));
 /// ```
 #[derive(Clone, Debug, Default)]
-pub struct LinearExpr(LinearExpressionProto);
+pub struct LinearExpr {
+    terms: Vec<(i32, i64)>,
+    offset: i64,
+}
 
 const OVERFLOW: &str = "linear expression overflows i64";
 
 impl LinearExpr {
     #[must_use]
     pub fn constant(value: i64) -> Self {
-        Self(LinearExpressionProto {
+        Self {
+            terms: Vec::new(),
             offset: value,
-            ..Default::default()
-        })
+        }
     }
 
-    fn term(var: i32, coeff: i64) -> Self {
-        Self(LinearExpressionProto {
-            vars: vec![var],
-            coeffs: vec![coeff],
-            ..Default::default()
-        })
-    }
-
-    /// Adds `factor * other` to this expression.
-    fn add_scaled(&mut self, other: Self, factor: i64) {
-        let LinearExpressionProto {
-            vars,
-            coeffs,
+    fn term(var: i32, coeff: i64, offset: i64) -> Self {
+        Self {
+            terms: vec![(var, coeff)],
             offset,
-            ..
-        } = other.0;
-        self.0.vars.extend(vars);
-        self.0.coeffs.extend(
-            coeffs
-                .into_iter()
-                .map(|coeff| coeff.checked_mul(factor).expect(OVERFLOW)),
-        );
-        self.0.offset = offset
+        }
+    }
+
+    /// Adds `factor * other` to this expression. It checks every product
+    /// before the first change, so an overflow leaves the expression intact.
+    fn add_scaled(&mut self, other: Self, factor: i64) {
+        let offset = other
+            .offset
             .checked_mul(factor)
-            .and_then(|scaled| self.0.offset.checked_add(scaled))
+            .and_then(|scaled| self.offset.checked_add(scaled))
+            .filter(|_| scales(&other.terms, factor))
             .expect(OVERFLOW);
+        self.terms.extend(
+            other
+                .terms
+                .into_iter()
+                .map(|(var, coeff)| (var, coeff * factor)),
+        );
+        self.offset = offset;
     }
 
     /// The terms, sorted by variable, merged, and without zero coefficients,
     /// as Python writes them into a constraint, and the offset.
+    ///
+    /// # Panics
+    ///
+    /// If a merged coefficient overflows `i64`.
     pub(crate) fn into_terms(self) -> (Vec<i32>, Vec<i64>, i64) {
-        let LinearExpressionProto {
-            vars,
-            coeffs,
-            offset,
-            ..
-        } = self.0;
-        let mut terms: Vec<(i32, i64)> = vars.into_iter().zip(coeffs).collect();
+        let mut terms = self.terms;
         terms.sort_unstable_by_key(|&(var, _)| var);
-        let mut merged: Vec<(i32, i64)> = Vec::with_capacity(terms.len());
-        for (var, coeff) in terms {
-            match merged.last_mut() {
-                Some(last) if last.0 == var => {
-                    last.1 = last.1.checked_add(coeff).expect(OVERFLOW);
-                }
-                _ => merged.push((var, coeff)),
-            }
-        }
-        merged.retain(|&(_, coeff)| coeff != 0);
-        let (vars, coeffs) = merged.into_iter().unzip();
-        (vars, coeffs, offset)
+        // Summing in i128 makes the merge independent of the order of equal
+        // keys, which the unstable sort leaves open.
+        let (vars, coeffs) = terms
+            .chunk_by(|a, b| a.0 == b.0)
+            .filter_map(|run| {
+                let sum: i128 = run.iter().map(|&(_, coeff)| i128::from(coeff)).sum();
+                let coeff = i64::try_from(sum).expect(OVERFLOW);
+                (coeff != 0).then_some((run[0].0, coeff))
+            })
+            .unzip();
+        (vars, coeffs, self.offset)
     }
 
     /// The value if the expression has no variables.
     pub(crate) fn constant_value(&self) -> Option<i64> {
-        self.0.vars.is_empty().then_some(self.0.offset)
+        self.terms.is_empty().then_some(self.offset)
     }
 
     /// The value under `solution`, indexed by variable, or `None` if a
@@ -104,22 +101,31 @@ impl LinearExpr {
     ///
     /// # Panics
     ///
-    /// If the value overflows `i64`.
+    /// If the value overflows `i64`, or a partial sum overflows `i128`, which
+    /// takes several products near `2^126`.
     pub(crate) fn value_in(&self, solution: &[i64]) -> Option<i64> {
-        self.0
-            .vars
+        // Each product fits i128, so terms that cancel, such as those of
+        // `4 * x - 3 * x`, do not overflow on the way to the result unless
+        // the products themselves approach the i128 limit.
+        let sum = self
+            .terms
             .iter()
-            .zip(&self.0.coeffs)
-            .try_fold(self.0.offset, |sum, (&var, &coeff)| {
+            .try_fold(i128::from(self.offset), |sum, &(var, coeff)| {
                 let value = solution.get(usize::try_from(var).ok()?)?;
                 Some(
-                    coeff
-                        .checked_mul(*value)
-                        .and_then(|term| sum.checked_add(term))
+                    sum.checked_add(i128::from(coeff) * i128::from(*value))
                         .expect(OVERFLOW),
                 )
-            })
+            })?;
+        Some(i64::try_from(sum).expect(OVERFLOW))
     }
+}
+
+/// Whether every coefficient times `factor` fits `i64`.
+fn scales(terms: &[(i32, i64)], factor: i64) -> bool {
+    terms
+        .iter()
+        .all(|&(_, coeff)| coeff.checked_mul(factor).is_some())
 }
 
 impl From<LinearExpr> for LinearExpressionProto {
@@ -137,7 +143,10 @@ impl From<LinearExpr> for LinearExpressionProto {
 
 impl From<LinearExpressionProto> for LinearExpr {
     fn from(proto: LinearExpressionProto) -> Self {
-        Self(proto)
+        Self {
+            terms: proto.vars.into_iter().zip(proto.coeffs).collect(),
+            offset: proto.offset,
+        }
     }
 }
 
@@ -156,18 +165,16 @@ impl From<i64> for LinearExpr {
 
 impl From<IntVar> for LinearExpr {
     fn from(var: IntVar) -> Self {
-        Self::term(var.0, 1)
+        Self::term(var.0, 1, 0)
     }
 }
 
 impl From<BoolVar> for LinearExpr {
     fn from(literal: BoolVar) -> Self {
         if literal.is_negated() {
-            let mut expr = Self::term(literal.variable().0, -1);
-            expr.0.offset = 1;
-            expr
+            Self::term(literal.variable().0, -1, 1)
         } else {
-            Self::term(literal.0, 1)
+            Self::term(literal.0, 1, 0)
         }
     }
 }
@@ -185,9 +192,16 @@ impl<R: Into<Self>> SubAssign<R> for LinearExpr {
 }
 
 impl MulAssign<i64> for LinearExpr {
+    /// Checks every product before the first change, like `add_scaled`.
     fn mul_assign(&mut self, factor: i64) {
-        let expr = std::mem::take(self);
-        self.add_scaled(expr, factor);
+        self.offset = self
+            .offset
+            .checked_mul(factor)
+            .filter(|_| scales(&self.terms, factor))
+            .expect(OVERFLOW);
+        for (_, coeff) in &mut self.terms {
+            *coeff *= factor;
+        }
     }
 }
 

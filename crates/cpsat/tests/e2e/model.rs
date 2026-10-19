@@ -1,6 +1,8 @@
 //! The modeling API around the Protobuf message: handles, lookups, names,
 //! objectives, and expression arithmetic.
 
+use std::panic::AssertUnwindSafe;
+
 use cpsat::prelude::*;
 use cpsat::proto::constraint_proto::Constraint as Kind;
 use cpsat::proto::{CpSolverResponse, CpSolverStatus, LinearExpressionProto, SatParameters};
@@ -231,6 +233,51 @@ fn evaluation_overflow_panics() {
         ..Default::default()
     };
     let _ = response.value(x * 4);
+}
+
+#[test]
+fn evaluation_cancels_terms_before_overflow() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=3_000_000_000_000_000_000);
+    let response = CpSolverResponse {
+        solution: vec![3_000_000_000_000_000_000],
+        ..Default::default()
+    };
+    assert_eq!(
+        response.value(4 * x - 3 * x),
+        Some(3_000_000_000_000_000_000)
+    );
+}
+
+#[test]
+fn merging_cancels_coefficients_before_overflow() {
+    let mut model = Model::new();
+    let x = model.int_var(0..=1);
+    let big = 1 << 62;
+    let proto = LinearExpressionProto::from(x * big + x * big - x * big);
+    assert_eq!((proto.vars, proto.coeffs), (vec![0], vec![big]));
+}
+
+#[test]
+fn overflowing_arithmetic_leaves_the_expression_intact() {
+    let mut model = Model::new();
+    let [x, y, z, w] = [(); 4].map(|()| model.int_var(0..=1));
+    let mut expr = LinearExpr::from(x);
+    let failed = std::panic::catch_unwind(AssertUnwindSafe(|| expr -= w + y * i64::MIN));
+    assert!(failed.is_err());
+    expr += z;
+    assert_eq!(
+        LinearExpressionProto::from(expr),
+        LinearExpressionProto::from(x + z)
+    );
+
+    let mut expr = x + y * i64::MAX + 1;
+    let failed = std::panic::catch_unwind(AssertUnwindSafe(|| expr *= 2));
+    assert!(failed.is_err());
+    assert_eq!(
+        LinearExpressionProto::from(expr),
+        LinearExpressionProto::from(x + y * i64::MAX + 1)
+    );
 }
 
 #[test]

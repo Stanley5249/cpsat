@@ -162,7 +162,7 @@ Every change follows these rules.
 ```text
 model.int_var(0..=10) -----------------------> IntVar(i32)
 model.bool_var() ----------------------------> BoolVar(i32), !b = -i - 1
-x + 2 * y - 3 -------------------------------> LinearExpr(LinearExpressionProto)
+x + 2 * y - 3 -------------------------------> LinearExpr { terms, offset }
 (x + 2 * y).le(10).only_if(b) ---------------> Constraint(ConstraintProto)
 Constraint::circuit([(0, 1, a)]) ------------> Constraint
 model.add(constraint) --- move into model ---> ConstraintRef(i32)
