@@ -1,6 +1,8 @@
 //! The modeling API, like Python's `CpModel`.
 
+mod interval;
 mod lookup;
+mod objective;
 
 use std::collections::BTreeMap;
 
@@ -10,13 +12,11 @@ use crate::constraint::{Constraint, ConstraintRef};
 use crate::domain::Domain;
 use crate::error::Result;
 use crate::expr::LinearExpr;
-use crate::float_expr::FloatExpr;
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use crate::proto::{
-    ConstraintProto, CpModelProto, CpObjectiveProto, CpSolverResponse, DecisionStrategyProto,
-    FloatObjectiveProto, IntegerVariableProto, IntervalConstraintProto, SatParameters,
+    CpModelProto, CpSolverResponse, DecisionStrategyProto, IntegerVariableProto, SatParameters,
 };
-use crate::variable::{BoolVar, IntVar, IntervalVar};
+use crate::variable::{BoolVar, IntVar};
 
 /// A CP-SAT model, which owns its `CpModelProto` and hands out typed handles.
 ///
@@ -166,77 +166,6 @@ impl Model {
         BoolVar(self.constant(value.into()).0)
     }
 
-    /// An interval with `start + size == end`, like Python's
-    /// `new_interval_var`. CP-SAT accepts affine expressions here.
-    pub fn interval_var(
-        &mut self,
-        start: impl Into<LinearExpr>,
-        size: impl Into<LinearExpr>,
-        end: impl Into<LinearExpr>,
-    ) -> IntervalVar {
-        self.interval(start.into(), size.into(), end.into(), None)
-    }
-
-    /// An interval of a fixed size, like Python's
-    /// `new_fixed_size_interval_var`.
-    pub fn fixed_size_interval_var(
-        &mut self,
-        start: impl Into<LinearExpr>,
-        size: i64,
-    ) -> IntervalVar {
-        let start = start.into();
-        let end = start.clone() + size;
-        self.interval(start, size.into(), end, None)
-    }
-
-    /// An interval that other constraints ignore when `present` is false, like
-    /// Python's `new_optional_interval_var`.
-    pub fn optional_interval_var(
-        &mut self,
-        start: impl Into<LinearExpr>,
-        size: impl Into<LinearExpr>,
-        end: impl Into<LinearExpr>,
-        present: BoolVar,
-    ) -> IntervalVar {
-        self.interval(start.into(), size.into(), end.into(), Some(present))
-    }
-
-    /// An optional interval of a fixed size, like Python's
-    /// `new_optional_fixed_size_interval_var`.
-    pub fn optional_fixed_size_interval_var(
-        &mut self,
-        start: impl Into<LinearExpr>,
-        size: i64,
-        present: BoolVar,
-    ) -> IntervalVar {
-        let start = start.into();
-        let end = start.clone() + size;
-        self.interval(start, size.into(), end, Some(present))
-    }
-
-    fn interval(
-        &mut self,
-        start: LinearExpr,
-        size: LinearExpr,
-        end: LinearExpr,
-        present: Option<BoolVar>,
-    ) -> IntervalVar {
-        let interval = IntervalConstraintProto {
-            start: MessageField::some(start.into()),
-            end: MessageField::some(end.into()),
-            size: MessageField::some(size.into()),
-            ..Default::default()
-        };
-        let mut constraint = Constraint::from(ConstraintProto {
-            constraint: Some(interval.into()),
-            ..Default::default()
-        });
-        if let Some(present) = present {
-            constraint = constraint.only_if(present);
-        }
-        IntervalVar(self.add(constraint).0)
-    }
-
     /// Inserts a constraint, like Python's `add` and `add_*` methods.
     ///
     /// # Panics
@@ -246,68 +175,6 @@ impl Model {
         let index = next_index(self.0.constraints.len(), "constraints");
         self.0.constraints.push(constraint.into().into_proto());
         ConstraintRef(index)
-    }
-
-    /// Minimizes `expr`, replacing any objective.
-    pub fn minimize(&mut self, expr: impl Into<LinearExpr>) {
-        self.set_objective(expr.into(), 1);
-    }
-
-    /// Maximizes `expr`, replacing any objective. Like Python, this minimizes
-    /// `-expr` with a scaling factor of -1.
-    pub fn maximize(&mut self, expr: impl Into<LinearExpr>) {
-        self.set_objective(-expr.into(), -1);
-    }
-
-    #[expect(
-        clippy::cast_precision_loss,
-        reason = "the schema stores the offset as a double, like Python"
-    )]
-    fn set_objective(&mut self, expr: LinearExpr, scaling: i8) {
-        self.clear_objective();
-        let (vars, coeffs, offset) = expr.into_terms();
-        self.0.objective = MessageField::some(CpObjectiveProto {
-            vars,
-            coeffs,
-            offset: offset as f64,
-            scaling_factor: scaling.into(),
-            ..Default::default()
-        });
-    }
-
-    /// Minimizes a floating-point `expr`, replacing any objective, like
-    /// Python's `minimize` with float coefficients.
-    pub fn minimize_float(&mut self, expr: impl Into<FloatExpr>) {
-        self.set_float_objective(expr.into(), false);
-    }
-
-    /// Maximizes a floating-point `expr`, replacing any objective, like
-    /// Python's `maximize` with float coefficients.
-    pub fn maximize_float(&mut self, expr: impl Into<FloatExpr>) {
-        self.set_float_objective(expr.into(), true);
-    }
-
-    fn set_float_objective(&mut self, expr: FloatExpr, maximize: bool) {
-        self.clear_objective();
-        let (vars, coeffs, offset) = expr.into_terms();
-        self.0.floating_point_objective = MessageField::some(FloatObjectiveProto {
-            vars,
-            coeffs,
-            offset,
-            maximize,
-            ..Default::default()
-        });
-    }
-
-    #[must_use]
-    pub fn has_objective(&self) -> bool {
-        self.0.objective.is_set() || self.0.floating_point_objective.is_set()
-    }
-
-    /// Removes the integer and the floating-point objectives.
-    pub fn clear_objective(&mut self) {
-        self.0.objective = MessageField::none();
-        self.0.floating_point_objective = MessageField::none();
     }
 
     /// Hints `var == value` to the solver, like Python's `add_hint`.
