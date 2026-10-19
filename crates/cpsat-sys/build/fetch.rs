@@ -87,6 +87,8 @@ fn download(archive: &Archive, dir: &Path) -> Result<PathBuf> {
     once(dir, |_| {
         run(Command::new("curl")
             .args(["--fail", "--location", "--silent", "--show-error"])
+            // Refuse a redirect to plain HTTP, even though the checksum is pinned.
+            .args(["--proto", "=https", "--proto-redir", "=https"])
             .args(["--retry", "3", "--connect-timeout", "30"])
             // Abort a stalled transfer instead of hanging the build.
             .args(["--speed-limit", "1024", "--speed-time", "60"])
