@@ -28,18 +28,42 @@ const OPTIONS: &[&str] = &[
     "-DUSE_COINOR=OFF",
 ];
 
+/// The variables that choose CMake's compiler, flags, and generator, which an
+/// installation built under other values may not be ABI compatible with.
+const TOOLCHAIN: &[&str] = &[
+    "CC",
+    "CXX",
+    "CFLAGS",
+    "CXXFLAGS",
+    "LDFLAGS",
+    "CMAKE_GENERATOR",
+    "CMAKE_TOOLCHAIN_FILE",
+];
+
 /// Builds and installs into the shared cache, because a full build is slow
 /// and should survive `cargo clean`, and returns the install prefix.
 ///
-/// The directory is keyed by the source, the options, and the target, so a
-/// change to any of them builds anew. A failed build keeps its CMake tree, so
-/// the next attempt continues incrementally.
+/// The directory is keyed by the source, the options, the target, and the
+/// set [`TOOLCHAIN`] variables, so a change to any of them builds anew. A
+/// failed build keeps its CMake tree, so the next attempt continues
+/// incrementally.
 pub fn build(cache: &Path, target: &str) -> Result<PathBuf> {
     let source = fetch::extracted(&artifacts::SOURCE, cache)?;
     let mut key = Sha256::new();
     for part in [artifacts::SOURCE.sha256, target].iter().chain(OPTIONS) {
         key.update(part.as_bytes());
         key.update([0]);
+    }
+    // Only set variables enter the key, so the default environment keeps the
+    // directory that builds before this key existed.
+    for var in TOOLCHAIN {
+        println!("cargo::rerun-if-env-changed={var}");
+        if let Some(value) = env::var_os(var) {
+            for part in [var.as_bytes(), value.as_encoded_bytes()] {
+                key.update(part);
+                key.update([0]);
+            }
+        }
     }
     let dir = cache
         .join("source")
