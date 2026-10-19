@@ -294,3 +294,30 @@ fn solution_view_accessors_match_the_owned_response() {
         )
     );
 }
+
+#[test]
+fn solution_view_carries_search_statistics() {
+    let model = Model::from(tiny_model());
+    let x = model.int_var_from_index(0).unwrap();
+    let mut checked = false;
+    Solver::default()
+        .on_event(EventSet::SOLUTION, |event| {
+            if let Event::Solution(view) = event {
+                // The objective is x, maximized.
+                let objective = f64::from(i32::try_from(view.value(x).unwrap()).unwrap());
+                assert!((view.objective_value - objective).abs() < 1e-9);
+                assert!(view.best_objective_bound >= view.objective_value);
+                assert!(
+                    view.num_booleans >= 0 && view.num_conflicts >= 0 && view.num_branches >= 0
+                );
+                for time in [view.wall_time, view.user_time, view.deterministic_time] {
+                    assert!(time.is_finite() && time >= 0.0, "{time}");
+                }
+                checked = true;
+            }
+            ControlFlow::Continue(())
+        })
+        .solve(model.proto())
+        .unwrap();
+    assert!(checked);
+}

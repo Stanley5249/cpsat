@@ -169,3 +169,67 @@ fn solves_a_float_objective_like_python() {
     assert!((response.objective_value + 8.75).abs() < 1e-9);
     assert_eq!(response.float_value(0.5 * x + y), Some(7.0));
 }
+
+/// Search counters vary between runs, so they are checked for sanity, not
+/// against Python's numbers.
+#[test]
+fn reports_search_statistics_and_log() {
+    let (model, ..) = small_model();
+    let parameters = single_worker()
+        .with_log_search_progress(true)
+        .with_log_to_stdout(false)
+        .with_log_to_response(true);
+    let response = model.solve(&parameters).unwrap();
+    assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
+    assert!(response.num_booleans >= 0 && response.num_conflicts >= 0);
+    assert!(response.num_branches >= 0 && response.num_binary_propagations >= 0);
+    assert!(response.num_integer_propagations >= 0);
+    for time in [
+        response.wall_time,
+        response.user_time,
+        response.deterministic_time,
+    ] {
+        assert!(time.is_finite() && time >= 0.0, "{time}");
+    }
+    assert!(
+        response.solve_log.contains("CpSolverResponse"),
+        "{}",
+        response.solve_log
+    );
+}
+
+/// Python's `values` returns a pandas `Series`; Rust maps the accessor over
+/// any collection and keeps its order, with `None` for a missing value.
+#[test]
+fn evaluates_collections_in_order() {
+    let mut model = Model::new();
+    let vars = [3, 1, 2].map(|value| model.int_var(value..=value));
+    let literals = [model.bool_var(), model.bool_var()];
+    model.add(literals[0].eq(1));
+    model.add(literals[1].eq(0));
+    let response = model.solve(&SatParameters::default()).unwrap();
+
+    let mut larger = Model::new();
+    let far = [(); 6].map(|()| larger.int_var(0..=1))[5];
+    let values: Vec<_> = vars
+        .iter()
+        .chain([&far])
+        .map(|&var| response.value(var))
+        .collect();
+    assert_eq!(values, [Some(3), Some(1), Some(2), None]);
+    let booleans = literals.map(|literal| response.boolean_value(literal));
+    assert_eq!(booleans, [Some(true), Some(false)]);
+    let floats = vars.map(|var| response.float_value(0.5 * var));
+    assert_eq!(floats, [Some(1.5), Some(0.5), Some(1.0)]);
+
+    // A weighted sum zips variables with weights, and `zip` stops at the
+    // shorter side, so the caller checks the lengths that Python checks.
+    let weights = [2, 10, 100];
+    assert_eq!(vars.len(), weights.len());
+    let total: LinearExpr = vars
+        .into_iter()
+        .zip(weights)
+        .map(|(var, weight)| var * weight)
+        .sum();
+    assert_eq!(response.value(total), Some(216));
+}

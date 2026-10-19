@@ -50,3 +50,25 @@ fn reads_parameter_defaults_from_or_tools() {
     let response = model.solve(&parameters).unwrap();
     assert_eq!(response.value(x), Some(3));
 }
+
+/// Python accepts these models at build time and leaves the check to the
+/// solver, so Rust reports them through `validate` and `MODEL_INVALID` too.
+#[test]
+fn rejects_what_python_rejects_only_at_solve_time() {
+    let mut zero_divisor = Model::new();
+    let x = zero_divisor.int_var(0..=10);
+    zero_divisor.add(Constraint::division_equality(x, x, 0));
+
+    // A handle from a larger model names a variable this model lacks.
+    let mut larger = Model::new();
+    let far = [(); 3].map(|()| larger.int_var(0..=1))[2];
+    let mut unknown_variable = Model::new();
+    unknown_variable.int_var(0..=1);
+    unknown_variable.add(far.le(1));
+
+    for model in [zero_divisor, unknown_variable] {
+        assert!(matches!(model.validate(), Err(Error::InvalidModel(_))));
+        let response = model.solve(&SatParameters::default()).unwrap();
+        assert_eq!(response.status(), CpSolverStatus::MODEL_INVALID);
+    }
+}
