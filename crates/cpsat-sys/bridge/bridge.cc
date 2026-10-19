@@ -163,14 +163,14 @@ struct CpsatSession {
   CpsatEventFn on_event = nullptr;
   void* context = nullptr;
   bool used = false;
-  SolveWrapper wrapper;
+  SolveWrapper solve_wrapper;
   // SolveWrapper keeps a reference to the observer, so the observer lives as
   // long as the session rather than as long as one call.
   Observer observer{this};
 
   void Dispatch(const CpsatEvent& event) {
     std::lock_guard<std::mutex> lock(event_mutex);
-    if (on_event(context, &event) != 0) wrapper.StopSearch();
+    if (on_event(context, &event) != 0) solve_wrapper.StopSearch();
   }
 };
 
@@ -196,7 +196,7 @@ void cpsat_session_free(CpsatSession* session) { delete session; }
 
 void cpsat_session_stop(CpsatSession* session) {
   try {
-    session->wrapper.StopSearch();
+    session->solve_wrapper.StopSearch();
   } catch (...) {
     // StopSearch only sets a flag under a mutex, so a failure here leaves
     // nothing to report and the solve simply runs to its own limits.
@@ -218,19 +218,19 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
 
     session->on_event = on_event;
     session->context = context;
-    SolveWrapper& wrapper = session->wrapper;
-    wrapper.SetParameters(parameters);
+    SolveWrapper& solve_wrapper = session->solve_wrapper;
+    solve_wrapper.SetParameters(parameters);
 
     if (events & CPSAT_EVENT_SOLUTION) {
-      wrapper.AddSolutionCallback(session->observer);
+      solve_wrapper.AddSolutionCallback(session->observer);
     }
     if (events & CPSAT_EVENT_BEST_BOUND) {
-      wrapper.AddBestBoundCallback([session](double bound) {
+      solve_wrapper.AddBestBoundCallback([session](double bound) {
         session->Dispatch(CpsatEvent{CPSAT_EVENT_BEST_BOUND, nullptr, 0, bound});
       });
     }
     if (events & CPSAT_EVENT_LOG) {
-      wrapper.AddLogCallback([session](const std::string& message) {
+      solve_wrapper.AddLogCallback([session](const std::string& message) {
         session->Dispatch(CpsatEvent{
             CPSAT_EVENT_LOG, reinterpret_cast<const uint8_t*>(message.data()),
             message.size(), 0.0});
@@ -239,7 +239,7 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
 
     // Solve joins its worker threads before it returns, so every event
     // callback happens before the caller reads its callback state.
-    FillMessage(response, wrapper.Solve(model_proto));
+    FillMessage(response, solve_wrapper.Solve(model_proto));
   });
 }
 

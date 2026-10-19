@@ -1,4 +1,4 @@
-//! Native diagnostics, mirroring Python's `CpSatHelper`.
+//! OR-Tools diagnostics through the bridge, mirroring Python's `CpSatHelper`.
 
 use cpsat::Error;
 use cpsat::prelude::*;

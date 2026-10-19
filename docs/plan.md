@@ -83,16 +83,16 @@ the
 and the C library convention `prefix_object_verb`, as in libgit2's
 `git_repository_open`. These terms name the parts of this project.
 
-| Term     | Meaning                                                                                                                         |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| OR-Tools | The upstream C++ library and its files                                                                                          |
-| bridge   | Our C++ code and the C ABI it exports, in `crates/cpsat-sys/bridge/`. Its functions are named `cpsat_<object>_<verb>`           |
-| FFI      | The Rust side of the C ABI: the `cpsat-sys` declarations and the owners in `cpsat`'s private `ffi` module                       |
-| session  | The bridge object that serves one solve                                                                                         |
-| mode     | How the build acquires OR-Tools: `prebuilt`, `source`, or `dir:<path>`                                                          |
-| wrapper  | A hand-written type that owns a Protobuf message, such as `Model` or `Constraint`. OR-Tools' `SolveWrapper` keeps its full name |
-| handle   | `IntVar`, `BoolVar`, `IntervalVar`, or `ConstraintRef`                                                                          |
-| literal  | A `BoolVar`, negated or not                                                                                                     |
+| Term     | Meaning                                                                                                                                                                                                          |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OR-Tools | The upstream C++ library and its files                                                                                                                                                                           |
+| bridge   | Our C++ code and the C ABI it exports, in `crates/cpsat-sys/bridge/`. Its functions are named `cpsat_<object>_<operation>`, where the operation matches the Rust method, such as `cpsat_model_stats` for `stats` |
+| FFI      | The Rust side of the C ABI: the `cpsat-sys` declarations and the owners in `cpsat`'s private `ffi` module                                                                                                        |
+| session  | The bridge object that serves one solve                                                                                                                                                                          |
+| mode     | How the build acquires OR-Tools: `prebuilt`, `source`, or `dir:<path>`                                                                                                                                           |
+| wrapper  | A hand-written type that owns a Protobuf message, such as `Model` or `Constraint`. OR-Tools' `SolveWrapper` keeps its full name                                                                                  |
+| handle   | `IntVar`, `BoolVar`, `IntervalVar`, or `ConstraintRef`                                                                                                                                                           |
+| literal  | A `BoolVar`, negated or not                                                                                                                                                                                      |
 
 ## Rules
 
@@ -219,9 +219,9 @@ decisions as expensive to reverse after a crates.io release.
 - Buffa, a 0.x crate, is part of the public API, so each Buffa minor release is
   a breaking change here. It stays until this decision, and keeping the wire
   bytes as the stable interchange would keep a later switch possible.
-- The supported platforms are two x86_64 targets. The README documents `dir:` as
-  the offline mode, and the macOS and aarch64 archives that OR-Tools publishes
-  are not supported yet.
+- The supported platforms are two x86_64 targets. The README documents the
+  `dir:` mode for offline builds, and the macOS and aarch64 archives that
+  OR-Tools publishes are not supported yet.
 - Shipped binaries find the OR-Tools libraries only through
   `DEP_ORTOOLS_RUNTIME` and a manual copy, and Linux gets no `$ORIGIN` rpath.
   Shipping them also requires the license notices of OR-Tools and its bundled

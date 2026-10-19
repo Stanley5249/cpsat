@@ -1,4 +1,4 @@
-//! Native helpers: the model and response diagnostics that Python's
+//! Bridge helpers: the model and response diagnostics that Python's
 //! `CpSatHelper` exposes, and the schema defaults of `SatParameters`.
 
 use buffa::Message;
