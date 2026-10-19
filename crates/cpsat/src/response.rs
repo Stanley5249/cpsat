@@ -9,7 +9,7 @@ use crate::expr::LinearExpr;
 use crate::float_expr::FloatExpr;
 use crate::proto::view::CpSolverResponseView;
 use crate::proto::{CpSolverResponse, CpSolverStatus};
-use crate::variable::BoolVar;
+use crate::variable::{BoolVar, IntVar};
 
 impl fmt::Display for CpSolverStatus {
     /// Writes the schema name, such as `OPTIMAL`, like Python's `status_name`.
@@ -26,15 +26,61 @@ impl CpSolverStatus {
     }
 }
 
-/// The value of `expr` under `solution`, or `None` if a variable has no value.
-fn value(solution: &[i64], expr: impl Into<LinearExpr>) -> Option<i64> {
-    expr.into().evaluate(solution)
+mod sealed {
+    pub trait Sealed {}
+}
+
+/// What `value` reads: a variable, a literal, a constant, or an expression.
+/// A handle reads its slot directly, so no expression is built.
+pub trait Evaluate: sealed::Sealed {
+    /// The value under `solution`, or `None` if a variable has no value.
+    #[doc(hidden)]
+    fn evaluate(&self, solution: &[i64]) -> Option<i64>;
+}
+
+fn slot(solution: &[i64], index: i32) -> Option<i64> {
+    solution.get(usize::try_from(index).ok()?).copied()
+}
+
+impl sealed::Sealed for IntVar {}
+impl Evaluate for IntVar {
+    fn evaluate(&self, solution: &[i64]) -> Option<i64> {
+        slot(solution, self.index())
+    }
+}
+
+impl sealed::Sealed for BoolVar {}
+impl Evaluate for BoolVar {
+    fn evaluate(&self, solution: &[i64]) -> Option<i64> {
+        boolean_value(solution, *self).map(i64::from)
+    }
+}
+
+impl sealed::Sealed for i64 {}
+impl Evaluate for i64 {
+    fn evaluate(&self, _: &[i64]) -> Option<i64> {
+        Some(*self)
+    }
+}
+
+impl sealed::Sealed for LinearExpr {}
+impl Evaluate for LinearExpr {
+    fn evaluate(&self, solution: &[i64]) -> Option<i64> {
+        LinearExpr::evaluate(self, solution)
+    }
+}
+
+impl<T: Evaluate> sealed::Sealed for &T {}
+impl<T: Evaluate> Evaluate for &T {
+    fn evaluate(&self, solution: &[i64]) -> Option<i64> {
+        T::evaluate(self, solution)
+    }
 }
 
 /// The value of `literal` under `solution`, or `None` without a solution.
 fn boolean_value(solution: &[i64], literal: BoolVar) -> Option<bool> {
-    let value = solution.get(usize::try_from(literal.variable().index()).ok()?)?;
-    Some((*value != 0) != literal.is_negated())
+    let value = slot(solution, literal.variable().index())?;
+    Some((value != 0) != literal.is_negated())
 }
 
 impl CpSolverResponse {
@@ -54,8 +100,8 @@ impl CpSolverResponse {
     ///
     /// If the value overflows `i64`.
     #[must_use]
-    pub fn value(&self, expr: impl Into<LinearExpr>) -> Option<i64> {
-        value(&self.solution, expr)
+    pub fn value(&self, expr: impl Evaluate) -> Option<i64> {
+        expr.evaluate(&self.solution)
     }
 
     /// The value of a floating-point expression in the solution, like
@@ -87,8 +133,8 @@ impl CpSolverResponseView<'_> {
     ///
     /// If the value overflows `i64`.
     #[must_use]
-    pub fn value(&self, expr: impl Into<LinearExpr>) -> Option<i64> {
-        value(&self.solution, expr)
+    pub fn value(&self, expr: impl Evaluate) -> Option<i64> {
+        expr.evaluate(&self.solution)
     }
 
     /// The value of a floating-point expression in the solution, like

@@ -62,5 +62,6 @@ pub use error::{Error, Result};
 pub use expr::LinearExpr;
 pub use float_expr::FloatExpr;
 pub use model::Model;
+pub use response::Evaluate;
 pub use solver::{Event, EventSet, NoEvents, Solver, StopHandle};
 pub use variable::{BoolVar, IntVar, IntervalVar};

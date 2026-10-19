@@ -28,6 +28,8 @@ fn solves_to_optimality() {
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_eq!((response.value(x), response.value(y)), (Some(3), Some(1)));
     assert_eq!(response.value(2 * x + 3 * y - 1), Some(8));
+    let objective = 2 * x + 3 * y;
+    assert_eq!(response.value(&objective), Some(9));
     assert!((response.objective_value - 9.0).abs() < 1e-9);
     assert!((response.best_objective_bound - 9.0).abs() < 1e-9);
 }
