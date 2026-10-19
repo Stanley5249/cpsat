@@ -54,20 +54,19 @@ jobs:
             ortools-${{ runner.os }}-${{
             hashFiles('crates/cpsat-sys/build/artifacts.rs') }}
       - uses: Swatinem/rust-cache@v2
-      - run:
-          cargo clippy --quiet --locked --workspace --all-targets --all-features
-          -- -D warnings
+      - uses: extractions/setup-just@v4
+      - run: just lint
 
   docs:
     runs-on: ubuntu-24.04
     env:
       # Also proves the docs.rs path, which skips the OR-Tools download and the bridge build.
       DOCS_RS: "1"
-      RUSTDOCFLAGS: -D warnings
     steps:
       - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
-      - run: cargo doc --locked --workspace --all-features --no-deps
+      - uses: extractions/setup-just@v4
+      - run: just doc
 
   proto:
     runs-on: ubuntu-24.04
@@ -78,6 +77,10 @@ jobs:
           setup_only: true
       - uses: extractions/setup-just@v4
       - run: just proto-check
+      - name: The Buffa plugin matches the buffa crate
+        run: |
+          plugin=$(sed -n 's|.*buf.build/anthropics/buffa:v\(.*\)|\1|p' crates/cpsat/proto/buf.gen.yaml)
+          grep -qx "buffa = \"$plugin\"" Cargo.toml
       - name: Vendored protos match the pinned OR-Tools tag
         run: |
           tag=$(sed -n 's|.*/archive/refs/tags/\(v[0-9.]*\)\.tar\.gz.*|\1|p' crates/cpsat-sys/build/artifacts.rs)
@@ -85,6 +88,14 @@ jobs:
             curl -fsSL "https://raw.githubusercontent.com/google/or-tools/$tag/ortools/sat/$proto.proto" |
               diff - "crates/cpsat/proto/ortools/sat/$proto.proto"
           done
+
+  fixtures:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0 # no major-version tag exists
+      - uses: extractions/setup-just@v4
+      - run: just fixtures-check
 
   test:
     strategy:

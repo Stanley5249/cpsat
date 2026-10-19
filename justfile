@@ -14,10 +14,6 @@ fmt: _fmt-cargo _fmt-tombi _fmt-oxfmt _fmt-just
 fix: fmt
     cargo clippy --fix --allow-dirty --workspace --all-targets
 
-# Type-check every target
-typecheck *args:
-    cargo check --locked --workspace --all-targets --all-features {{ args }}
-
 # Run Clippy with warnings as errors
 lint *args:
     cargo clippy --quiet --locked --workspace --all-targets --all-features {{ args }} -- -D warnings
@@ -46,11 +42,18 @@ proto-gen *args:
 
 # Fail when the committed Buffa code differs from a fresh generation
 proto-check: proto-gen
+    # Intent-to-add makes a newly generated file show up in the diff.
+    git add --intent-to-add -- crates/cpsat/src/proto
     git diff --exit-code -- crates/cpsat/src/proto
 
 # Regenerate the Python models that tests/e2e/equivalence.rs compares against
 fixtures:
     uv run --quiet --with ortools==9.15.6755 python -I crates/cpsat/tests/e2e/fixtures/generate.py
+
+# Fail when the committed fixtures differ from a fresh generation
+fixtures-check: fixtures
+    git add --intent-to-add -- crates/cpsat/tests/e2e/fixtures
+    git diff --exit-code -- crates/cpsat/tests/e2e/fixtures
 
 _fmt-cargo *args:
     cargo fmt --all {{ args }}

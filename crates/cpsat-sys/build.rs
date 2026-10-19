@@ -254,12 +254,17 @@ fn exported_definitions(lib: &Path) -> Result<Vec<String>> {
         .lines()
         .find_map(|line| line.trim().strip_prefix("INTERFACE_COMPILE_DEFINITIONS "))
         .with_context(|| format!("no compile definitions in {}", targets.display()))?;
-    // The pinned archives export no generator expressions here, so any that a
-    // future version adds are dropped rather than passed to the compiler raw.
+    // The pinned archives export no generator expressions here. Dropping one
+    // that a future version adds could change the bridge's ABI silently.
+    ensure!(
+        !definitions.contains("$<"),
+        "generator expression in the compile definitions of {}",
+        targets.display()
+    );
     Ok(definitions
         .trim_matches('"')
         .split(';')
-        .filter(|define| !define.is_empty() && !define.contains("$<"))
+        .filter(|define| !define.is_empty())
         .map(str::to_owned)
         .collect())
 }
