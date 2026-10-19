@@ -18,11 +18,12 @@ mod arithmetic;
 mod boolean;
 mod circuit;
 mod global;
+mod linear;
 mod scheduling;
 
-use crate::expr::{BoolVar, Domain, IntVar, LinearExpr};
+use crate::expr::{BoolVar, IntVar, LinearExpr};
 use crate::proto::constraint_proto::Constraint as Kind;
-use crate::proto::{ConstraintProto, LinearConstraintProto, LinearExpressionProto};
+use crate::proto::{ConstraintProto, LinearExpressionProto};
 
 /// A constraint before insertion, like the `Constraint` that Python's `add_*`
 /// methods return, except that it is configured before insertion.
@@ -96,35 +97,6 @@ impl ConstraintRef {
     pub const fn index(self) -> i32 {
         self.0
     }
-}
-
-/// `expr` in `domain`, with the offset moved into the domain as Python does.
-pub(crate) fn linear(expr: LinearExpr, domain: &Domain) -> Constraint {
-    let (vars, coeffs, offset) = expr.into_terms();
-    // The domain bounds i64::MIN and i64::MAX stand for infinity, so they
-    // stay, and finite bounds saturate into them like Python's `Domain`
-    // arithmetic. A saturated bound admits no extra value, because OR-Tools
-    // rejects a variable whose domain reaches near either limit.
-    let shift = |bound: i64| match bound {
-        i64::MIN | i64::MAX => bound,
-        _ => i64::try_from(
-            (i128::from(bound) - i128::from(offset)).clamp(i64::MIN.into(), i64::MAX.into()),
-        )
-        .expect("the bound is clamped into i64"),
-    };
-    // Saturation can make intervals touch, so normalize them again.
-    let domain = Domain::from_intervals(
-        domain
-            .intervals()
-            .iter()
-            .map(|&(lower, upper)| (shift(lower), shift(upper))),
-    );
-    Constraint::of(LinearConstraintProto {
-        vars,
-        coeffs,
-        domain: domain.flattened_intervals(),
-        ..Default::default()
-    })
 }
 
 fn exprs(exprs: impl IntoIterator<Item = impl Into<LinearExpr>>) -> Vec<LinearExpressionProto> {

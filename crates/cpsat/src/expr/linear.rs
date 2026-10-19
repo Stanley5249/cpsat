@@ -3,14 +3,14 @@
 use std::iter::Sum;
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use crate::constraint::{self, Constraint};
-use crate::expr::{BoolVar, Domain, IntVar};
+use crate::expr::{BoolVar, IntVar};
 use crate::proto::LinearExpressionProto;
 
 /// `sum(coeff * var) + offset` with `i64` coefficients.
 ///
 /// Arithmetic operators build one from variables, literals, and constants,
-/// and the comparison methods turn it into a linear [`Constraint`]. A negated
+/// and the comparison methods turn it into a linear
+/// [`Constraint`](crate::prelude::Constraint). A negated
 /// literal `!b` counts as `1 - b`.
 ///
 /// The arithmetic panics when a coefficient or the offset overflows `i64`,
@@ -94,6 +94,11 @@ impl LinearExpr {
         (vars, coeffs, offset)
     }
 
+    /// The value if the expression has no variables.
+    pub(crate) fn constant_value(&self) -> Option<i64> {
+        self.0.vars.is_empty().then_some(self.0.offset)
+    }
+
     /// The value under `solution`, indexed by variable, or `None` if a
     /// variable is out of range.
     ///
@@ -115,35 +120,6 @@ impl LinearExpr {
                 )
             })
     }
-
-    /// `self` compared with `rhs` like Python: a constant `rhs` builds the
-    /// domain directly, and otherwise `self - rhs` lies in `relative`.
-    fn compare(
-        self,
-        rhs: Self,
-        relative: &Domain,
-        constant: impl FnOnce(i64) -> Domain,
-    ) -> Constraint {
-        if rhs.0.vars.is_empty() {
-            constraint::linear(self, &constant(rhs.0.offset))
-        } else {
-            constraint::linear(self - rhs, relative)
-        }
-    }
-}
-
-/// `value` as a finite domain bound.
-///
-/// # Panics
-///
-/// If `value` equals `infinity`, which the bound would read as infinite, like
-/// Python's `ArithmeticError`.
-fn finite(value: i64, infinity: i64) -> i64 {
-    assert!(
-        value != infinity,
-        "comparing with {value} is not supported, because domains read it as infinity",
-    );
-    value
 }
 
 impl From<LinearExpr> for LinearExpressionProto {
@@ -284,63 +260,6 @@ macro_rules! linear {
 
             fn mul(self, rhs: $ty) -> LinearExpr {
                 rhs * self
-            }
-        }
-
-        impl $ty {
-            /// `self == rhs`.
-            #[must_use]
-            pub fn eq(self, rhs: impl Into<LinearExpr>) -> Constraint {
-                LinearExpr::from(self).compare(rhs.into(), &Domain::new(0, 0), |c| {
-                    Domain::new(finite(c, i64::MIN), finite(c, i64::MAX))
-                })
-            }
-
-            /// `self != rhs`.
-            #[must_use]
-            pub fn ne(self, rhs: impl Into<LinearExpr>) -> Constraint {
-                LinearExpr::from(self).compare(rhs.into(), &Domain::new(0, 0).complement(), |c| {
-                    Domain::new(c, c).complement()
-                })
-            }
-
-            /// `self <= rhs`.
-            #[must_use]
-            pub fn le(self, rhs: impl Into<LinearExpr>) -> Constraint {
-                LinearExpr::from(self).compare(rhs.into(), &Domain::new(i64::MIN, 0), |c| {
-                    Domain::new(i64::MIN, finite(c, i64::MIN))
-                })
-            }
-
-            /// `self < rhs`, which is `self <= rhs - 1` over integers.
-            #[must_use]
-            pub fn lt(self, rhs: impl Into<LinearExpr>) -> Constraint {
-                LinearExpr::from(self).compare(rhs.into(), &Domain::new(i64::MIN, -1), |c| {
-                    Domain::new(i64::MIN, finite(c, i64::MIN) - 1)
-                })
-            }
-
-            /// `self >= rhs`.
-            #[must_use]
-            pub fn ge(self, rhs: impl Into<LinearExpr>) -> Constraint {
-                LinearExpr::from(self).compare(rhs.into(), &Domain::new(0, i64::MAX), |c| {
-                    Domain::new(finite(c, i64::MAX), i64::MAX)
-                })
-            }
-
-            /// `self > rhs`, which is `self >= rhs + 1` over integers.
-            #[must_use]
-            pub fn gt(self, rhs: impl Into<LinearExpr>) -> Constraint {
-                LinearExpr::from(self).compare(rhs.into(), &Domain::new(1, i64::MAX), |c| {
-                    Domain::new(finite(c, i64::MAX) + 1, i64::MAX)
-                })
-            }
-
-            /// `self` lies in `domain`, like Python's
-            /// `add_linear_expression_in_domain`.
-            #[must_use]
-            pub fn in_domain(self, domain: impl Into<Domain>) -> Constraint {
-                constraint::linear(self.into(), &domain.into())
             }
         }
     )*};
