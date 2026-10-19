@@ -163,7 +163,7 @@ fn search() {
     let (x, y, b, c) = variables(&mut model);
     model.maximize(x + 2 * y + 1);
     model.add_hint(x, 3);
-    model.add_bool_hint(!b, true);
+    model.add_hint(!b, true);
     model.add_assumptions([!c]);
     model.add_assumptions([b]);
     model.add_decision_strategy(

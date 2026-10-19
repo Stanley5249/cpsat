@@ -61,7 +61,7 @@ pub use domain::Domain;
 pub use error::{Error, Result};
 pub use expr::LinearExpr;
 pub use float_expr::FloatExpr;
-pub use model::{Model, Objective};
+pub use model::{Hint, Model, Objective};
 pub use response::Evaluate;
 pub use solver::{Event, EventSet, NoEvents, Solver, StopHandle};
 pub use variable::{BoolVar, IntVar, IntervalVar};

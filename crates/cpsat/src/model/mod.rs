@@ -20,6 +20,38 @@ use crate::proto::{
 };
 use crate::variable::{BoolVar, IntVar};
 
+mod sealed {
+    pub trait Sealed {}
+}
+
+/// What `add_hint` accepts, and the type of its value.
+pub trait Hint: sealed::Sealed {
+    type Value;
+
+    /// The variable index and the value the schema stores.
+    #[doc(hidden)]
+    fn hint(self, value: Self::Value) -> (i32, i64);
+}
+
+impl sealed::Sealed for IntVar {}
+impl Hint for IntVar {
+    type Value = i64;
+
+    fn hint(self, value: i64) -> (i32, i64) {
+        (self.index(), value)
+    }
+}
+
+impl sealed::Sealed for BoolVar {}
+impl Hint for BoolVar {
+    type Value = bool;
+
+    /// A negated literal hints its variable with the opposite value.
+    fn hint(self, value: bool) -> (i32, i64) {
+        (self.variable().index(), (value != self.is_negated()).into())
+    }
+}
+
 /// A CP-SAT model, which owns its `CpModelProto` and hands out typed handles.
 ///
 /// The model only appends variables and constraints, so a handle stays valid
@@ -179,16 +211,13 @@ impl Model {
         ConstraintRef(index)
     }
 
-    /// Hints `var == value` to the solver, like Python's `add_hint`.
-    pub fn add_hint(&mut self, var: IntVar, value: i64) {
+    /// Hints that `var` has `value`, like Python's `add_hint`: an `i64` for
+    /// an integer variable and a `bool` for a literal.
+    pub fn add_hint<H: Hint>(&mut self, var: H, value: H::Value) {
+        let (var, value) = var.hint(value);
         let hint = self.0.solution_hint.get_or_insert_default();
-        hint.vars.push(var.0);
+        hint.vars.push(var);
         hint.values.push(value);
-    }
-
-    /// Hints that `literal` has `value`, like Python's `add_hint` on a literal.
-    pub fn add_bool_hint(&mut self, literal: BoolVar, value: bool) {
-        self.add_hint(literal.variable(), (value != literal.is_negated()).into());
     }
 
     /// Removes every hint, like Python's `clear_hints`.
