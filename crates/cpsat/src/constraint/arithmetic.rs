@@ -12,7 +12,7 @@ fn linear_argument(
     exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
 ) -> Constraint {
     Constraint::of(kind(Box::new(LinearArgumentProto {
-        target: MessageField::some(target.into().into()),
+        target: MessageField::some(LinearExpr::into_proto(target.into())),
         exprs: self::exprs(exprs),
         ..Default::default()
     })))

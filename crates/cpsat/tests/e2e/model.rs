@@ -167,7 +167,7 @@ fn expressions_merge_terms_like_python() {
     expr += 2 * x;
     expr -= y;
     expr *= 3;
-    let proto = LinearExpressionProto::from(expr + 4);
+    let proto = LinearExpr::into_proto(expr + 4);
     assert_eq!(
         (proto.vars, proto.coeffs, proto.offset),
         (vec![0], vec![6], 4)
@@ -175,7 +175,7 @@ fn expressions_merge_terms_like_python() {
 
     let empty: LinearExpr = std::iter::empty::<IntVar>().sum();
     assert_eq!(
-        LinearExpressionProto::from(empty),
+        LinearExpr::into_proto(empty),
         LinearExpressionProto::default()
     );
 }
@@ -305,7 +305,7 @@ fn merging_cancels_coefficients_before_overflow() {
     let mut model = CpModel::new();
     let x = model.new_var(0..=1);
     let big = 1 << 62;
-    let proto = LinearExpressionProto::from(x * big + x * big - x * big);
+    let proto = LinearExpr::into_proto(x * big + x * big - x * big);
     assert_eq!((proto.vars, proto.coeffs), (vec![0], vec![big]));
 }
 
@@ -317,17 +317,14 @@ fn overflowing_arithmetic_leaves_the_expression_intact() {
     let failed = std::panic::catch_unwind(AssertUnwindSafe(|| expr -= w + y * i64::MIN));
     assert!(failed.is_err());
     expr += z;
-    assert_eq!(
-        LinearExpressionProto::from(expr),
-        LinearExpressionProto::from(x + z)
-    );
+    assert_eq!(LinearExpr::into_proto(expr), LinearExpr::into_proto(x + z));
 
     let mut expr = x + y * i64::MAX + 1;
     let failed = std::panic::catch_unwind(AssertUnwindSafe(|| expr *= 2));
     assert!(failed.is_err());
     assert_eq!(
-        LinearExpressionProto::from(expr),
-        LinearExpressionProto::from(x + y * i64::MAX + 1)
+        LinearExpr::into_proto(expr),
+        LinearExpr::into_proto(x + y * i64::MAX + 1)
     );
 }
 
@@ -356,11 +353,10 @@ fn reads_interval_parts_like_python() {
             model.interval_size(interval),
             model.interval_end(interval),
         ]
-        .map(LinearExpressionProto::from)
+        .map(LinearExpr::into_proto)
     };
-    let expected = |size: i64| {
-        [x.into(), LinearExpr::constant(size), x + size].map(LinearExpressionProto::from)
-    };
+    let expected =
+        |size: i64| [x.into(), LinearExpr::constant(size), x + size].map(LinearExpr::into_proto);
     assert_eq!(parts(fixed), expected(3));
     assert_eq!(parts(optional), expected(2));
     assert_eq!(model.interval_presence_literals(fixed).count(), 0);

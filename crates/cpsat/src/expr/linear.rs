@@ -140,20 +140,25 @@ fn scales(terms: &[(i32, i64)], factor: i64) -> bool {
         .all(|&(_, coeff)| coeff.checked_mul(factor).is_some())
 }
 
-impl From<LinearExpr> for LinearExpressionProto {
-    /// The canonical form that Python writes, with terms sorted and merged.
-    fn from(expr: LinearExpr) -> Self {
-        let (vars, coeffs, offset) = expr.into_terms();
-        Self {
+impl LinearExpr {
+    /// The message in the canonical form that Python writes, with terms
+    /// sorted and merged. A method instead of `From`, because merging can
+    /// fail.
+    ///
+    /// # Panics
+    ///
+    /// If a merged coefficient overflows `i64`.
+    #[must_use]
+    pub fn into_proto(self) -> LinearExpressionProto {
+        let (vars, coeffs, offset) = self.into_terms();
+        LinearExpressionProto {
             vars,
             coeffs,
             offset,
             ..Default::default()
         }
     }
-}
 
-impl LinearExpr {
     /// The expression that `proto` writes, or `None` if its `vars` and
     /// `coeffs` differ in length, which `validate` rejects.
     pub(crate) fn from_proto(proto: &LinearExpressionProto) -> Option<Self> {

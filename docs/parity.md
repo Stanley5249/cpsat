@@ -217,9 +217,9 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: Compile-time type distinction; no direct runtime parity test
 - `FlatIntExpr`, `FlatFloatExpr` and their `vars`, `coeffs`, `offset`,
   `FlatIntExpr.ok`
-  - Rust: Convert `LinearExpr` into `LinearExpressionProto`; set a float
-    objective and inspect `floating_point_objective` for normalized float terms.
-    Rust's expression types replace the runtime integer-validity flag
+  - Rust: `LinearExpr::into_proto`; set a float objective and inspect
+    `floating_point_objective` for normalized float terms. Rust's expression
+    types replace the runtime integer-validity flag
   - Test: `model.rs::expressions_merge_terms_like_python`,
     `equivalence.rs::minimize_float`; standalone float-expression inspection has
     no direct Rust API

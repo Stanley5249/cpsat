@@ -109,7 +109,11 @@ impl ConstraintIndex {
 }
 
 fn exprs(exprs: impl IntoIterator<Item = impl Into<LinearExpr>>) -> Vec<LinearExpressionProto> {
-    exprs.into_iter().map(|expr| expr.into().into()).collect()
+    exprs
+        .into_iter()
+        .map(Into::into)
+        .map(LinearExpr::into_proto)
+        .collect()
 }
 
 fn literals(literals: impl IntoIterator<Item = BoolVar>) -> Vec<i32> {

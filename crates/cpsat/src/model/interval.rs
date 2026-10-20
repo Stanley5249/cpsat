@@ -88,9 +88,9 @@ impl Interval {
 
     fn of(start: LinearExpr, size: LinearExpr, end: LinearExpr) -> Self {
         let interval = IntervalConstraintProto {
-            start: MessageField::some(start.into()),
-            end: MessageField::some(end.into()),
-            size: MessageField::some(size.into()),
+            start: MessageField::some(start.into_proto()),
+            end: MessageField::some(end.into_proto()),
+            size: MessageField::some(size.into_proto()),
             ..Default::default()
         };
         Self(Constraint::from(ConstraintProto {

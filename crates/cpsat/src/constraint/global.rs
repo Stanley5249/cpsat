@@ -30,8 +30,8 @@ impl Constraint {
         target: impl Into<LinearExpr>,
     ) -> Self {
         Self::of(ElementConstraintProto {
-            linear_index: MessageField::some(index.into().into()),
-            linear_target: MessageField::some(target.into().into()),
+            linear_index: MessageField::some(LinearExpr::into_proto(index.into())),
+            linear_target: MessageField::some(LinearExpr::into_proto(target.into())),
             exprs: self::exprs(exprs),
             ..Default::default()
         })

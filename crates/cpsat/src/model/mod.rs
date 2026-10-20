@@ -246,7 +246,11 @@ impl CpModel {
         domain_reduction: DomainReductionStrategy,
     ) {
         self.0.search_strategy.push(DecisionStrategyProto {
-            exprs: exprs.into_iter().map(|expr| expr.into().into()).collect(),
+            exprs: exprs
+                .into_iter()
+                .map(Into::into)
+                .map(LinearExpr::into_proto)
+                .collect(),
             variable_selection_strategy: variable_selection.into(),
             domain_reduction_strategy: domain_reduction.into(),
             ..Default::default()

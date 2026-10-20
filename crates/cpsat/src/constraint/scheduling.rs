@@ -60,10 +60,10 @@ impl Constraint {
     ) -> Self {
         let (intervals, demands) = tasks
             .into_iter()
-            .map(|(interval, demand)| (interval.index(), demand.into().into()))
+            .map(|(interval, demand)| (interval.index(), LinearExpr::into_proto(demand.into())))
             .unzip();
         Self::of(CumulativeConstraintProto {
-            capacity: MessageField::some(capacity.into().into()),
+            capacity: MessageField::some(LinearExpr::into_proto(capacity.into())),
             intervals,
             demands,
             ..Default::default()
@@ -91,7 +91,12 @@ impl Constraint {
     ) -> Self {
         let (time_exprs, level_changes) = events
             .into_iter()
-            .map(|(time, change)| (time.into().into(), change.into().into()))
+            .map(|(time, change)| {
+                (
+                    LinearExpr::into_proto(time.into()),
+                    LinearExpr::into_proto(change.into()),
+                )
+            })
             .unzip();
         Self::of(reservoir(min_level, max_level, time_exprs, level_changes))
     }
@@ -109,8 +114,8 @@ impl Constraint {
         let mut level_changes = Vec::new();
         let mut active_literals = Vec::new();
         for (time, change, active) in events {
-            time_exprs.push(time.into().into());
-            level_changes.push(change.into().into());
+            time_exprs.push(LinearExpr::into_proto(time.into()));
+            level_changes.push(LinearExpr::into_proto(change.into()));
             active_literals.push(active.index());
         }
         Self::of(ReservoirConstraintProto {
