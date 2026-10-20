@@ -169,7 +169,8 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Rust: `CpModel::new_var(Bool)`
   - Test: `samples.rs::boolean_product`
 - `new_constant`, `True`, `False`
-  - Rust: `CpModel::new_constant` with an `i64` or a `bool`
+  - Rust: `CpModel::new_constant` with an `i64` or a `bool`; each call appends a
+    variable, while Python and C++ share one variable per value
   - Test: `model.rs::constants_and_true_literals_solve_to_their_values`
 - `new_interval_var`, `new_fixed_size_interval_var`
   - Rust: `CpModel::new_var` with `Interval::new` or `Interval::fixed_size`
@@ -382,10 +383,8 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   `get_or_make_boolean_index`, `rebuild_constant_map` inherited from
   `CpBaseModel`
   - Rust: `CpModel::new_constant(value).index()`, typed handle indices,
-    `new_constant(bool)` / `to_literal`; `CpModel::from(proto)` rebuilds the
-    constant cache
-  - Test: `model.rs::constants_survive_round_trips_and_edits`,
-    `equivalence.rs::constants`
+    `new_constant(bool)` / `to_literal`; no constant cache to rebuild
+  - Test: `model.rs::constants_own_their_variables`, `equivalence.rs::constants`
 - `CpModel.is_boolean_value`, `object_is_a_true_literal`,
   `object_is_a_false_literal`
   - Rust: Typed `BoolVar` conversion and explicit inspection of

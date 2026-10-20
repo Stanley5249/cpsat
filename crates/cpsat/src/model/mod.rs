@@ -9,8 +9,6 @@ pub use interval::Interval;
 pub use objective::Objective;
 pub use var::{Bool, Named, NewVar, WithName};
 
-use std::collections::BTreeMap;
-
 use buffa::MessageField;
 
 use crate::constraint::{Constraint, ConstraintIndex};
@@ -70,7 +68,7 @@ impl NewConstant for i64 {
     type Output = IntVar;
 
     fn insert(self, model: &mut CpModel) -> IntVar {
-        model.int_constant(self)
+        IntVar(model.push_variable(vec![self, self], String::new()))
     }
 }
 
@@ -78,9 +76,8 @@ impl sealed::Sealed for bool {}
 impl NewConstant for bool {
     type Output = BoolVar;
 
-    /// `true` and `false` share the variables of `1` and `0`.
     fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.int_constant(self.into()).0)
+        BoolVar(model.push_variable(vec![self.into(); 2], String::new()))
     }
 }
 
@@ -102,19 +99,8 @@ impl NewConstant for bool {
 /// model.add(x.ne(y));
 /// ```
 #[doc(alias("CpModelBuilder"))]
-#[derive(Clone, Debug, Default)]
-pub struct CpModel(CpModelProto, Constants);
-
-/// The variable of each value that [`CpModel::new_constant`] created, so a value
-/// reuses one variable like Python's constant map.
-type Constants = BTreeMap<i64, i32>;
-
-impl PartialEq for CpModel {
-    /// Compares the messages, because the constant map only saves variables.
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct CpModel(CpModelProto);
 
 /// Converts a handle into a `Vec` index, which panics for a negative index
 /// like an index out of range does.
@@ -232,10 +218,11 @@ impl CpModel {
         self.0.variables[slot(var.0)].domain = domain.into().into_flattened_intervals();
     }
 
-    /// A variable fixed to `value`: an [`IntVar`] for an `i64`, and a
+    /// A new variable fixed to `value`: an [`IntVar`] for an `i64`, and a
     /// [`BoolVar`] for a `bool`, which Python writes as `True` or `False`.
-    /// Calls with one value share one variable while its domain stays
-    /// `[value, value]`, and `true` shares the variable of `1`.
+    /// Unlike Python and C++, each call appends its own variable, so
+    /// [`set_domain`](Self::set_domain) on one handle changes no other handle.
+    /// Reuse the handle to share one variable.
     ///
     /// Use it where the schema needs a variable or a literal, such as in
     /// [`Constraint::inverse`] or [`Constraint::bool_or`]. An expression takes
@@ -247,23 +234,6 @@ impl CpModel {
     #[doc(alias("TrueVar", "FalseVar"))]
     pub fn new_constant<C: NewConstant>(&mut self, value: C) -> C::Output {
         value.insert(self)
-    }
-
-    /// The variable fixed to `value`, reused while its domain stays
-    /// `[value, value]`.
-    fn int_constant(&mut self, value: i64) -> IntVar {
-        if let Some(&index) = self.1.get(&value)
-            && self
-                .0
-                .variables
-                .get(slot(index))
-                .is_some_and(|variable| variable.domain == [value, value])
-        {
-            return IntVar(index);
-        }
-        let index = self.push_variable(vec![value, value], String::new());
-        self.1.insert(value, index);
-        IntVar(index)
     }
 
     /// Inserts a constraint.
@@ -339,21 +309,9 @@ impl CpModel {
 }
 
 impl From<CpModelProto> for CpModel {
-    /// Wraps an existing model, like Python's `CpModel(model_proto)`. Like
-    /// Python, the first variable fixed to each value becomes that value's
-    /// constant.
+    /// Wraps an existing model, like Python's `CpModel(model_proto)`.
     fn from(proto: CpModelProto) -> Self {
-        let mut constants = Constants::new();
-        for (index, variable) in proto.variables.iter().enumerate() {
-            if let &[lower, upper] = variable.domain.as_slice()
-                && lower == upper
-            {
-                constants
-                    .entry(lower)
-                    .or_insert_with(|| next_index(index, "variables"));
-            }
-        }
-        Self(proto, constants)
+        Self(proto)
     }
 }
 

@@ -415,25 +415,18 @@ fn only_domains_within_zero_and_one_are_literals() {
     assert_eq!(model.to_literal(empty), None);
 }
 
+/// Unlike Python's constant map, each constant owns its variable, so editing
+/// one leaves the others fixed.
 #[test]
-fn constants_survive_round_trips_and_edits() {
+fn constants_own_their_variables() {
     let mut model = CpModel::new();
     let five = model.new_constant(5);
-    assert_eq!(model.new_constant(5), five);
+    let other = model.new_constant(5);
+    assert_ne!(five, other);
+    assert_ne!(model.new_constant(true).variable(), model.new_constant(1));
 
-    // Like Python's clone, a rebuilt model reuses any fixed variable.
-    let mut proto = model.into_proto();
-    proto.variables[0].domain = vec![7, 7];
-    let mut model = CpModel::from(proto);
-    assert_eq!(model.new_constant(7), five);
-    assert_eq!(model.clone().new_constant(7), five);
-
-    // An edited or removed variable no longer serves its old value.
-    model.proto_mut().variables.clear();
-    let seven = model.new_constant(7);
-    assert_eq!(seven.index(), 0);
-    model.set_domain(seven, 0..=9);
-    assert_ne!(model.new_constant(7), seven);
+    model.set_domain(other, 0..=9);
+    assert_eq!(model[five].domain, [5, 5]);
 }
 
 /// Handles order by index, so they key sorted collections, while the

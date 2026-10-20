@@ -202,11 +202,12 @@ fn maximize_float() {
 fn constants() {
     let mut model = CpModel::new();
     let (x, _, b, _) = variables(&mut model);
+    // Python shares one variable per value, so the Rust side reuses handles.
     let five = model.new_constant(5);
     model.add(x.eq(five));
-    let (five, one) = (model.new_constant(5), model.new_constant(1));
+    let one = model.new_constant(1);
     model.add(x.le(five + one));
-    let yes = model.new_constant(true);
+    let yes = model.to_literal(one).expect("1 is a 0-1 value");
     model.add(Constraint::bool_or([yes, b]));
     let no = model.new_constant(false);
     model.add(Constraint::bool_and([no]).only_enforce_if(b));
