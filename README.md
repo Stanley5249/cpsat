@@ -29,14 +29,13 @@ use std::ops::ControlFlow;
 use cpsat::prelude::*;
 use cpsat::proto::SatParameters;
 
+// From `solve_and_print_intermediate_solutions_sample_sat.py`.
 let mut model = Model::new();
-let x = model.new_var(0..=10);
-let y = model.new_var(0..=10);
-let enabled = model.new_var(Bool);
-model.add((x + 2 * y).le(14));
-model.add(x.ne(y).only_enforce_if(enabled));
-model.add(Constraint::all_different([x, y]));
-model.maximize(x + y);
+let x = model.new_var((0..=2).with_name("x"));
+let y = model.new_var((0..=2).with_name("y"));
+let z = model.new_var((0..=2).with_name("z"));
+model.add(x.ne(y));
+model.maximize(x + 2 * y + 3 * z);
 
 let response = model.solve(&SatParameters::default())?;
 println!("{}: x = {:?}", response.status(), response.value(x));
