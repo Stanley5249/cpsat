@@ -129,7 +129,8 @@ Every change follows these rules.
   same pattern of names, such as `model` with `model_proto` and `parameters`
   with `parameters_proto`.
 - **Files.** A file takes the spelling of the types it holds. Sibling modules
-  may reuse a file name, as `expr/linear.rs` and `constraint/linear.rs` do.
+  may reuse a file name, as the `expr::linear` and `constraint::linear` modules
+  do.
 - **Parity.** Where a Python name breaks a Rust convention or the API's own
   pattern, the Rust name wins and the Python name becomes a `#[doc(alias)]`.
 - **Entry points.** One method per meaning. Several input types share one method
