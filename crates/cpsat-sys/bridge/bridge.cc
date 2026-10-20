@@ -204,8 +204,8 @@ void cpsat_session_stop(CpsatSession* session) {
 }
 
 int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
-                            size_t model_len, const uint8_t* params,
-                            size_t params_len, uint32_t events,
+                            size_t model_len, const uint8_t* parameters,
+                            size_t parameters_len, uint32_t events,
                             CpsatEventFn on_event, void* context,
                             CpsatBuffer* response, CpsatBuffer* error) {
   return Guard(response, error, [&] {
@@ -213,13 +213,13 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
     session->used = true;
     CpModelProto model_proto;
     Parse(model_proto, model, model_len, "CpModelProto");
-    SatParameters parameters;
-    Parse(parameters, params, params_len, "SatParameters");
+    SatParameters parameters_proto;
+    Parse(parameters_proto, parameters, parameters_len, "SatParameters");
 
     session->on_event = on_event;
     session->context = context;
     SolveWrapper& solve_wrapper = session->solve_wrapper;
-    solve_wrapper.SetParameters(parameters);
+    solve_wrapper.SetParameters(parameters_proto);
 
     if (events & CPSAT_EVENT_SOLUTION) {
       solve_wrapper.AddSolutionCallback(session->observer);
@@ -270,11 +270,11 @@ int32_t cpsat_response_stats(const uint8_t* response, size_t response_len,
   });
 }
 
-int32_t cpsat_parameters_default(CpsatBuffer* params, CpsatBuffer* error) {
-  return Guard(params, error, [&] {
-    SatParameters parameters;
-    SetDefaults(parameters);
-    FillMessage(params, parameters);
+int32_t cpsat_parameters_default(CpsatBuffer* parameters, CpsatBuffer* error) {
+  return Guard(parameters, error, [&] {
+    SatParameters parameters_proto;
+    SetDefaults(parameters_proto);
+    FillMessage(parameters, parameters_proto);
   });
 }
 

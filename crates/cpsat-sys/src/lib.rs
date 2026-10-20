@@ -60,8 +60,8 @@ unsafe extern "C" {
         session: *mut CpsatSession,
         model: *const u8,
         model_len: usize,
-        params: *const u8,
-        params_len: usize,
+        parameters: *const u8,
+        parameters_len: usize,
         events: u32,
         on_event: Option<CpsatEventFn>,
         context: *mut c_void,
@@ -86,6 +86,6 @@ unsafe extern "C" {
         stats: *mut CpsatBuffer,
         error: *mut CpsatBuffer,
     ) -> i32;
-    pub fn cpsat_parameters_default(params: *mut CpsatBuffer, error: *mut CpsatBuffer) -> i32;
+    pub fn cpsat_parameters_default(parameters: *mut CpsatBuffer, error: *mut CpsatBuffer) -> i32;
     pub fn cpsat_buffer_free(buffer: *mut CpsatBuffer);
 }

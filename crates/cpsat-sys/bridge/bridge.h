@@ -64,8 +64,8 @@ void cpsat_session_stop(CpsatSession* session);
 // events is a bitwise OR of CpsatEventKind values to subscribe to. on_event
 // may be null when events is 0.
 int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
-                            size_t model_len, const uint8_t* params,
-                            size_t params_len, uint32_t events,
+                            size_t model_len, const uint8_t* parameters,
+                            size_t parameters_len, uint32_t events,
                             CpsatEventFn on_event, void* context,
                             CpsatBuffer* response, CpsatBuffer* error);
 
@@ -79,8 +79,8 @@ int32_t cpsat_model_stats(const uint8_t* model, size_t model_len,
 int32_t cpsat_response_stats(const uint8_t* response, size_t response_len,
                              CpsatBuffer* stats, CpsatBuffer* error);
 
-// *params is a SatParameters with every singular field set to its default.
-int32_t cpsat_parameters_default(CpsatBuffer* params, CpsatBuffer* error);
+// *parameters is a SatParameters with every singular field set to its default.
+int32_t cpsat_parameters_default(CpsatBuffer* parameters, CpsatBuffer* error);
 
 void cpsat_buffer_free(CpsatBuffer* buffer);
 
