@@ -23,8 +23,10 @@
 //!
 //! let parameters = SatParameters::default().with_num_workers(8);
 //! let response = model.solve(&parameters)?;
-//! for var in [x, y, z] {
-//!     println!("{:?}", response.value(var));
+//! if let Some(solution) = response.solution() {
+//!     for var in [x, y, z] {
+//!         println!("{}", solution.value(var));
+//!     }
 //! }
 //! # Ok::<(), cpsat::Error>(())
 //! ```

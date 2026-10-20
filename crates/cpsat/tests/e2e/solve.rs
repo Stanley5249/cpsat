@@ -3,7 +3,7 @@
 
 use buffa::Message;
 use cpsat::prelude::*;
-use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
+use cpsat::proto::{CpModelProto, CpSolverResponse, CpSolverStatus, SatParameters};
 
 /// max 2x + 3y subject to x + y <= 4, x + 3y <= 6, x, y in [0, 10].
 /// The optimum is x = 3, y = 1 with objective 9.
@@ -25,11 +25,12 @@ fn single_worker() -> SatParameters {
 fn solves_to_optimality() {
     let (model, x, y) = small_model();
     let response = model.solve(&SatParameters::default()).unwrap();
+    let solution = response.solution().unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
-    assert_eq!((response.value(x), response.value(y)), (Some(3), Some(1)));
-    assert_eq!(response.value(2 * x + 3 * y - 1), Some(8));
+    assert_eq!((solution.value(x), solution.value(y)), (3, 1));
+    assert_eq!(solution.value(2 * x + 3 * y - 1), 8);
     let objective = 2 * x + 3 * y;
-    assert_eq!(response.value(&objective), Some(9));
+    assert_eq!(solution.value(&objective), 9);
     assert!((response.objective_value - 9.0).abs() < 1e-9);
     assert!((response.best_objective_bound - 9.0).abs() < 1e-9);
 }
@@ -41,17 +42,26 @@ fn reads_negated_literals_and_expressions() {
     let b = model.new_var(Bool);
     model.add(b.eq(1));
     let response = model.solve(&SatParameters::default()).unwrap();
-    assert_eq!(response.value(-x), Some(-4));
-    assert_eq!(response.value(7), Some(7));
-    assert_eq!(response.value(b), Some(true));
-    assert_eq!(response.value(!b), Some(false));
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(-x), -4);
+    assert_eq!(solution.value(7), 7);
+    assert!(solution.value(b));
+    assert!(!solution.value(!b));
     // In an expression, `!b` counts as `1 - b`.
-    assert_eq!(response.value(LinearExpr::from(!b)), Some(0));
+    assert_eq!(solution.value(LinearExpr::from(!b)), 0);
+}
 
-    // A handle from a larger model is out of range here.
+#[test]
+#[should_panic(expected = "index out of bounds")]
+fn a_handle_from_a_larger_model_panics() {
     let mut larger = CpModel::new();
     let [.., far]: [IntVar; 3] = std::array::from_fn(|_| larger.new_var(0..=1));
-    assert_eq!(response.value(far), None);
+    let response = CpSolverResponse {
+        status: CpSolverStatus::OPTIMAL.into(),
+        solution: vec![0],
+        ..Default::default()
+    };
+    let _ = response.solution().unwrap().value(far);
 }
 
 #[test]
@@ -68,7 +78,7 @@ fn reports_infeasible() {
     model.add(x.in_domain(5..=10));
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::INFEASIBLE);
-    assert_eq!(response.value(x), None);
+    assert_eq!(response.solution(), None);
 }
 
 #[test]
@@ -93,7 +103,8 @@ fn resolves_after_model_change() {
     model.maximize(y);
     model.proto_mut().constraints.truncate(1);
     let response = model.solve(&single_worker()).unwrap();
-    assert_eq!(response.value(y), Some(4));
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(y), 4);
 }
 
 #[test]
@@ -165,10 +176,11 @@ fn solves_a_float_objective_like_python() {
     let objective = 0.5 * x - 1.25 * y;
     model.minimize(&objective);
     let response = model.solve(&SatParameters::default()).unwrap();
+    let solution = response.solution().unwrap();
     // Python's OR-Tools 9.15 reports -8.75 at x = 0, y = 7.
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert!((response.objective_value + 8.75).abs() < 1e-9);
-    assert_eq!(response.value(0.5 * x + y), Some(7.0));
+    assert_eq!(solution.value(0.5 * x + y), 7.0);
 }
 
 /// Search counters vary between runs, so they are checked for sanity, not
@@ -200,7 +212,7 @@ fn reports_search_statistics_and_log() {
 }
 
 /// Python's `values` returns a pandas `Series`; Rust maps the accessor over
-/// any collection and keeps its order, with `None` for a missing value.
+/// any collection and keeps its order.
 #[test]
 fn evaluates_collections_in_order() {
     let mut model = CpModel::new();
@@ -209,19 +221,14 @@ fn evaluates_collections_in_order() {
     model.add(literals[0].eq(1));
     model.add(literals[1].eq(0));
     let response = model.solve(&SatParameters::default()).unwrap();
+    let solution = response.solution().unwrap();
 
-    let mut larger = CpModel::new();
-    let [.., far]: [IntVar; 6] = std::array::from_fn(|_| larger.new_var(0..=1));
-    let values: Vec<_> = vars
-        .iter()
-        .chain([&far])
-        .map(|&var| response.value(var))
-        .collect();
-    assert_eq!(values, [Some(3), Some(1), Some(2), None]);
-    let booleans = literals.map(|literal| response.value(literal));
-    assert_eq!(booleans, [Some(true), Some(false)]);
-    let floats = vars.map(|var| response.value(0.5 * var));
-    assert_eq!(floats, [Some(1.5), Some(0.5), Some(1.0)]);
+    let values: Vec<_> = vars.iter().map(|&var| solution.value(var)).collect();
+    assert_eq!(values, [3, 1, 2]);
+    let booleans = literals.map(|literal| solution.value(literal));
+    assert_eq!(booleans, [true, false]);
+    let floats = vars.map(|var| solution.value(0.5 * var));
+    assert_eq!(floats, [1.5, 0.5, 1.0]);
 
     // A weighted sum zips variables with weights. `zip` stops at the shorter
     // side, so the caller checks the lengths that Python checks.
@@ -231,5 +238,5 @@ fn evaluates_collections_in_order() {
         .zip(weights)
         .map(|(var, weight)| var * weight)
         .sum();
-    assert_eq!(response.value(total), Some(216));
+    assert_eq!(solution.value(total), 216);
 }

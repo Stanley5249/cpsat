@@ -56,8 +56,9 @@ fn builds_a_variable_with_holes() {
     let x = model.new_var(Domain::from_values([1, 3, 5]));
     model.maximize(x);
     let response = model.solve(&SatParameters::default()).unwrap();
+    let solution = response.solution().unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
-    assert_eq!(response.value(x), Some(5));
+    assert_eq!(solution.value(x), 5);
 }
 
 #[test]

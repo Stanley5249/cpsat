@@ -104,28 +104,27 @@ impl LinearExpr {
         self.terms.is_empty().then_some(self.offset)
     }
 
-    /// The value under `solution`, indexed by variable, or `None` if a
-    /// variable is out of range.
+    /// The value under `solution`, indexed by variable.
     ///
     /// # Panics
     ///
-    /// If the value overflows `i64`, or a partial sum overflows `i128`, which
-    /// takes several products near `2^126`.
-    pub(crate) fn value_in(&self, solution: &[i64]) -> Option<i64> {
+    /// If a variable is out of range, like indexing a slice, if the value
+    /// overflows `i64`, or if a partial sum overflows `i128`, which takes
+    /// several products near `2^126`.
+    pub(crate) fn value_in(&self, solution: &[i64]) -> i64 {
         // Each product fits i128, so terms that cancel, such as those of
         // `4 * x - 3 * x`, do not overflow on the way to the result unless
         // the products themselves approach the i128 limit.
         let sum = self
             .terms
             .iter()
-            .try_fold(i128::from(self.offset), |sum, &(var, coeff)| {
-                let value = solution.get(usize::try_from(var).ok()?)?;
-                Some(
-                    sum.checked_add(i128::from(coeff) * i128::from(*value))
-                        .expect(OVERFLOW),
-                )
-            })?;
-        Some(i64::try_from(sum).expect(OVERFLOW))
+            .fold(i128::from(self.offset), |sum, &(var, coeff)| {
+                let value =
+                    solution[usize::try_from(var).expect("a variable index is non-negative")];
+                sum.checked_add(i128::from(coeff) * i128::from(value))
+                    .expect(OVERFLOW)
+            });
+        i64::try_from(sum).expect(OVERFLOW)
     }
 }
 
@@ -166,7 +165,7 @@ impl LinearExpr {
 }
 
 impl From<&Self> for LinearExpr {
-    /// Clones the expression, so `response.value(&expr)` keeps `expr`.
+    /// Clones the expression, so `solution.value(&expr)` keeps `expr`.
     fn from(expr: &Self) -> Self {
         expr.clone()
     }

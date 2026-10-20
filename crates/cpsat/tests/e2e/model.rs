@@ -110,10 +110,11 @@ fn constants_and_true_literals_solve_to_their_values() {
         [(x, 2, yes), (seven, -2, no)],
     ));
     let response = model.solve(&SatParameters::default()).unwrap();
+    let solution = response.solution().unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
-    assert_eq!(response.value(x), Some(8));
-    assert_eq!(response.value(yes), Some(true));
-    assert_eq!(response.value(no), Some(false));
+    assert_eq!(solution.value(x), 8);
+    assert!(solution.value(yes));
+    assert!(!solution.value(no));
 }
 
 #[test]
@@ -224,12 +225,8 @@ fn constants_that_mean_infinity_panic_like_python() {
 }
 
 #[test]
-fn values_without_a_solution() {
-    let mut model = CpModel::new();
-    let x = model.new_var(0..=1);
-    let response = CpSolverResponse::default();
-    assert_eq!(response.value(x), None);
-    assert_eq!(response.value(LinearExpr::constant(3)), Some(3));
+fn a_response_without_a_solution_has_none() {
+    assert_eq!(CpSolverResponse::default().solution(), None);
 }
 
 #[test]
@@ -238,10 +235,12 @@ fn evaluation_overflow_panics() {
     let mut model = CpModel::new();
     let x = model.new_var(0..=1);
     let response = CpSolverResponse {
+        status: CpSolverStatus::OPTIMAL.into(),
         solution: vec![i64::MAX / 2],
         ..Default::default()
     };
-    let _ = response.value(x * 4);
+    let solution = response.solution().unwrap();
+    let _ = solution.value(x * 4);
 }
 
 #[test]
@@ -249,13 +248,12 @@ fn evaluation_cancels_terms_before_overflow() {
     let mut model = CpModel::new();
     let x = model.new_var(0..=3_000_000_000_000_000_000);
     let response = CpSolverResponse {
+        status: CpSolverStatus::OPTIMAL.into(),
         solution: vec![3_000_000_000_000_000_000],
         ..Default::default()
     };
-    assert_eq!(
-        response.value(4 * x - 3 * x),
-        Some(3_000_000_000_000_000_000)
-    );
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(4 * x - 3 * x), 3_000_000_000_000_000_000);
 }
 
 #[test]
@@ -384,11 +382,13 @@ fn float_operators_mix_constants_and_expressions() {
     expr += 2 * x;
     expr *= 2.0;
     let response = CpSolverResponse {
+        status: CpSolverStatus::OPTIMAL.into(),
         solution: vec![3],
         ..Default::default()
     };
-    assert_eq!(response.value(&expr), Some(13.5));
-    assert_eq!(response.value(x - 0.5), Some(2.5));
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(&expr), 13.5);
+    assert_eq!(solution.value(x - 0.5), 2.5);
 }
 
 #[test]
@@ -401,7 +401,8 @@ fn a_zero_one_variable_serves_as_a_literal() {
     assert_eq!(model.to_bool_var(wide), None);
     model.add(Constraint::bool_or([literal]));
     let response = model.solve(&SatParameters::default()).unwrap();
-    assert_eq!(response.value(flag), Some(1));
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(flag), 1);
 }
 
 #[test]
@@ -451,5 +452,6 @@ fn handles_order_by_index_and_compare_into_constraints() {
     model.add(constraint);
     model.maximize(x);
     let response = model.solve(&SatParameters::default()).unwrap();
-    assert_eq!(response.value(x), Some(4));
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(x), 4);
 }

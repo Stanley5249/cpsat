@@ -42,8 +42,8 @@ and Names rules in `docs/design.md`.
   - OR-Tools: `SolutionCallback`
   - Test: `samples.rs::solve_and_print_intermediate_solutions`
 - `CpSolverSolutionCallback.value`, `boolean_value`, `float_value`
-  - Rust: `CpSolverResponseView::value`, which reads a literal as `bool` and a
-    `FloatExpr` as `f64`
+  - Rust: `CpSolverResponseView::solution`, then `Solution::value`, which reads
+    a literal as `bool` and a `FloatExpr` as `f64`
   - OR-Tools: none
   - Test: `events.rs::solution_view_reads_values_and_converts_to_owned`,
     `solution_view_accessors_match_the_owned_response`
@@ -76,8 +76,9 @@ and Names rules in `docs/design.md`.
   - OR-Tools: none
   - Test: `solve.rs::fills_additional_solutions_when_asked`
 - `CpSolver.value`, `boolean_value`, `float_value`
-  - Rust: `CpSolverResponse::value`, which reads a literal as `bool` and a
-    `FloatExpr` as `f64`
+  - Rust: `CpSolverResponse::solution`, then `Solution::value`, which reads a
+    literal as `bool` and a `FloatExpr` as `f64`; `additional_solutions` reads
+    the solution pool the same way
   - OR-Tools: none
   - Test: `solve.rs::reads_negated_literals_and_expressions`,
     `solve.rs::solves_a_float_objective_like_python`
@@ -121,8 +122,8 @@ and Names rules in `docs/design.md`.
   - Test: `solve.rs::reports_search_statistics_and_log` covers `solve_log`;
     `solution_info` has no direct test
 - `CpSolver.values`, `boolean_values`, `float_values`
-  - Rust: Iterate the corresponding response accessor and collect `Option`
-    values; Python returns a pandas `Series` preserving the input index
+  - Rust: Map `Solution::value` over the handles and collect; Python returns a
+    pandas `Series` preserving the input index
   - OR-Tools: none
   - Test: `solve.rs::evaluates_collections_in_order`
 - `CpSolverSolutionCallback.has_response`, `response_proto`
@@ -497,6 +498,8 @@ or mutable solver state with types.
 - `From` ranges, `FromIterator`, `PartialEq`, `intervals` on `Domain`: Build a
   domain from `0..=10` or values, and compare normalized sets
 - `CpSolverStatus::has_solution`: True for `OPTIMAL` and `FEASIBLE`
+- `Solution`: One value per variable, which `solution` and
+  `additional_solutions` borrow from a response
 
 ## Limitations
 
@@ -505,9 +508,9 @@ or mutable solver state with types.
   the description. Python's `export_to_file` returns a success Boolean; Rust
   callers handle the result of their chosen file-writing operation.
 - Python's `solve` returns a status and stores its response on the solver. Rust
-  returns an owned response, and response access is explicit. Variable accessors
-  return `Option` for missing values, while Python can raise on unavailable
-  response access. Constants can still be evaluated without a solution.
+  returns an owned response, and response access is explicit. `solution` returns
+  `None` without a solution, where Python raises, and the values it returns need
+  no further checks.
 - Python constructors accept names, and constraint methods mutate an already
   inserted constraint. Rust names variables and intervals with `with_name`
   before `new_var`, configures a `Constraint` before insertion, and changes it

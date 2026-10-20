@@ -69,19 +69,20 @@ impl FloatExpr {
         (vars, coeffs, self.offset)
     }
 
-    /// The value under `solution`, indexed by variable, or `None` if a
-    /// variable is out of range.
+    /// The value under `solution`, indexed by variable.
+    ///
+    /// # Panics
+    ///
+    /// If a variable is out of range, like indexing a slice.
     #[expect(
         clippy::cast_precision_loss,
         reason = "Python evaluates float expressions in doubles too"
     )]
-    pub(crate) fn value_in(&self, solution: &[i64]) -> Option<f64> {
-        self.terms
-            .iter()
-            .try_fold(self.offset, |sum, &(var, coeff)| {
-                let value = solution.get(usize::try_from(var).ok()?)?;
-                Some(sum + coeff * *value as f64)
-            })
+    pub(crate) fn value_in(&self, solution: &[i64]) -> f64 {
+        self.terms.iter().fold(self.offset, |sum, &(var, coeff)| {
+            let value = solution[usize::try_from(var).expect("a variable index is non-negative")];
+            sum + coeff * value as f64
+        })
     }
 }
 
@@ -121,7 +122,7 @@ impl From<&LinearExpr> for FloatExpr {
 }
 
 impl From<&Self> for FloatExpr {
-    /// Clones the expression, so `response.value(&expr)` keeps `expr`.
+    /// Clones the expression, so `solution.value(&expr)` keeps `expr`.
     fn from(expr: &Self) -> Self {
         expr.clone()
     }

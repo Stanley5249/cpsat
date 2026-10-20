@@ -134,7 +134,9 @@ Every change follows these rules.
   mistakes, such as a negated literal where the schema wants a variable or an
   open range such as `0..` as a variable domain. The validator checks what
   depends on the model's current state, such as a variable's domain or an
-  earlier hint. Check eagerly only what the validator cannot see.
+  earlier hint. Check eagerly only what the validator cannot see. Trust what
+  OR-Tools returns and decode it without checks, so only a caller's mistake,
+  such as a handle from another model, panics while reading a response.
 - **Matched lists.** Items that belong together form one tuple, such as the
   `(interval, demand)` pairs of `cumulative`, so their lists cannot differ in
   length. Lists whose lengths must match but whose items do not pair, such as
@@ -221,5 +223,8 @@ model.add(constraint) ---- move into model ----> ConstraintIndex(i32)
 - **Compositions.** Python helpers that compose other calls, such as
   `add_map_domain` and `weighted_sum`, stay compositions, and `docs/parity.md`
   gives each encoding.
-- **Responses.** `value` takes any `Evaluate` input and returns an `Option` of
-  `i64`, `bool`, or `f64` to match it, on both the owned response and the view.
+- **Responses.** `solution` returns a `Solution` when the status has one, on
+  both the owned response and the view, and `Solution::value` takes any
+  `Evaluate` input and returns an `i64`, `bool`, or `f64` to match it. A
+  `Solution` borrows one `repeated int64` row, so `additional_solutions` reads
+  the same way.

@@ -13,6 +13,10 @@ fn main() -> Result<()> {
     model.maximize(x + y);
 
     let response = model.solve(&SatParameters::default())?;
-    println!("{}: x + y = {:?}", response.status(), response.value(x + y));
+    println!(
+        "{}: x + y = {:?}",
+        response.status(),
+        response.solution().map(|s| s.value(x + y))
+    );
     Ok(())
 }

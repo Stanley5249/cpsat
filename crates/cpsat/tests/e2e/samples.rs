@@ -27,7 +27,11 @@ fn all_solutions<const N: usize>(
     let response = CpSolver::new(&parameters.with_enumerate_all_solutions(true))
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
-                solutions.push(exprs.each_ref().map(|expr| view.value(expr).unwrap()));
+                solutions.push(
+                    exprs
+                        .each_ref()
+                        .map(|expr| view.solution().unwrap().value(expr)),
+                );
             }
             ControlFlow::Continue(())
         })
@@ -45,9 +49,10 @@ fn simple_sat_program() {
     model.add(x.ne(y));
 
     let response = model.solve(&SatParameters::default()).unwrap();
+    let solution = response.solution().unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
-    assert_ne!(response.value(x), response.value(y));
-    assert!(response.value(z).is_some_and(|z| (0..=2).contains(&z)));
+    assert_ne!(solution.value(x), solution.value(y));
+    assert!((0..=2).contains(&solution.value(z)));
 }
 
 /// `cp_sat_example.py`
@@ -185,8 +190,9 @@ fn rabbits_and_pheasants() {
     model.add((4 * rabbits + 2 * pheasants).eq(56));
 
     let response = solve_optimal(&model);
-    assert_eq!(response.value(rabbits), Some(8));
-    assert_eq!(response.value(pheasants), Some(12));
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(rabbits), 8);
+    assert_eq!(solution.value(pheasants), 12);
 }
 
 /// `boolean_product_sample_sat.py`
@@ -280,10 +286,8 @@ fn non_linear() {
     model.maximize(area);
 
     let response = solve_optimal(&model);
-    assert_eq!(
-        [x, y, area].map(|var| response.value(var)),
-        [Some(5), Some(5), Some(25)]
-    );
+    let solution = response.solution().unwrap();
+    assert_eq!([x, y, area].map(|var| solution.value(var)), [5, 5, 25]);
 }
 
 /// `nqueens_sat.py` with its default board size of 8.
@@ -384,7 +388,10 @@ fn no_overlap() {
     model.add(Constraint::max_equality(makespan, ends));
     model.minimize(makespan);
 
-    assert_eq!(solve_optimal(&model).value(makespan), Some(11));
+    assert_eq!(
+        solve_optimal(&model).solution().unwrap().value(makespan),
+        11
+    );
 }
 
 /// `minimal_jobshop_sat.py`
@@ -489,10 +496,11 @@ fn ranking_circuit() {
     model.minimize(2 * makespan - 7 * presences.iter().copied().sum::<LinearExpr>());
 
     let response = solve_optimal(&model);
+    let solution = response.solution().unwrap();
     assert!((response.objective_value + 9.0).abs() < 1e-9);
-    assert_eq!(response.value(makespan), Some(6));
-    let performed: Vec<_> = presences.iter().map(|&p| response.value(p)).collect();
-    assert_eq!(performed, [Some(true), Some(true), Some(true), Some(false)]);
+    assert_eq!(solution.value(makespan), 6);
+    let performed: Vec<_> = presences.iter().map(|&p| solution.value(p)).collect();
+    assert_eq!(performed, [true, true, true, false]);
 }
 
 /// `assignment_groups_sat.py`, which limits which workers work with
@@ -619,8 +627,9 @@ fn solve_with_time_limit() {
     let parameters = SatParameters::default().with_max_time_in_seconds(10.0);
 
     let response = model.solve(&parameters).unwrap();
+    let solution = response.solution().unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
-    assert_ne!(response.value(x), response.value(y));
+    assert_ne!(solution.value(x), solution.value(y));
 }
 
 /// The (duration, load, priority) of t1 to t30 in `cumulative_variable_profile`.
@@ -728,15 +737,15 @@ fn cumulative_variable_profile() {
     );
 
     let response = model.solve(&SatParameters::default()).unwrap();
-    assert!(response.status().has_solution(), "{}", response.status());
+    let solution = response.solution().expect("the sample finds a solution");
 
     // The sample's `check_solution`.
     let mut load_profile = vec![0; usize::try_from(horizon).unwrap()];
     for (&start, (&(duration, load, _), &presence)) in
         starts.iter().zip(tasks.iter().zip(&performed))
     {
-        if response.value(presence) == Some(true) {
-            let start = usize::try_from(response.value(start).unwrap()).unwrap();
+        if solution.value(presence) {
+            let start = usize::try_from(solution.value(start)).unwrap();
             for slot in &mut load_profile[start..start + usize::try_from(duration).unwrap()] {
                 *slot += load;
             }

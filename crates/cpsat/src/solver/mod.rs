@@ -12,5 +12,5 @@ mod stop;
 pub use builder::{CpSolver, NoEvents};
 pub use diagnostics::default_parameters;
 pub use event::{Event, EventSet};
-pub use response::Evaluate;
+pub use response::{Evaluate, Solution};
 pub use stop::StopHandle;

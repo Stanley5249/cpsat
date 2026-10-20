@@ -40,7 +40,9 @@ fn main() -> cpsat::Result<()> {
     model.maximize(x + 2 * y + 3 * z);
 
     let response = model.solve(&SatParameters::default())?;
-    println!("{}: x = {:?}", response.status(), response.value(x));
+    if let Some(solution) = response.solution() {
+        println!("{}: x = {}", response.status(), solution.value(x));
+    }
 
     let stop = StopHandle::new();
     let response = CpSolver::new(&SatParameters::default().with_num_workers(8))

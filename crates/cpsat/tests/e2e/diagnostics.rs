@@ -49,7 +49,8 @@ fn reads_parameter_defaults_from_or_tools() {
     let x = model.new_var(0..=3);
     model.maximize(x);
     let response = model.solve(&parameters).unwrap();
-    assert_eq!(response.value(x), Some(3));
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(x), 3);
 }
 
 /// Python accepts these models at build time and leaves the check to the

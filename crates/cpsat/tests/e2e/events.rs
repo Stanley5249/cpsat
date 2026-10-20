@@ -44,7 +44,7 @@ fn solution_view_reads_values_and_converts_to_owned() {
     CpSolver::default()
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
-                seen = view.value(x);
+                seen = view.solution().map(|solution| solution.value(x));
                 owned = Some(view.to_owned_message().unwrap());
             }
             ControlFlow::Continue(())
@@ -52,7 +52,8 @@ fn solution_view_reads_values_and_converts_to_owned() {
         .solve(model.proto())
         .unwrap();
     assert_eq!(seen, Some(3));
-    assert_eq!(owned.unwrap().value(x), Some(3));
+    let owned = owned.unwrap();
+    assert_eq!(owned.solution().map(|solution| solution.value(x)), Some(3));
 }
 
 #[test]
@@ -263,54 +264,31 @@ fn solution_view_accessors_match_the_owned_response() {
     model.add(b.eq(1));
     model.add(c.eq(0));
     model.maximize(x);
-    // Handles from a larger model are out of range here.
-    let mut larger = CpModel::new();
-    let [.., far]: [IntVar; 4] = std::array::from_fn(|_| larger.new_var(0..=1));
-    let far_literal = larger.new_var(Bool);
-
-    let read = |value: &dyn Fn(LinearExpr) -> Option<i64>,
-                boolean: &dyn Fn(BoolVar) -> Option<bool>,
-                float: &dyn Fn(FloatExpr) -> Option<f64>| {
+    let read = |solution: Solution<'_>| {
         (
-            [value(x.into()), value(2 * x - 1), value(far.into())],
+            [solution.value(x), solution.value(2 * x - 1)],
             [
-                boolean(b),
-                boolean(!b),
-                boolean(c),
-                boolean(!c),
-                boolean(far_literal),
+                solution.value(b),
+                solution.value(!b),
+                solution.value(c),
+                solution.value(!c),
             ],
-            [float(0.5 * x + 1.25), float(x + 0.5 * !b), float(0.5 * far)],
+            [solution.value(0.5 * x + 1.25), solution.value(x + 0.5 * !b)],
         )
     };
     let mut seen = None;
     let response = CpSolver::new(&SatParameters::default().with_num_workers(1))
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
-                seen = Some(read(
-                    &|expr| view.value(expr),
-                    &|literal| view.value(literal),
-                    &|expr| view.value(expr),
-                ));
+                seen = view.solution().map(read);
             }
             ControlFlow::Continue(())
         })
         .solve(model.proto())
         .unwrap();
-    let owned = read(
-        &|expr| response.value(expr),
-        &|literal| response.value(literal),
-        &|expr| response.value(expr),
-    );
+    let owned = read(response.solution().unwrap());
     assert_eq!(seen, Some(owned));
-    assert_eq!(
-        owned,
-        (
-            [Some(3), Some(5), None],
-            [Some(true), Some(false), Some(false), Some(true), None],
-            [Some(2.75), Some(3.0), None],
-        )
-    );
+    assert_eq!(owned, ([3, 5], [true, false, false, true], [2.75, 3.0]));
 }
 
 #[test]
@@ -322,7 +300,8 @@ fn solution_view_carries_search_statistics() {
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 // The objective is x, maximized.
-                let objective = f64::from(i32::try_from(view.value(x).unwrap()).unwrap());
+                let value = view.solution().unwrap().value(x);
+                let objective = f64::from(i32::try_from(value).unwrap());
                 assert!((view.objective_value - objective).abs() < 1e-9);
                 assert!(
                     view.num_booleans >= 0 && view.num_conflicts >= 0 && view.num_branches >= 0

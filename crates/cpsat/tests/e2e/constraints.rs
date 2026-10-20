@@ -7,9 +7,8 @@ use cpsat::proto::{CpSolverResponse, CpSolverStatus, SatParameters};
 use crate::common::{map_domain, solve_optimal};
 
 fn values(response: &CpSolverResponse, vars: impl IntoIterator<Item = IntVar>) -> Vec<i64> {
-    vars.into_iter()
-        .map(|var| response.value(var).unwrap())
-        .collect()
+    let solution = response.solution().unwrap();
+    vars.into_iter().map(|var| solution.value(var)).collect()
 }
 
 #[test]
@@ -19,7 +18,8 @@ fn element_picks_the_index_of_the_target() {
     model.add(Constraint::element(index, [10, 20, 30], 30));
     model.minimize(index);
     let response = solve_optimal(&model);
-    assert_eq!(response.value(index), Some(2));
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(index), 2);
 }
 
 #[test]
@@ -82,7 +82,8 @@ fn reservoir_drains_only_after_filling() {
     model.add(fill.eq(4));
     model.minimize(drain);
     let response = solve_optimal(&model);
-    assert_eq!(response.value(drain), Some(4));
+    let solution = response.solution().unwrap();
+    assert_eq!(solution.value(drain), 4);
 }
 
 #[test]
@@ -128,7 +129,8 @@ fn multiple_circuit_takes_two_routes_through_the_depot() {
             .sum::<LinearExpr>(),
     );
     let response = solve_optimal(&model);
-    let used = arcs.map(|(_, _, arc)| response.value(arc).unwrap());
+    let solution = response.solution().unwrap();
+    let used = arcs.map(|(_, _, arc)| solution.value(arc));
     assert_eq!(used, [true, true, true, true, false, false]);
 }
 
@@ -157,8 +159,9 @@ fn map_domain_sets_only_the_literal_of_the_value() {
         map_domain(&mut model, x, literals);
         model.add(x.eq(fixed));
         let response = solve_optimal(&model);
+        let solution = response.solution().unwrap();
         assert_eq!(
-            literals.map(|literal| response.value(literal).unwrap()),
+            literals.map(|literal| solution.value(literal)),
             expected,
             "x = {fixed}"
         );
@@ -184,7 +187,7 @@ fn enforced_empty_bool_or_forces_its_literal_false() {
     let b = model.new_var(Bool);
     model.add(Constraint::bool_or([]).only_enforce_if(b));
     model.maximize(b);
-    assert_eq!(solve_optimal(&model).value(b), Some(false));
+    assert!(!solve_optimal(&model).solution().unwrap().value(b));
 }
 
 /// The schema stores rows of zero values as no rows at all, so forbidding the
@@ -217,7 +220,7 @@ fn min_equality_takes_the_smallest() {
     model.add(x.eq(7));
     model.add(y.eq(4));
     model.add(Constraint::min_equality(target, [x + 1, y - 2]));
-    assert_eq!(solve_optimal(&model).value(target), Some(2));
+    assert_eq!(solve_optimal(&model).solution().unwrap().value(target), 2);
 }
 
 #[test]
@@ -227,7 +230,7 @@ fn abs_equality_drops_the_sign() {
     let target = model.new_var(0..=10);
     model.add(x.eq(-6));
     model.add(Constraint::abs_equality(target, x));
-    assert_eq!(solve_optimal(&model).value(target), Some(6));
+    assert_eq!(solve_optimal(&model).solution().unwrap().value(target), 6);
 }
 
 #[test]
@@ -237,7 +240,7 @@ fn modulo_equality_keeps_the_sign_of_the_dividend() {
     let target = model.new_var(-10..=10);
     model.add(x.eq(-7));
     model.add(Constraint::modulo_equality(target, x, 3));
-    assert_eq!(solve_optimal(&model).value(target), Some(-1));
+    assert_eq!(solve_optimal(&model).solution().unwrap().value(target), -1);
 }
 
 #[test]
@@ -248,5 +251,6 @@ fn bool_xor_needs_an_odd_count() {
     model.add(literals[0].eq(1));
     model.add(literals[1].eq(1));
     let response = solve_optimal(&model);
-    assert_eq!(response.value(literals[2]), Some(true));
+    let solution = response.solution().unwrap();
+    assert!(solution.value(literals[2]));
 }
