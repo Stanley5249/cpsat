@@ -187,6 +187,14 @@ fn enforced_empty_bool_or_forces_its_literal_false() {
     assert_eq!(solve_optimal(&model).value(b), Some(false));
 }
 
+/// The schema stores rows of zero values as no rows at all, so forbidding the
+/// empty tuple would silently forbid nothing.
+#[test]
+#[should_panic(expected = "a table with rows needs an expression")]
+fn table_rejects_rows_without_expressions() {
+    let _ = Constraint::forbidden_assignments(Vec::<LinearExpr>::new(), [Vec::<i64>::new()]);
+}
+
 #[test]
 #[should_panic(expected = "a table row has one value per expression")]
 fn table_rejects_a_ragged_row() {

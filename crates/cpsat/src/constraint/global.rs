@@ -58,7 +58,8 @@ impl Constraint {
     ///
     /// If a row's length differs from the number of expressions, as Python
     /// raises, because the flat schema would split the values into other
-    /// rows without an error.
+    /// rows without an error. Also if rows come without expressions, because
+    /// the schema stores them as no rows.
     ///
     /// ```
     /// use cpsat::prelude::*;
@@ -88,7 +89,8 @@ impl Constraint {
     ///
     /// # Panics
     ///
-    /// If a row's length differs from the number of expressions, as in
+    /// If a row's length differs from the number of expressions, or rows
+    /// come without expressions, as in
     /// [`allowed_assignments`](Self::allowed_assignments).
     #[doc(alias("add_forbidden_assignments", "AddForbiddenAssignments"))]
     #[must_use]
@@ -144,6 +146,7 @@ fn table(
     let exprs = self::exprs(exprs);
     let mut values = Vec::new();
     for row in rows {
+        assert!(!exprs.is_empty(), "a table with rows needs an expression");
         let start = values.len();
         values.extend(row);
         let len = values.len() - start;
