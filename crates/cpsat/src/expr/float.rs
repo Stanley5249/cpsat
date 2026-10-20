@@ -41,6 +41,13 @@ impl FloatExpr {
         }
     }
 
+    fn term(var: i32, coeff: f64, offset: f64) -> Self {
+        Self {
+            terms: vec![(var, coeff)],
+            offset,
+        }
+    }
+
     /// Adds `factor * other` to this expression.
     fn add_scaled(&mut self, other: Self, factor: f64) {
         self.terms.extend(
@@ -127,20 +134,29 @@ impl From<&Self> for FloatExpr {
 }
 
 impl From<i64> for FloatExpr {
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "the schema stores float objectives as doubles, like Python"
+    )]
     fn from(value: i64) -> Self {
-        LinearExpr::constant(value).into()
+        Self::constant(value as f64)
     }
 }
 
 impl From<IntVar> for FloatExpr {
     fn from(var: IntVar) -> Self {
-        LinearExpr::from(var).into()
+        Self::term(var.0, 1.0, 0.0)
     }
 }
 
 impl From<BoolVar> for FloatExpr {
+    /// Reads `!b` as `1 - b`, like [`LinearExpr`].
     fn from(literal: BoolVar) -> Self {
-        LinearExpr::from(literal).into()
+        if literal.is_negated() {
+            Self::term(literal.to_int_var().0, -1.0, 1.0)
+        } else {
+            Self::term(literal.0, 1.0, 0.0)
+        }
     }
 }
 
