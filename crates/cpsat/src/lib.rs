@@ -31,7 +31,7 @@
 //! # Ok::<(), cpsat::Error>(())
 //! ```
 //!
-//! [`CpSolver`](prelude::CpSolver) adds solution, best-bound, and log events, and a
+//! [`CpSolver`](prelude::CpSolver) adds solution, best-bound, and log callbacks, and a
 //! [`StopHandle`](prelude::StopHandle)
 //! stops solves from any thread.
 //!
@@ -44,9 +44,6 @@
 #[cfg(doctest)]
 #[doc = include_str!("../../../README.md")]
 struct ReadmeDoctests;
-
-#[cfg(not(feature = "views"))]
-compile_error!("the `views` feature is required, because solution events are Buffa views");
 
 mod constraint;
 mod error;

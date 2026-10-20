@@ -1,18 +1,18 @@
-//! Measures the overhead of the solver's solution callback path.
+//! Measures the cost of a solution callback.
 //!
 //! The model has `FREE` binary variables and `NUM_VARS - FREE` followers that
 //! each equal one binary variable. One worker enumerates all `2^FREE`
-//! solutions, so every run does the same work and reports the same number of
-//! solution events, each carrying `NUM_VARS` values. (An optimization model
-//! stops after a few improvements or is limited by search speed, so it does
-//! not give a reproducible event count.)
+//! solutions, so every run reports the same number of solutions, each with
+//! `NUM_VARS` values. (An optimization model stops after a few improvements,
+//! so it does not give a reproducible count.)
 //!
-//! Each case solves the model `RUNS` times and prints the median wall time and
-//! solutions per second. The cases differ only in the callback:
+//! The solver spends about 10 ms on each solution, which hides the callback in
+//! the wall time, so each case times the work inside its callback instead:
 //!
-//! 1. no callback,
-//! 2. a callback that counts solution events,
-//! 3. a callback that reads every variable of each solution.
+//! 1. reading the borrowed solution's length,
+//! 2. reading every variable of the borrowed solution,
+//! 3. copying the whole response with `to_owned_message`, which costs about
+//!    what every solution cost before callbacks borrowed the response.
 //!
 //! Run it with:
 //!
@@ -30,11 +30,8 @@ const NUM_VARS: usize = 20_000;
 const FREE: usize = 8;
 const RUNS: usize = 5;
 
-/// A run's wall time and number of solution events.
-struct Run {
-    time: Duration,
-    events: u32,
-}
+/// The work one case does inside its callback.
+type Work<'a> = &'a (dyn Fn(CpSolverResponseRef<'_>) -> i64 + Sync);
 
 fn build() -> (CpModel, Vec<IntVar>) {
     let mut model = CpModel::new();
@@ -56,93 +53,57 @@ fn parameters() -> SatParameters {
         .with_max_time_in_seconds(120.0)
 }
 
-fn timed(solve: impl FnOnce() -> u32) -> Run {
-    let start = Instant::now();
-    let events = solve();
-    Run {
-        time: start.elapsed(),
-        events,
-    }
-}
-
-fn no_callback(proto: &CpModelProto, parameters: &SatParameters) -> Run {
-    timed(|| {
-        proto.solve(parameters).unwrap();
-        0
-    })
-}
-
-fn count_events(proto: &CpModelProto, parameters: &SatParameters) -> Run {
-    timed(|| {
-        let mut events = 0;
-        CpSolver::new(parameters)
-            .on_event(EventSet::SOLUTION, |event| {
-                if let Event::Solution(_) = event {
-                    events += 1;
-                }
-                ControlFlow::Continue(())
-            })
-            .solve(proto)
-            .unwrap();
-        events
-    })
-}
-
-fn read_solution(proto: &CpModelProto, parameters: &SatParameters, vars: &[IntVar]) -> Run {
-    timed(|| {
-        let mut events = 0;
-        let mut checksum = 0_i64;
-        CpSolver::new(parameters)
-            .on_event(EventSet::SOLUTION, |event| {
-                if let Event::Solution(view) = event {
-                    events += 1;
-                    if let Some(solution) = view.solution() {
-                        checksum += vars.iter().map(|&var| solution.value(var)).sum::<i64>();
-                    }
-                }
-                ControlFlow::Continue(())
-            })
-            .solve(proto)
-            .unwrap();
-        std::hint::black_box(checksum);
-        events
-    })
-}
-
-/// The run with the median wall time.
-fn median(mut runs: Vec<Run>) -> Run {
-    runs.sort_by_key(|run| run.time);
-    runs.swap_remove(runs.len() / 2)
+/// Solves once and returns the solution count and the mean time inside `work`.
+fn time_callback(
+    proto: &CpModelProto,
+    parameters: &SatParameters,
+    mut work: impl FnMut(CpSolverResponseRef<'_>) -> i64 + Send,
+) -> (u32, Duration) {
+    let mut solutions = 0;
+    let mut inside = Duration::ZERO;
+    let mut checksum = 0;
+    CpSolver::new(parameters)
+        .add_solution_callback(|response| {
+            let start = Instant::now();
+            checksum += work(response);
+            inside += start.elapsed();
+            solutions += 1;
+            ControlFlow::Continue(())
+        })
+        .solve(proto)
+        .unwrap();
+    std::hint::black_box(checksum);
+    (solutions, inside / solutions)
 }
 
 fn main() {
     let (model, vars) = build();
     let proto = model.proto();
     let parameters = parameters();
-    println!("{NUM_VARS} vars, 2^{FREE} solutions, {RUNS} runs, 1 worker");
+    println!("{NUM_VARS} vars, 2^{FREE} solutions, median of {RUNS} runs, 1 worker");
 
-    let base = median((0..RUNS).map(|_| no_callback(proto, &parameters)).collect());
-    let counted = median(
-        (0..RUNS)
-            .map(|_| count_events(proto, &parameters))
-            .collect(),
-    );
-    let read = median(
-        (0..RUNS)
-            .map(|_| read_solution(proto, &parameters, &vars))
-            .collect(),
-    );
-
-    let events = counted.events;
-    let base_seconds = base.time.as_secs_f64();
-    println!("no callback      median {base_seconds:>8.3} s");
-    for (name, run) in [("count events", &counted), ("read all values", &read)] {
-        let seconds = run.time.as_secs_f64();
-        println!(
-            "{name:<16} median {seconds:>8.3} s  {:>9.1} solutions/s  {:>7.2} us per event over no callback  ({} events)",
-            f64::from(run.events) / seconds,
-            (seconds - base_seconds) * 1e6 / f64::from(events),
-            run.events,
-        );
+    let cases: [(&str, Work<'_>); 3] = [
+        ("borrow solution", &|response| {
+            response
+                .solution()
+                .map_or(0, |solution| solution.values().len().try_into().unwrap())
+        }),
+        ("read all values", &|response| {
+            response.solution().map_or(0, |solution| {
+                vars.iter().map(|&var| solution.value(var)).sum()
+            })
+        }),
+        ("copy response", &|response| {
+            response.to_owned_message().unwrap().solution[0]
+        }),
+    ];
+    for (name, work) in cases {
+        let mut runs: Vec<(u32, Duration)> = (0..RUNS)
+            .map(|_| time_callback(proto, &parameters, work))
+            .collect();
+        runs.sort_by_key(|&(_, time)| time);
+        let (solutions, time) = runs[RUNS / 2];
+        let micros = time.as_secs_f64() * 1e6;
+        println!("{name:<16} {micros:>9.2} us per solution  ({solutions} solutions)");
     }
 }

@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <list>
+#include <memory>
 #include <mutex>
 #include <string>
 
@@ -124,10 +126,9 @@ void SetError(CpsatBuffer* error, const std::string& message) noexcept {
 }
 
 // Exceptions must not cross the C ABI, so every entry point runs its body
-// through Guard, which also empties both output buffers first.
+// through Guard, which also empties the error buffer first.
 template <typename Body>
-int32_t Guard(CpsatBuffer* out, CpsatBuffer* error, Body body) noexcept {
-  *out = CpsatBuffer{};
+int32_t Guard(CpsatBuffer* error, Body body) noexcept {
   *error = CpsatBuffer{};
   try {
     body();
@@ -142,42 +143,70 @@ int32_t Guard(CpsatBuffer* out, CpsatBuffer* error, Body body) noexcept {
   return CPSAT_ERROR;
 }
 
+// Also empties the output buffer first.
+template <typename Body>
+int32_t Guard(CpsatBuffer* out, CpsatBuffer* error, Body body) noexcept {
+  *out = CpsatBuffer{};
+  return Guard(error, body);
+}
+
 class Observer : public SolutionCallback {
  public:
-  explicit Observer(CpsatSession* session) : session_(session) {}
+  Observer(CpsatSession* session, CpsatSolutionCallback callback,
+           void* context)
+      : session_(session), callback_(callback), context_(context) {}
   void OnSolutionCallback() const override;
 
  private:
   CpsatSession* session_;
+  CpsatSolutionCallback callback_;
+  void* context_;
 };
 
 }  // namespace
 
 struct CpsatSession {
-  // CP-SAT already serializes each event kind, but log and solution events can
-  // come from different threads, so this mutex lets Rust see one at a time.
-  // Rust relies on it to hold the only live reference to its callback state.
-  std::mutex event_mutex;
-  CpsatEventFn on_event = nullptr;
-  void* context = nullptr;
+  // CP-SAT already serializes each callback kind, but log and solution
+  // callbacks can run on different threads, so this mutex lets Rust see one
+  // call at a time. Rust relies on it to hold the only live reference to each
+  // callback's state.
+  std::mutex callback_mutex;
   bool used = false;
   SolveWrapper solve_wrapper;
-  // SolveWrapper keeps a reference to the observer, so the observer lives as
-  // long as the session rather than as long as one call.
-  Observer observer{this};
+  // SolveWrapper keeps a reference to each observer, so the observers live as
+  // long as the session, in a list whose elements never move.
+  std::list<Observer> observers;
 
-  void Dispatch(const CpsatEvent& event) {
-    std::lock_guard<std::mutex> lock(event_mutex);
-    if (on_event(context, &event) != 0) solve_wrapper.StopSearch();
+  template <typename Call>
+  void Dispatch(Call call) {
+    std::lock_guard<std::mutex> lock(callback_mutex);
+    if (call() != 0) solve_wrapper.StopSearch();
+  }
+
+  void CheckUnused() const {
+    if (used) throw Error{"a CP-SAT session serves one solve"};
   }
 };
 
 void Observer::OnSolutionCallback() const {
-  std::string bytes;
-  SharedResponse()->SerializeToString(&bytes);
-  session_->Dispatch(CpsatEvent{CPSAT_EVENT_SOLUTION,
-                                reinterpret_cast<const uint8_t*>(bytes.data()),
-                                bytes.size(), 0.0});
+  const std::shared_ptr<CpSolverResponse> response = SharedResponse();
+  const CpsatResponseRef ref{
+      static_cast<int32_t>(response->status()),
+      response->solution().data(),
+      static_cast<size_t>(response->solution_size()),
+      response->objective_value(),
+      response->best_objective_bound(),
+      response->num_booleans(),
+      response->num_conflicts(),
+      response->num_branches(),
+      response->num_binary_propagations(),
+      response->num_integer_propagations(),
+      response->wall_time(),
+      response->user_time(),
+      response->deterministic_time(),
+      response.get(),
+  };
+  session_->Dispatch([&] { return callback_(context_, &ref); });
 }
 
 extern "C" {
@@ -201,43 +230,77 @@ void cpsat_session_stop(CpsatSession* session) {
   }
 }
 
+int32_t cpsat_session_set_parameters(CpsatSession* session,
+                                     const uint8_t* parameters,
+                                     size_t parameters_len,
+                                     CpsatBuffer* error) {
+  return Guard(error, [&] {
+    session->CheckUnused();
+    SatParameters parameters_proto;
+    Parse(parameters_proto, parameters, parameters_len, "SatParameters");
+    session->solve_wrapper.SetParameters(parameters_proto);
+  });
+}
+
+int32_t cpsat_session_add_solution_callback(CpsatSession* session,
+                                            CpsatSolutionCallback callback,
+                                            void* context, CpsatBuffer* error) {
+  return Guard(error, [&] {
+    session->CheckUnused();
+    session->solve_wrapper.AddSolutionCallback(
+        session->observers.emplace_back(session, callback, context));
+  });
+}
+
+int32_t cpsat_session_add_best_bound_callback(CpsatSession* session,
+                                              CpsatBestBoundCallback callback,
+                                              void* context,
+                                              CpsatBuffer* error) {
+  return Guard(error, [&] {
+    session->CheckUnused();
+    session->solve_wrapper.AddBestBoundCallback(
+        [session, callback, context](double bound) {
+          session->Dispatch([&] { return callback(context, bound); });
+        });
+  });
+}
+
+int32_t cpsat_session_add_log_callback(CpsatSession* session,
+                                       CpsatLogCallback callback, void* context,
+                                       CpsatBuffer* error) {
+  return Guard(error, [&] {
+    session->CheckUnused();
+    session->solve_wrapper.AddLogCallback(
+        [session, callback, context](const std::string& message) {
+          session->Dispatch([&] {
+            return callback(context,
+                            reinterpret_cast<const uint8_t*>(message.data()),
+                            message.size());
+          });
+        });
+  });
+}
+
 int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
-                            size_t model_len, const uint8_t* parameters,
-                            size_t parameters_len, uint32_t events,
-                            CpsatEventFn on_event, void* context,
-                            CpsatBuffer* response, CpsatBuffer* error) {
+                            size_t model_len, CpsatBuffer* response,
+                            CpsatBuffer* error) {
   return Guard(response, error, [&] {
-    if (session->used) throw Error{"a CP-SAT session serves one solve"};
+    session->CheckUnused();
     session->used = true;
     CpModelProto model_proto;
     Parse(model_proto, model, model_len, "CpModelProto");
-    SatParameters parameters_proto;
-    Parse(parameters_proto, parameters, parameters_len, "SatParameters");
+    // Solve joins its worker threads before it returns, so every callback
+    // happens before the caller reads its callback state.
+    FillMessage(response, session->solve_wrapper.Solve(model_proto));
+  });
+}
 
-    session->on_event = on_event;
-    session->context = context;
-    SolveWrapper& solve_wrapper = session->solve_wrapper;
-    solve_wrapper.SetParameters(parameters_proto);
-
-    if (events & CPSAT_EVENT_SOLUTION) {
-      solve_wrapper.AddSolutionCallback(session->observer);
-    }
-    if (events & CPSAT_EVENT_BEST_BOUND) {
-      solve_wrapper.AddBestBoundCallback([session](double bound) {
-        session->Dispatch(CpsatEvent{CPSAT_EVENT_BEST_BOUND, nullptr, 0, bound});
-      });
-    }
-    if (events & CPSAT_EVENT_LOG) {
-      solve_wrapper.AddLogCallback([session](const std::string& message) {
-        session->Dispatch(CpsatEvent{
-            CPSAT_EVENT_LOG, reinterpret_cast<const uint8_t*>(message.data()),
-            message.size(), 0.0});
-      });
-    }
-
-    // Solve joins its worker threads before it returns, so every event
-    // callback happens before the caller reads its callback state.
-    FillMessage(response, solve_wrapper.Solve(model_proto));
+int32_t cpsat_response_ref_serialize(const CpsatResponseRef* response_ref,
+                                     CpsatBuffer* response,
+                                     CpsatBuffer* error) {
+  return Guard(response, error, [&] {
+    FillMessage(response,
+                *static_cast<const CpSolverResponse*>(response_ref->response));
   });
 }
 

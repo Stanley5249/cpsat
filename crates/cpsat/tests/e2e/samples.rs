@@ -25,14 +25,12 @@ fn all_solutions<const N: usize>(
 ) -> Vec<[i64; N]> {
     let mut solutions = Vec::new();
     let response = CpSolver::new(&parameters.with_enumerate_all_solutions(true))
-        .on_event(EventSet::SOLUTION, |event| {
-            if let Event::Solution(view) = event {
-                solutions.push(
-                    exprs
-                        .each_ref()
-                        .map(|expr| view.solution().unwrap().value(expr)),
-                );
-            }
+        .add_solution_callback(|response| {
+            solutions.push(
+                exprs
+                    .each_ref()
+                    .map(|expr| response.solution().unwrap().value(expr)),
+            );
             ControlFlow::Continue(())
         })
         .solve(model.proto())
@@ -81,10 +79,8 @@ fn solve_and_print_intermediate_solutions() {
 
     let mut objectives = Vec::new();
     let response = CpSolver::default()
-        .on_event(EventSet::SOLUTION, |event| {
-            if let Event::Solution(view) = event {
-                objectives.push(view.objective_value);
-            }
+        .add_solution_callback(|response| {
+            objectives.push(response.objective_value());
             ControlFlow::Continue(())
         })
         .solve(model.proto())
@@ -104,10 +100,8 @@ fn search_for_all_solutions() {
 
     let mut solutions = Vec::new();
     let response = CpSolver::new(&parameters)
-        .on_event(EventSet::SOLUTION, |event| {
-            if let Event::Solution(view) = event {
-                solutions.push(view.solution.to_vec());
-            }
+        .add_solution_callback(|response| {
+            solutions.push(response.solution().unwrap().values().to_vec());
             ControlFlow::Continue(())
         })
         .solve(model.proto())
@@ -128,7 +122,7 @@ fn stop_after_n_solutions() {
 
     let mut count = 0;
     let response = CpSolver::new(&parameters)
-        .on_event(EventSet::SOLUTION, |_| {
+        .add_solution_callback(|_| {
             count += 1;
             if count >= 5 {
                 ControlFlow::Break(())
@@ -306,7 +300,7 @@ fn nqueens() {
 
     let mut count = 0;
     CpSolver::new(&SatParameters::default().with_enumerate_all_solutions(true))
-        .on_event(EventSet::SOLUTION, |_| {
+        .add_solution_callback(|_| {
             count += 1;
             ControlFlow::Continue(())
         })
@@ -334,7 +328,7 @@ fn cp_is_fun() {
 
     let mut count = 0;
     CpSolver::new(&SatParameters::default().with_enumerate_all_solutions(true))
-        .on_event(EventSet::SOLUTION, |_| {
+        .add_solution_callback(|_| {
             count += 1;
             ControlFlow::Continue(())
         })

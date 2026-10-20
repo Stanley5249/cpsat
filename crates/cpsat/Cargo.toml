@@ -28,8 +28,7 @@ download-libortools = ["cpsat-sys/download-libortools"]
 json = ["buffa/json", "dep:serde"]
 # Protobuf text format through buffa::text.
 text = ["buffa/text"]
-# Required. Buffa gates views together with the optional formats, and the
-# solver passes solutions as views.
+# Zero-copy views of the generated messages through buffa::view.
 views = []
 
 [lints]

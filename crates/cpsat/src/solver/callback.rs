@@ -1,72 +1,231 @@
-//! The trampoline that turns bridge events into Rust callbacks.
+//! Solver callbacks and the trampolines that the bridge calls.
+//!
+//! A [`CpSolver`](crate::prelude::CpSolver) keeps its callbacks in a nested
+//! tuple, such as `(((), SolutionCallback<F>), LogCallback<G>)`, so it stays
+//! generic over each closure. A boxed closure would keep its borrows alive until
+//! the solver drops.
 
 use core::ffi::c_void;
 use std::any::Any;
 use std::ops::ControlFlow;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use buffa::MessageView;
-use cpsat_sys::{CPSAT_EVENT_BEST_BOUND, CPSAT_EVENT_LOG, CPSAT_EVENT_SOLUTION, CpsatEvent};
+use cpsat_sys::CpsatResponseRef;
 
-use crate::proto::view::CpSolverResponseView;
-use crate::solver::event::Event;
+use crate::error::Result;
+use crate::solver::ffi::Session;
+use crate::solver::response::CpSolverResponseRef;
 
-/// Callback state that the bridge passes back as the context pointer.
-pub struct State<F> {
-    pub on_event: F,
-    /// The first panic from `on_event`, resumed after the solve returns, as
-    /// Python's binding reraises the first callback exception.
-    pub panic: Option<Box<dyn Any + Send>>,
+/// A panic payload from a callback.
+type Panic = Box<dyn Any + Send>;
+
+/// One callback and the first panic it raised, which the solve resumes after
+/// it returns, as Python's binding reraises the first callback exception.
+#[derive(Debug)]
+struct Slot<F> {
+    callback: F,
+    panic: Option<Panic>,
 }
 
-/// Returns nonzero to stop the search.
+impl<F> Slot<F> {
+    fn new(callback: F) -> Self {
+        Self {
+            callback,
+            panic: None,
+        }
+    }
+
+    /// Returns nonzero to stop the search.
+    fn call(&mut self, run: impl FnOnce(&mut F) -> ControlFlow<()>) -> i32 {
+        if self.panic.is_some() {
+            return 1;
+        }
+        match catch_unwind(AssertUnwindSafe(|| run(&mut self.callback))) {
+            Ok(ControlFlow::Continue(())) => 0,
+            Ok(ControlFlow::Break(())) => 1,
+            Err(payload) => {
+                self.panic = Some(payload);
+                1
+            }
+        }
+    }
+}
+
+/// A solution callback in a [`CpSolver`](crate::prelude::CpSolver), added by
+/// [`CpSolver::add_solution_callback`](crate::prelude::CpSolver::add_solution_callback).
+#[derive(Debug)]
+pub struct SolutionCallback<F>(Slot<F>);
+
+/// A best-bound callback in a [`CpSolver`](crate::prelude::CpSolver), added by
+/// [`CpSolver::add_best_bound_callback`](crate::prelude::CpSolver::add_best_bound_callback).
+#[derive(Debug)]
+pub struct BestBoundCallback<F>(Slot<F>);
+
+/// A log callback in a [`CpSolver`](crate::prelude::CpSolver), added by
+/// [`CpSolver::add_log_callback`](crate::prelude::CpSolver::add_log_callback).
+#[derive(Debug)]
+pub struct LogCallback<F>(Slot<F>);
+
+impl<F> SolutionCallback<F> {
+    pub(crate) fn new(callback: F) -> Self {
+        Self(Slot::new(callback))
+    }
+}
+
+impl<F> BestBoundCallback<F> {
+    pub(crate) fn new(callback: F) -> Self {
+        Self(Slot::new(callback))
+    }
+}
+
+impl<F> LogCallback<F> {
+    pub(crate) fn new(callback: F) -> Self {
+        Self(Slot::new(callback))
+    }
+}
+
+mod sealed {
+    use super::{Panic, Result, Session};
+
+    pub trait Sealed {
+        /// Adds every callback to `session`, in order.
+        ///
+        /// # Safety
+        ///
+        /// `self` must neither move nor drop until the solve returns.
+        unsafe fn register(&mut self, session: &Session) -> Result<()>;
+
+        /// The first panic, in registration order.
+        fn take_panic(&mut self) -> Option<Panic>;
+    }
+
+    /// One callback of a known kind.
+    pub trait Callback {
+        /// # Safety
+        ///
+        /// As for [`Sealed::register`].
+        unsafe fn register(&mut self, session: &Session) -> Result<()>;
+
+        fn take_panic(&mut self) -> Option<Panic>;
+    }
+}
+
+/// The callbacks of a [`CpSolver`](crate::prelude::CpSolver), which its
+/// `add_*` methods build. The trait is sealed.
+pub trait Callbacks: sealed::Sealed {}
+
+impl sealed::Sealed for () {
+    unsafe fn register(&mut self, _: &Session) -> Result<()> {
+        Ok(())
+    }
+
+    fn take_panic(&mut self) -> Option<Panic> {
+        None
+    }
+}
+
+impl Callbacks for () {}
+
+impl<C: Callbacks, K: sealed::Callback> sealed::Sealed for (C, K) {
+    unsafe fn register(&mut self, session: &Session) -> Result<()> {
+        // SAFETY: the caller keeps both parts in place.
+        unsafe {
+            self.0.register(session)?;
+            self.1.register(session)
+        }
+    }
+
+    fn take_panic(&mut self) -> Option<Panic> {
+        let first = self.0.take_panic();
+        first.or_else(|| self.1.take_panic())
+    }
+}
+
+impl<C: Callbacks, K: sealed::Callback> Callbacks for (C, K) {}
+
+impl<F> sealed::Callback for SolutionCallback<F>
+where
+    F: FnMut(CpSolverResponseRef<'_>) -> ControlFlow<()> + Send,
+{
+    unsafe fn register(&mut self, session: &Session) -> Result<()> {
+        // SAFETY: the trampoline matches the context type, and the caller
+        // keeps the context in place.
+        unsafe { session.add_solution_callback(solution::<F>, (&raw mut self.0).cast()) }
+    }
+
+    fn take_panic(&mut self) -> Option<Panic> {
+        self.0.panic.take()
+    }
+}
+
+impl<F> sealed::Callback for BestBoundCallback<F>
+where
+    F: FnMut(f64) -> ControlFlow<()> + Send,
+{
+    unsafe fn register(&mut self, session: &Session) -> Result<()> {
+        // SAFETY: as for the solution callback.
+        unsafe { session.add_best_bound_callback(best_bound::<F>, (&raw mut self.0).cast()) }
+    }
+
+    fn take_panic(&mut self) -> Option<Panic> {
+        self.0.panic.take()
+    }
+}
+
+impl<F> sealed::Callback for LogCallback<F>
+where
+    F: FnMut(&str) -> ControlFlow<()> + Send,
+{
+    unsafe fn register(&mut self, session: &Session) -> Result<()> {
+        // SAFETY: as for the solution callback.
+        unsafe { session.add_log_callback(log::<F>, (&raw mut self.0).cast()) }
+    }
+
+    fn take_panic(&mut self) -> Option<Panic> {
+        self.0.panic.take()
+    }
+}
+
+/// Recovers the slot that a trampoline's context points to.
 ///
 /// # Safety
 ///
-/// `context` must point to a live `State<F>`, and `event` to a valid event.
-pub unsafe extern "C" fn trampoline<F>(context: *mut c_void, event: *const CpsatEvent) -> i32
-where
-    F: FnMut(Event<'_>) -> ControlFlow<()> + Send,
-{
-    // SAFETY: the bridge's event mutex delivers one event at a time, so this
-    // is the only live reference to the state.
-    let state = unsafe { &mut *context.cast::<State<F>>() };
-    if state.panic.is_some() {
-        return 1;
-    }
-    // SAFETY: the bridge passes a valid event for the duration of the call.
-    let event = unsafe { &*event };
-    // SAFETY: data is null or points to len bytes valid for the duration of
-    // the call.
-    let data = unsafe { crate::solver::ffi::bytes(event.data, event.len) };
-    let on_event = &mut state.on_event;
-    match catch_unwind(AssertUnwindSafe(|| {
-        dispatch(on_event, event.kind, data, event.bound)
-    })) {
-        Ok(ControlFlow::Continue(())) => 0,
-        Ok(ControlFlow::Break(())) => 1,
-        Err(payload) => {
-            state.panic = Some(payload);
-            1
-        }
-    }
+/// `context` must point to a live `Slot<F>`, and the bridge's callback mutex
+/// makes this the only live reference to it.
+unsafe fn slot<'a, F>(context: *mut c_void) -> &'a mut Slot<F> {
+    // SAFETY: the caller upholds the contract above.
+    unsafe { &mut *context.cast::<Slot<F>>() }
 }
 
-fn dispatch<F>(on_event: &mut F, kind: u32, data: &[u8], bound: f64) -> ControlFlow<()>
+unsafe extern "C" fn solution<F>(context: *mut c_void, response: *const CpsatResponseRef) -> i32
 where
-    F: FnMut(Event<'_>) -> ControlFlow<()>,
+    F: FnMut(CpSolverResponseRef<'_>) -> ControlFlow<()>,
 {
-    match kind {
-        CPSAT_EVENT_SOLUTION => {
-            let view = CpSolverResponseView::decode_view(data)
-                .expect("the bridge sends a serialized CpSolverResponse");
-            on_event(Event::Solution(&view))
-        }
-        CPSAT_EVENT_BEST_BOUND => on_event(Event::BestBound(bound)),
-        CPSAT_EVENT_LOG => {
-            let text = String::from_utf8_lossy(data);
-            on_event(Event::Log(&text))
-        }
-        _ => unreachable!("the bridge sends only the event kinds in cpsat_sys"),
-    }
+    // SAFETY: the bridge passes the context it was given and a response valid
+    // for the duration of the call.
+    let (slot, response) = unsafe { (slot::<F>(context), &*response) };
+    slot.call(|callback| callback(CpSolverResponseRef::new(response)))
+}
+
+unsafe extern "C" fn best_bound<F>(context: *mut c_void, bound: f64) -> i32
+where
+    F: FnMut(f64) -> ControlFlow<()>,
+{
+    // SAFETY: the bridge passes the context it was given.
+    unsafe { slot::<F>(context) }.call(|callback| callback(bound))
+}
+
+unsafe extern "C" fn log<F>(context: *mut c_void, message: *const u8, message_len: usize) -> i32
+where
+    F: FnMut(&str) -> ControlFlow<()>,
+{
+    // SAFETY: the bridge passes the context it was given and a message valid
+    // for the duration of the call.
+    let (slot, message) = unsafe {
+        (
+            slot::<F>(context),
+            crate::solver::ffi::slice(message, message_len),
+        )
+    };
+    slot.call(|callback| callback(&String::from_utf8_lossy(message)))
 }

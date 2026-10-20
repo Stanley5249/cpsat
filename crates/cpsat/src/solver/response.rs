@@ -3,11 +3,15 @@
 
 use std::fmt;
 
-use buffa::Enumeration;
+use buffa::{Enumeration, Message};
+use cpsat_sys::CpsatResponseRef;
 
+use crate::error::Result;
 use crate::expr::{BoolVar, FloatExpr, IntVar, LinearExpr};
+#[cfg(feature = "views")]
 use crate::proto::view::CpSolverResponseView;
 use crate::proto::{CpSolverResponse, CpSolverStatus};
+use crate::solver::ffi::Buffer;
 
 impl fmt::Display for CpSolverStatus {
     /// Writes the schema name, such as `OPTIMAL`, like Python's `status_name`.
@@ -53,7 +57,13 @@ mod sealed {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Solution<'a>(&'a [i64]);
 
-impl Solution<'_> {
+impl<'a> Solution<'a> {
+    /// The raw values, one per row of `CpModelProto::variables`.
+    #[must_use]
+    pub fn values(self) -> &'a [i64] {
+        self.0
+    }
+
     /// The value of a variable, literal, or expression, like Python's
     /// `CpSolver.value`, `boolean_value`, and `float_value`.
     ///
@@ -179,6 +189,7 @@ impl CpSolverResponse {
     }
 }
 
+#[cfg(feature = "views")]
 impl CpSolverResponseView<'_> {
     /// The status, with values from a newer schema read as `UNKNOWN`.
     #[must_use]
@@ -193,5 +204,127 @@ impl CpSolverResponseView<'_> {
         self.status()
             .has_solution()
             .then_some(Solution(&self.solution))
+    }
+}
+
+/// A [`CpSolverResponse`] that a solution callback borrows from OR-Tools,
+/// like the response behind Python's `CpSolverSolutionCallback`. Each method
+/// reads the response field of the same name, and
+/// [`CpSolverResponseRef::to_owned_message`] copies the whole response.
+#[doc(alias("CpSolverSolutionCallback", "SolutionCallback"))]
+#[derive(Clone, Copy, Debug)]
+pub struct CpSolverResponseRef<'a>(&'a CpsatResponseRef);
+
+impl<'a> CpSolverResponseRef<'a> {
+    pub(crate) fn new(response: &'a CpsatResponseRef) -> Self {
+        Self(response)
+    }
+
+    /// The status, with values from a newer schema read as `UNKNOWN`.
+    #[must_use]
+    pub fn status(self) -> CpSolverStatus {
+        CpSolverStatus::from_i32(self.0.status).unwrap_or(CpSolverStatus::UNKNOWN)
+    }
+
+    /// The solution when the status is `OPTIMAL` or `FEASIBLE`, borrowed from
+    /// OR-Tools without a copy. See [`CpSolverResponse::solution`].
+    #[must_use]
+    pub fn solution(self) -> Option<Solution<'a>> {
+        // SAFETY: the bridge points solution at solution_len values that live
+        // as long as the borrowed response.
+        let values = unsafe { crate::solver::ffi::slice(self.0.solution, self.0.solution_len) };
+        self.status().has_solution().then_some(Solution(values))
+    }
+
+    /// The objective value.
+    #[doc(alias("ObjectiveValue"))]
+    #[must_use]
+    pub fn objective_value(self) -> f64 {
+        self.0.objective_value
+    }
+
+    /// The best proven objective bound.
+    #[doc(alias("BestObjectiveBound"))]
+    #[must_use]
+    pub fn best_objective_bound(self) -> f64 {
+        self.0.best_objective_bound
+    }
+
+    /// The number of Boolean variables in the search.
+    #[doc(alias("NumBooleans"))]
+    #[must_use]
+    pub fn num_booleans(self) -> i64 {
+        self.0.num_booleans
+    }
+
+    /// The number of conflicts so far.
+    #[doc(alias("NumConflicts"))]
+    #[must_use]
+    pub fn num_conflicts(self) -> i64 {
+        self.0.num_conflicts
+    }
+
+    /// The number of search branches so far.
+    #[doc(alias("NumBranches"))]
+    #[must_use]
+    pub fn num_branches(self) -> i64 {
+        self.0.num_branches
+    }
+
+    /// The number of Boolean propagations so far.
+    #[doc(alias("NumBinaryPropagations"))]
+    #[must_use]
+    pub fn num_binary_propagations(self) -> i64 {
+        self.0.num_binary_propagations
+    }
+
+    /// The number of integer propagations so far.
+    #[doc(alias("NumIntegerPropagations"))]
+    #[must_use]
+    pub fn num_integer_propagations(self) -> i64 {
+        self.0.num_integer_propagations
+    }
+
+    /// The wall time in seconds since the solve started.
+    #[doc(alias("WallTime"))]
+    #[must_use]
+    pub fn wall_time(self) -> f64 {
+        self.0.wall_time
+    }
+
+    /// The user time in seconds since the solve started.
+    #[doc(alias("UserTime"))]
+    #[must_use]
+    pub fn user_time(self) -> f64 {
+        self.0.user_time
+    }
+
+    /// The deterministic time since the solve started.
+    #[doc(alias("DeterministicTime"))]
+    #[must_use]
+    pub fn deterministic_time(self) -> f64 {
+        self.0.deterministic_time
+    }
+
+    /// Copies the whole response, including the fields without a method here.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the bridge fails to serialize the response.
+    #[doc(alias("Response", "response_proto"))]
+    pub fn to_owned_message(self) -> Result<CpSolverResponse> {
+        let mut response = Buffer::new();
+        let mut error = Buffer::new();
+        // SAFETY: the response is borrowed during its callback, and both
+        // buffers are empty bridge buffers.
+        let code = unsafe {
+            cpsat_sys::cpsat_response_ref_serialize(
+                self.0,
+                response.as_mut_ptr(),
+                error.as_mut_ptr(),
+            )
+        };
+        crate::solver::ffi::check(code, &error)?;
+        Ok(CpSolverResponse::decode_from_slice(response.bytes())?)
     }
 }

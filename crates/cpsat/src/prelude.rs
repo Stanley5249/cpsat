@@ -6,5 +6,6 @@ pub use crate::constraint::{Constraint, ConstraintIndex};
 pub use crate::expr::{BoolVar, Domain, FloatExpr, IntVar, IntervalVar, LinearExpr};
 pub use crate::model::{Bool, CpModel, Hint, Interval, Named, NewVar, Objective, VarMut, WithName};
 pub use crate::solver::{
-    CpSolver, Evaluate, Event, EventSet, NoEvents, Solution, StopHandle, default_parameters,
+    BestBoundCallback, Callbacks, CpSolver, CpSolverResponseRef, Evaluate, LogCallback, Solution,
+    SolutionCallback, StopHandle, default_parameters,
 };

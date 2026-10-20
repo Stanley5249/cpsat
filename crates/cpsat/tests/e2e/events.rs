@@ -1,13 +1,12 @@
-//! Events and cancellation, mirroring Python's solution, best-bound, and log
+//! Callbacks and cancellation, mirroring Python's solution, best-bound, and log
 //! callbacks and `stop_search`.
 
 use std::ops::ControlFlow;
 use std::panic::{AssertUnwindSafe, catch_unwind};
-use std::sync::mpsc;
+use std::sync::{Mutex, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use buffa::MessageView;
 use cpsat::prelude::*;
 use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
 
@@ -26,27 +25,35 @@ fn tiny_model() -> CpModelProto {
 }
 
 #[test]
-fn event_set_combines_kinds() {
-    let set = EventSet::SOLUTION | EventSet::LOG;
-    assert!(set.contains(EventSet::SOLUTION));
-    assert!(!set.contains(EventSet::BEST_BOUND));
-    let mut all = set;
-    all |= EventSet::BEST_BOUND;
-    assert_eq!(all, EventSet::ALL);
+fn callbacks_of_one_kind_run_in_order() {
+    let calls = Mutex::new(Vec::new());
+    let calls_ref = &calls;
+    CpSolver::new(&SatParameters::default().with_enumerate_all_solutions(true))
+        .add_solution_callback(|_| {
+            calls_ref.lock().unwrap().push(1);
+            ControlFlow::Continue(())
+        })
+        .add_solution_callback(|_| {
+            calls_ref.lock().unwrap().push(2);
+            ControlFlow::Continue(())
+        })
+        .solve(&tiny_model())
+        .unwrap();
+    let calls = calls.into_inner().unwrap();
+    assert_ne!(calls, Vec::<i32>::new());
+    assert!(calls.chunks(2).all(|pair| pair == [1, 2]), "{calls:?}");
 }
 
 #[test]
-fn solution_view_reads_values_and_converts_to_owned() {
+fn solution_ref_reads_values_and_converts_to_owned() {
     let model = CpModel::from(tiny_model());
     let x = model.int_var_from_index(0).unwrap();
     let mut owned = None;
     let mut seen = None;
     CpSolver::default()
-        .on_event(EventSet::SOLUTION, |event| {
-            if let Event::Solution(view) = event {
-                seen = view.solution().map(|solution| solution.value(x));
-                owned = Some(view.to_owned_message().unwrap());
-            }
+        .add_solution_callback(|response| {
+            seen = response.solution().map(|solution| solution.value(x));
+            owned = Some(response.to_owned_message().unwrap());
             ControlFlow::Continue(())
         })
         .solve(model.proto())
@@ -65,10 +72,8 @@ fn reports_best_bounds() {
         .with_max_time_in_seconds(30.0)
         .with_num_workers(8);
     CpSolver::new(&parameters)
-        .on_event(EventSet::BEST_BOUND, |event| {
-            if let Event::BestBound(bound) = event {
-                bounds.push(bound);
-            }
+        .add_best_bound_callback(|bound| {
+            bounds.push(bound);
             if bounds.is_empty() {
                 ControlFlow::Continue(())
             } else {
@@ -87,11 +92,9 @@ fn forwards_logs_and_parameters() {
         .with_log_to_stdout(false)
         .with_num_workers(3);
     let mut log = String::new();
-    let mut solver = CpSolver::new(&parameters).on_event(EventSet::LOG, |event| {
-        if let Event::Log(line) = event {
-            log.push_str(line);
-            log.push('\n');
-        }
+    let mut solver = CpSolver::new(&parameters).add_log_callback(|line| {
+        log.push_str(line);
+        log.push('\n');
         ControlFlow::Continue(())
     });
     assert_eq!(solver.parameters().num_workers, Some(3));
@@ -105,7 +108,7 @@ fn forwards_logs_and_parameters() {
 fn callback_break_stops_search() {
     let start = Instant::now();
     let response = CpSolver::new(&long_parameters())
-        .on_event(EventSet::SOLUTION, |_| ControlFlow::Break(()))
+        .add_solution_callback(|_| ControlFlow::Break(()))
         .solve(&hard_model())
         .unwrap();
     assert_eq!(response.status(), CpSolverStatus::FEASIBLE);
@@ -116,7 +119,7 @@ fn callback_break_stops_search() {
 fn stop_handle_works_inside_callback() {
     let stop = StopHandle::new();
     let response = CpSolver::new(&long_parameters())
-        .on_event(EventSet::SOLUTION, |_| {
+        .add_solution_callback(|_| {
             stop.stop();
             ControlFlow::Continue(())
         })
@@ -140,7 +143,7 @@ fn stops_from_another_thread() {
             stop.stop();
         });
         CpSolver::new(&long_parameters())
-            .on_event(EventSet::SOLUTION, |_| {
+            .add_solution_callback(|_| {
                 // The receiver leaves after the first solution.
                 let _ = found.send(());
                 ControlFlow::Continue(())
@@ -165,7 +168,7 @@ fn one_handle_stops_concurrent_solves() {
                 let found = found.clone();
                 scope.spawn(move || {
                     CpSolver::new(&long_parameters())
-                        .on_event(EventSet::SOLUTION, move |_| {
+                        .add_solution_callback(move |_| {
                             // The receiver leaves after both first solutions.
                             let _ = found.send(());
                             ControlFlow::Continue(())
@@ -198,7 +201,7 @@ fn stopped_handle_stops_every_later_solve() {
         let mut solutions = 0;
         let start = Instant::now();
         CpSolver::new(&long_parameters())
-            .on_event(EventSet::SOLUTION, |_| {
+            .add_solution_callback(|_| {
                 solutions += 1;
                 ControlFlow::Continue(())
             })
@@ -225,7 +228,7 @@ fn callback_panic_stops_and_resumes_after_solve() {
     let mut calls = 0;
     let panic = catch_unwind(AssertUnwindSafe(|| {
         CpSolver::new(&long_parameters())
-            .on_event(EventSet::SOLUTION, |_| {
+            .add_solution_callback(|_| {
                 calls += 1;
                 panic!("user callback failed");
             })
@@ -240,12 +243,13 @@ fn callback_panic_stops_and_resumes_after_solve() {
 #[test]
 fn solver_solves_again() {
     let mut solutions = 0;
-    let mut solver = CpSolver::default().on_event(EventSet::ALL, |event| {
-        if matches!(event, Event::Solution(_)) {
+    let mut solver = CpSolver::default()
+        .add_solution_callback(|_| {
             solutions += 1;
-        }
-        ControlFlow::Continue(())
-    });
+            ControlFlow::Continue(())
+        })
+        .add_best_bound_callback(|_| ControlFlow::Continue(()))
+        .add_log_callback(|_| ControlFlow::Continue(()));
     for _ in 0..20 {
         let response = solver.solve(&tiny_model()).unwrap();
         assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
@@ -253,10 +257,10 @@ fn solver_solves_again() {
     assert!(solutions >= 20);
 }
 
-/// Every accessor on the solution view agrees with the owned response, as
+/// Every accessor on the borrowed solution agrees with the owned response, as
 /// Python's callback and `CpSolver` accessors agree.
 #[test]
-fn solution_view_accessors_match_the_owned_response() {
+fn solution_ref_accessors_match_the_owned_response() {
     let mut model = CpModel::new();
     let x = model.new_var(0..=3);
     let b = model.new_var(Bool);
@@ -278,10 +282,8 @@ fn solution_view_accessors_match_the_owned_response() {
     };
     let mut seen = None;
     let response = CpSolver::new(&SatParameters::default().with_num_workers(1))
-        .on_event(EventSet::SOLUTION, |event| {
-            if let Event::Solution(view) = event {
-                seen = view.solution().map(read);
-            }
+        .add_solution_callback(|response| {
+            seen = response.solution().map(read);
             ControlFlow::Continue(())
         })
         .solve(model.proto())
@@ -292,25 +294,29 @@ fn solution_view_accessors_match_the_owned_response() {
 }
 
 #[test]
-fn solution_view_carries_search_statistics() {
+fn solution_ref_carries_search_statistics() {
     let model = CpModel::from(tiny_model());
     let x = model.int_var_from_index(0).unwrap();
     let mut checked = false;
     CpSolver::new(&SatParameters::default().with_num_workers(1))
-        .on_event(EventSet::SOLUTION, |event| {
-            if let Event::Solution(view) = event {
-                // The objective is x, maximized.
-                let value = view.solution().unwrap().value(x);
-                let objective = f64::from(i32::try_from(value).unwrap());
-                assert!((view.objective_value - objective).abs() < 1e-9);
-                assert!(
-                    view.num_booleans >= 0 && view.num_conflicts >= 0 && view.num_branches >= 0
-                );
-                for time in [view.wall_time, view.user_time, view.deterministic_time] {
-                    assert!(time.is_finite() && time >= 0.0, "{time}");
-                }
-                checked = true;
+        .add_solution_callback(|response| {
+            // The objective is x, maximized.
+            let value = response.solution().unwrap().value(x);
+            let objective = f64::from(i32::try_from(value).unwrap());
+            assert!((response.objective_value() - objective).abs() < 1e-9);
+            assert!(
+                response.num_booleans() >= 0
+                    && response.num_conflicts() >= 0
+                    && response.num_branches() >= 0
+            );
+            for time in [
+                response.wall_time(),
+                response.user_time(),
+                response.deterministic_time(),
+            ] {
+                assert!(time.is_finite() && time >= 0.0, "{time}");
             }
+            checked = true;
             ControlFlow::Continue(())
         })
         .solve(model.proto())

@@ -46,10 +46,8 @@ fn main() -> cpsat::Result<()> {
 
     let stop = StopHandle::new();
     let response = CpSolver::new(&SatParameters::default().with_num_workers(8))
-        .on_event(EventSet::SOLUTION, |event| {
-            if let Event::Solution(view) = event {
-                println!("objective {}", view.objective_value);
-            }
+        .add_solution_callback(|response| {
+            println!("objective {}", response.objective_value());
             ControlFlow::Continue(())
         })
         .with_stop_handle(&stop)

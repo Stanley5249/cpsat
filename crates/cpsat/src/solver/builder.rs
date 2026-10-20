@@ -1,4 +1,3 @@
-use core::ffi::c_void;
 use std::ops::ControlFlow;
 use std::panic::resume_unwind;
 use std::sync::LazyLock;
@@ -7,17 +6,14 @@ use buffa::Message;
 
 use crate::error::Result;
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
-use crate::solver::callback::{State, trampoline};
-use crate::solver::event::{Event, EventSet};
-use crate::solver::ffi::{Buffer, Session};
+use crate::solver::callback::{BestBoundCallback, Callbacks, LogCallback, SolutionCallback};
+use crate::solver::ffi::Session;
+use crate::solver::response::CpSolverResponseRef;
 use crate::solver::stop::StopHandle;
-
-/// The callback type of a [`CpSolver`] without events.
-pub type NoEvents = fn(Event<'_>) -> ControlFlow<()>;
 
 impl CpModelProto {
     /// Solves the model and returns the final response without a callback.
-    /// [`CpSolver`] adds events and stops.
+    /// [`CpSolver`] adds callbacks and stops.
     ///
     /// # Errors
     ///
@@ -25,13 +21,11 @@ impl CpModelProto {
     /// parameters are not an error; the response status is `MODEL_INVALID`.
     #[doc(alias("SolveWithParameters"))]
     pub fn solve(&self, parameters: &SatParameters) -> Result<CpSolverResponse> {
-        run(self, parameters, EventSet::NONE, None, |_| {
-            ControlFlow::Continue(())
-        })
+        run(self, parameters, None, &mut ())
     }
 }
 
-/// Configures a solve with events and cancellation.
+/// Configures a solve with callbacks and cancellation.
 ///
 /// ```no_run
 /// use std::ops::ControlFlow;
@@ -47,21 +41,18 @@ impl CpModelProto {
 ///
 /// let parameters = SatParameters::default().with_num_workers(8);
 /// let response = CpSolver::new(&parameters)
-///     .on_event(EventSet::SOLUTION, |event| {
-///         if let Event::Solution(view) = event {
-///             println!("objective {}", view.objective_value);
-///         }
+///     .add_solution_callback(|response| {
+///         println!("objective {}", response.objective_value());
 ///         ControlFlow::Continue(())
 ///     })
 ///     .solve(model.proto())?;
 /// # Ok::<(), cpsat::Error>(())
 /// ```
 #[derive(Debug)]
-pub struct CpSolver<'a, F = NoEvents> {
+pub struct CpSolver<'a, C = ()> {
     parameters: &'a SatParameters,
-    events: EventSet,
     stop: Option<&'a StopHandle>,
-    on_event: F,
+    callbacks: C,
 }
 
 impl<'a> CpSolver<'a> {
@@ -72,9 +63,8 @@ impl<'a> CpSolver<'a> {
     pub fn new(parameters: &'a SatParameters) -> Self {
         Self {
             parameters,
-            events: EventSet::NONE,
             stop: None,
-            on_event: |_| ControlFlow::Continue(()),
+            callbacks: (),
         }
     }
 }
@@ -86,27 +76,58 @@ impl Default for CpSolver<'_> {
     }
 }
 
-impl<'a, F> CpSolver<'a, F> {
+impl<'a, C> CpSolver<'a, C> {
     /// The parameters.
     #[must_use]
     pub fn parameters(&self) -> &'a SatParameters {
         self.parameters
     }
 
-    /// Reports `events` to `on_event`, which runs on a solver thread, one
-    /// event at a time. Returning [`ControlFlow::Break`] stops the search. A
-    /// panic in `on_event` stops the search and resumes after the solve
-    /// returns.
+    /// Adds a callback for each improving solution.
+    ///
+    /// Every callback runs on a solver thread, one call at a time, and
+    /// callbacks of one kind run in the order they were added. Returning
+    /// [`ControlFlow::Break`] stops the search. A panic stops the search and
+    /// resumes after the solve returns.
+    #[doc(alias("AddSolutionCallback", "solution_callback"))]
     #[must_use]
-    pub fn on_event<G>(self, events: EventSet, on_event: G) -> CpSolver<'a, G>
+    pub fn add_solution_callback<F>(self, callback: F) -> CpSolver<'a, (C, SolutionCallback<F>)>
     where
-        G: FnMut(Event<'_>) -> ControlFlow<()> + Send,
+        F: FnMut(CpSolverResponseRef<'_>) -> ControlFlow<()> + Send,
     {
+        self.add(SolutionCallback::new(callback))
+    }
+
+    /// Adds a callback for each improved objective bound. See
+    /// [`CpSolver::add_solution_callback`].
+    #[doc(alias("AddBestBoundCallback", "best_bound_callback"))]
+    #[must_use]
+    pub fn add_best_bound_callback<F>(self, callback: F) -> CpSolver<'a, (C, BestBoundCallback<F>)>
+    where
+        F: FnMut(f64) -> ControlFlow<()> + Send,
+    {
+        self.add(BestBoundCallback::new(callback))
+    }
+
+    /// Adds a callback for each log message, decoded lossily as UTF-8. See
+    /// [`CpSolver::add_solution_callback`].
+    ///
+    /// Messages arrive only when `log_search_progress` is set. Set
+    /// `log_to_stdout` to false to avoid printing them twice.
+    #[doc(alias("AddLogCallback", "log_callback"))]
+    #[must_use]
+    pub fn add_log_callback<F>(self, callback: F) -> CpSolver<'a, (C, LogCallback<F>)>
+    where
+        F: FnMut(&str) -> ControlFlow<()> + Send,
+    {
+        self.add(LogCallback::new(callback))
+    }
+
+    fn add<K>(self, callback: K) -> CpSolver<'a, (C, K)> {
         CpSolver {
             parameters: self.parameters,
-            events,
             stop: self.stop,
-            on_event,
+            callbacks: (self.callbacks, callback),
         }
     }
 
@@ -128,59 +149,34 @@ impl<'a, F> CpSolver<'a, F> {
     /// parameters are not an error; the response status is `MODEL_INVALID`.
     pub fn solve<M: AsRef<CpModelProto> + ?Sized>(&mut self, model: &M) -> Result<CpSolverResponse>
     where
-        F: FnMut(Event<'_>) -> ControlFlow<()> + Send,
+        C: Callbacks,
     {
         run(
             model.as_ref(),
             self.parameters,
-            self.events,
             self.stop,
-            &mut self.on_event,
+            &mut self.callbacks,
         )
     }
 }
 
-fn run<F>(
+fn run<C: Callbacks>(
     model: &CpModelProto,
     parameters: &SatParameters,
-    events: EventSet,
     stop: Option<&StopHandle>,
-    on_event: F,
-) -> Result<CpSolverResponse>
-where
-    F: FnMut(Event<'_>) -> ControlFlow<()> + Send,
-{
+    callbacks: &mut C,
+) -> Result<CpSolverResponse> {
     let model = model.encode_to_vec();
-    let parameters = parameters.encode_to_vec();
     let session = Session::new()?;
+    session.set_parameters(&parameters.encode_to_vec())?;
+    // SAFETY: `callbacks` stays borrowed in place until this function returns,
+    // after the solve.
+    unsafe { callbacks.register(&session)? };
     // SAFETY: the guard drops at the end of this scope, before the session.
     let _attached = stop.map(|stop| unsafe { crate::solver::stop::attach(stop, session.as_ptr()) });
-
-    let mut state = State {
-        on_event,
-        panic: None,
-    };
-    let mut response = Buffer::new();
-    let mut error = Buffer::new();
-    // SAFETY: the byte slices and state outlive the call, the buffers are
-    // empty bridge buffers, and the trampoline matches the state type.
-    let code = unsafe {
-        cpsat_sys::cpsat_session_solve(
-            session.as_ptr(),
-            model.as_ptr(),
-            model.len(),
-            parameters.as_ptr(),
-            parameters.len(),
-            events.bits(),
-            Some(trampoline::<F>),
-            (&raw mut state).cast::<c_void>(),
-            response.as_mut_ptr(),
-            error.as_mut_ptr(),
-        )
-    };
-    if let Some(payload) = state.panic {
+    let response = session.solve(&model);
+    if let Some(payload) = callbacks.take_panic() {
         resume_unwind(payload);
     }
-    crate::solver::ffi::check(code, &error)?;
-    Ok(CpSolverResponse::decode_from_slice(response.bytes())?)
+    Ok(CpSolverResponse::decode_from_slice(response?.bytes())?)
 }

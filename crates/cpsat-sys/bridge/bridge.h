@@ -1,7 +1,7 @@
 // C ABI over OR-Tools' SolveWrapper and CpSatHelper.
 //
-// Every message crosses the ABI as serialized Protobuf bytes. Functions that
-// return int32_t return CPSAT_OK or CPSAT_ERROR; on error, *error holds a UTF-8
+// Messages cross the ABI as serialized Protobuf bytes, except the response that
+// a solution callback borrows. Functions that return int32_t return CPSAT_OK or CPSAT_ERROR; on error, *error holds a UTF-8
 // message. Buffers in CpsatBuffer outputs are owned by the bridge and must be
 // released with cpsat_buffer_free.
 //
@@ -27,28 +27,38 @@ typedef struct CpsatBuffer {
   size_t len;
 } CpsatBuffer;
 
-typedef enum CpsatEventKind {
-  // data/len hold a serialized CpSolverResponse.
-  CPSAT_EVENT_SOLUTION = 1,
-  // bound holds the new best objective bound.
-  CPSAT_EVENT_BEST_BOUND = 2,
-  // data/len hold one log message, which may not be valid UTF-8.
-  CPSAT_EVENT_LOG = 4,
-} CpsatEventKind;
+// A CpSolverResponse borrowed during a solution callback. Each field holds the
+// response field of the same name, and solution points into the response.
+typedef struct CpsatResponseRef {
+  int32_t status;
+  const int64_t* solution;
+  size_t solution_len;
+  double objective_value;
+  double best_objective_bound;
+  int64_t num_booleans;
+  int64_t num_conflicts;
+  int64_t num_branches;
+  int64_t num_binary_propagations;
+  int64_t num_integer_propagations;
+  double wall_time;
+  double user_time;
+  double deterministic_time;
+  // The CpSolverResponse, for cpsat_response_ref_serialize.
+  const void* response;
+} CpsatResponseRef;
 
-// data is borrowed and valid only during the callback.
-typedef struct CpsatEvent {
-  uint32_t kind;
-  const uint8_t* data;
-  size_t len;
-  double bound;
-} CpsatEvent;
+// Each callback runs with at most one other callback call at a time, possibly
+// on a solver worker thread, and borrows its arguments only during the call.
+// A nonzero return requests the solver to stop.
+typedef int32_t (*CpsatSolutionCallback)(void* context,
+                                         const CpsatResponseRef* response);
+typedef int32_t (*CpsatBestBoundCallback)(void* context, double bound);
+// message may not be valid UTF-8.
+typedef int32_t (*CpsatLogCallback)(void* context, const uint8_t* message,
+                                    size_t message_len);
 
-// Called with at most one event at a time, possibly from a solver worker
-// thread. A nonzero return requests the solver to stop.
-typedef int32_t (*CpsatEventFn)(void* context, const CpsatEvent* event);
-
-// One session serves one solve, because SolveWrapper is not reusable.
+// One session serves one solve, because SolveWrapper is not reusable. Set the
+// parameters and add callbacks before cpsat_session_solve.
 typedef struct CpsatSession CpsatSession;
 
 // Returns null if the session cannot be allocated.
@@ -57,17 +67,33 @@ CpsatSession* cpsat_session_new(void);
 // Must not run concurrently with any other call on the same session.
 void cpsat_session_free(CpsatSession* session);
 
-// Safe from any thread and from inside the event callback, while the session
-// is alive.
+// Safe from any thread and from inside a callback, while the session is alive.
 void cpsat_session_stop(CpsatSession* session);
 
-// events is a bitwise OR of CpsatEventKind values to subscribe to. on_event
-// may be null when events is 0.
+int32_t cpsat_session_set_parameters(CpsatSession* session,
+                                     const uint8_t* parameters,
+                                     size_t parameters_len, CpsatBuffer* error);
+
+// Callbacks of one kind run in the order they were added. context must stay
+// valid until cpsat_session_solve returns.
+int32_t cpsat_session_add_solution_callback(CpsatSession* session,
+                                            CpsatSolutionCallback callback,
+                                            void* context, CpsatBuffer* error);
+int32_t cpsat_session_add_best_bound_callback(CpsatSession* session,
+                                              CpsatBestBoundCallback callback,
+                                              void* context,
+                                              CpsatBuffer* error);
+int32_t cpsat_session_add_log_callback(CpsatSession* session,
+                                       CpsatLogCallback callback, void* context,
+                                       CpsatBuffer* error);
+
 int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
-                            size_t model_len, const uint8_t* parameters,
-                            size_t parameters_len, uint32_t events,
-                            CpsatEventFn on_event, void* context,
-                            CpsatBuffer* response, CpsatBuffer* error);
+                            size_t model_len, CpsatBuffer* response,
+                            CpsatBuffer* error);
+
+// Serializes the whole response. Valid only during the solution callback.
+int32_t cpsat_response_ref_serialize(const CpsatResponseRef* response_ref,
+                                     CpsatBuffer* response, CpsatBuffer* error);
 
 // *message is empty when the model is valid.
 int32_t cpsat_model_validate(const uint8_t* model, size_t model_len,
