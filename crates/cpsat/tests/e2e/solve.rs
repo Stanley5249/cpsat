@@ -37,7 +37,7 @@ fn solves_to_optimality() {
 #[test]
 fn reads_negated_literals_and_expressions() {
     let mut model = CpModel::new();
-    let x = model.new_constant(4);
+    let x = model.new_var(4..=4);
     let b = model.new_var(Bool);
     model.add(b.eq(1));
     let response = model.solve(&SatParameters::default()).unwrap();

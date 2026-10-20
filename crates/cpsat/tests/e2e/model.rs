@@ -26,7 +26,7 @@ fn looks_up_handles_by_index() {
     let mut model = CpModel::new();
     let x = model.new_var(0..=5);
     let b = model.new_var(Bool);
-    let one = model.new_constant(1);
+    let one = model.new_var(1..=1);
     let start = model.new_var(0..=10);
     let interval = model.new_var(Interval::fixed_size(start, 2));
     let constraint = model.add(x.le(3));
@@ -99,9 +99,9 @@ fn replaces_and_clears_the_objective() {
 #[test]
 fn constants_and_true_literals_solve_to_their_values() {
     let mut model = CpModel::new();
-    let seven = model.new_constant(7);
-    let yes = model.new_constant(true);
-    let no = model.new_constant(false);
+    let seven = model.new_var(7..=7);
+    let yes = model.new_var(true);
+    let no = model.new_var(false);
     let x = model.new_var(0..=10);
     model.add(x.eq(seven + 1));
     model.add(Constraint::reservoir_with_active(
@@ -415,18 +415,14 @@ fn only_domains_within_zero_and_one_are_literals() {
     assert_eq!(model.to_literal(empty), None);
 }
 
-/// Unlike Python's constant map, each constant owns its variable, so editing
-/// one leaves the others fixed.
 #[test]
-fn constants_own_their_variables() {
+fn a_bool_creates_a_fixed_literal() {
     let mut model = CpModel::new();
-    let five = model.new_constant(5);
-    let other = model.new_constant(5);
-    assert_ne!(five, other);
-    assert_ne!(model.new_constant(true).variable(), model.new_constant(1));
-
-    model.set_domain(other, 0..=9);
-    assert_eq!(model[five].domain, [5, 5]);
+    let yes = model.new_var(true.with_name("yes"));
+    let no = model.new_var(false);
+    assert_eq!(model[yes.variable()].domain, [1, 1]);
+    assert_eq!(model[yes.variable()].name, "yes");
+    assert_eq!(model[no.variable()].domain, [0, 0]);
 }
 
 /// Handles order by index, so they key sorted collections, while the

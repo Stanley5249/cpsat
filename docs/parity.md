@@ -169,8 +169,9 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Rust: `CpModel::new_var(Bool)`
   - Test: `samples.rs::boolean_product`
 - `new_constant`, `True`, `False`
-  - Rust: `CpModel::new_constant` with an `i64` or a `bool`; each call appends a
-    variable, while Python and C++ share one variable per value
+  - Rust: `CpModel::new_var` with a fixed range such as `5..=5`, or with `true`
+    or `false` for a fixed literal; each call appends a variable, while Python
+    and C++ share one variable per value
   - Test: `model.rs::constants_and_true_literals_solve_to_their_values`
 - `new_interval_var`, `new_fixed_size_interval_var`
   - Rust: `CpModel::new_var` with `Interval::new` or `Interval::fixed_size`
@@ -382,9 +383,10 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
 - `get_or_make_index_from_constant`, `get_or_make_variable_index`,
   `get_or_make_boolean_index`, `rebuild_constant_map` inherited from
   `CpBaseModel`
-  - Rust: `CpModel::new_constant(value).index()`, typed handle indices,
-    `new_constant(bool)` / `to_literal`; no constant cache to rebuild
-  - Test: `model.rs::constants_own_their_variables`, `equivalence.rs::constants`
+  - Rust: `new_var(value..=value).index()`, typed handle indices,
+    `new_var(bool)` / `to_literal`; no constant cache to rebuild
+  - Test: `model.rs::a_bool_creates_a_fixed_literal`,
+    `equivalence.rs::constants`
 - `CpModel.is_boolean_value`, `object_is_a_true_literal`,
   `object_is_a_false_literal`
   - Rust: Typed `BoolVar` conversion and explicit inspection of
@@ -511,8 +513,10 @@ or mutable solver state with types.
   before `new_var`, configures a `Constraint` before insertion, and uses
   `model[ConstraintIndex]` for later changes.
 - Python accepts dynamic literal inputs and sequence/varargs overloads. Rust
-  takes typed `BoolVar` literals and iterator inputs. Use `new_constant(true)`
-  for a Boolean constant and `to_literal` for a 0-1 integer variable.
+  takes typed `BoolVar` literals and iterator inputs. Use `new_var(true)` for a
+  fixed literal and `to_literal` for a 0-1 integer variable. Where Python mixes
+  `True` into a list of presence literals, an `Option<BoolVar>` says the same
+  without a variable.
 - Integer expression overflow panics in Rust, while Python's native expression
   arithmetic can wrap. `Domain::size` and empty-bound behavior differ as noted
   in the Domain entries. Compare supported values and explicit edge cases

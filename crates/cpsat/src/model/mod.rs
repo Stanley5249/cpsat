@@ -52,35 +52,6 @@ impl Hint for BoolVar {
     }
 }
 
-/// What [`CpModel::new_constant`] accepts: an `i64` gives an [`IntVar`], and a
-/// `bool` gives a [`BoolVar`].
-pub trait NewConstant: sealed::Sealed {
-    /// The handle that [`CpModel::new_constant`] returns.
-    type Output;
-
-    /// Fixes the value in `model` and returns its handle.
-    #[doc(hidden)]
-    fn insert(self, model: &mut CpModel) -> Self::Output;
-}
-
-impl sealed::Sealed for i64 {}
-impl NewConstant for i64 {
-    type Output = IntVar;
-
-    fn insert(self, model: &mut CpModel) -> IntVar {
-        IntVar(model.push_variable(vec![self, self], String::new()))
-    }
-}
-
-impl sealed::Sealed for bool {}
-impl NewConstant for bool {
-    type Output = BoolVar;
-
-    fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.push_variable(vec![self.into(); 2], String::new()))
-    }
-}
-
 /// A CP-SAT model, which owns its `CpModelProto` and hands out typed handles.
 ///
 /// The model only appends variables and constraints, so a handle stays valid
@@ -172,9 +143,14 @@ impl CpModel {
     }
 
     /// A variable or an interval: an [`IntVar`] for a domain or a bounded
-    /// range, a [`BoolVar`] for [`Bool`], and an
-    /// [`IntervalVar`](crate::prelude::IntervalVar) for an [`Interval`].
-    /// [`WithName::with_name`] names a variable.
+    /// range, a [`BoolVar`] for [`Bool`], a [`BoolVar`] fixed to the value of
+    /// a `bool`, and an [`IntervalVar`](crate::prelude::IntervalVar) for an
+    /// [`Interval`]. [`WithName::with_name`] names a variable.
+    ///
+    /// A fixed variable, such as `5..=5` or `true`, serves where the schema
+    /// needs a variable or a literal, such as in [`Constraint::inverse`] or
+    /// [`Constraint::bool_or`]. An expression takes a plain `i64` or
+    /// [`LinearExpr::constant`], which adds no variable.
     ///
     /// ```
     /// use cpsat::prelude::*;
@@ -190,7 +166,15 @@ impl CpModel {
     ///
     /// Panics if the model already holds `i32::MAX` variables or
     /// constraints.
-    #[doc(alias("new_int_var", "new_int_var_from_domain", "NewIntVar"))]
+    #[doc(alias(
+        "new_int_var",
+        "new_int_var_from_domain",
+        "new_constant",
+        "NewIntVar",
+        "NewConstant",
+        "TrueVar",
+        "FalseVar"
+    ))]
     pub fn new_var<V: NewVar>(&mut self, var: V) -> V::Output {
         var.insert(self)
     }
@@ -216,24 +200,6 @@ impl CpModel {
     /// Panics if the model lacks `var`, like indexing with it.
     pub fn set_domain(&mut self, var: IntVar, domain: impl Into<Domain>) {
         self.0.variables[slot(var.0)].domain = domain.into().into_flattened_intervals();
-    }
-
-    /// A new variable fixed to `value`: an [`IntVar`] for an `i64`, and a
-    /// [`BoolVar`] for a `bool`, which Python writes as `True` or `False`.
-    /// Unlike Python and C++, each call appends its own variable, so
-    /// [`set_domain`](Self::set_domain) on one handle changes no other handle.
-    /// Reuse the handle to share one variable.
-    ///
-    /// Use it where the schema needs a variable or a literal, such as in
-    /// [`Constraint::inverse`] or [`Constraint::bool_or`]. An expression takes
-    /// a plain `i64` or [`LinearExpr::constant`], which adds no variable.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the model already holds `i32::MAX` variables.
-    #[doc(alias("TrueVar", "FalseVar"))]
-    pub fn new_constant<C: NewConstant>(&mut self, value: C) -> C::Output {
-        value.insert(self)
     }
 
     /// Inserts a constraint.

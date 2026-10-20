@@ -104,17 +104,16 @@ Every change follows these rules.
 - **Names.** Use Python's name wherever a Rust convention allows it, such as
   `constant` and `parameters`. Constructors drop `new_`, constraint constructors
   drop `add_`, and integer is the unmarked kind. The model and solver take
-  Python's class names, `CpModel` and `CpSolver`. `CpModel::new_var` and
-  `new_constant` keep the prefix, because they append to the model and a bare
-  `var` reads like a getter. A value before insertion is a plain noun, such as
-  `Constraint` and `Interval`. A handle takes the OR-Tools name where one
-  exists, such as `IntVar` and `IntervalVar`, and is otherwise the noun plus
-  `Index`, such as `ConstraintIndex`, because it is a row index and borrows
-  nothing.
+  Python's class names, `CpModel` and `CpSolver`. `CpModel::new_var` keeps the
+  prefix, because it appends to the model and a bare `var` reads like a getter.
+  A value before insertion is a plain noun, such as `Constraint` and `Interval`.
+  A handle takes the OR-Tools name where one exists, such as `IntVar` and
+  `IntervalVar`, and is otherwise the noun plus `Index`, such as
+  `ConstraintIndex`, because it is a row index and borrows nothing.
 - **Entry points.** One method per meaning. Several input types share one method
   over a sealed trait, such as `value` over `Evaluate`, `new_var` over `NewVar`,
-  `new_constant` over `NewConstant`, and `add_hint` over `Hint`. Take
-  `impl IntoIterator` instead of a single-item twin.
+  and `add_hint` over `Hint`. Take `impl IntoIterator` instead of a single-item
+  twin.
 - **Insertion.** `CpModel::new_var` appends what other parts of the model refer
   to, a variable or an interval, and returns the handle they take as input.
   `CpModel::add` appends a constraint that nothing refers to, and its

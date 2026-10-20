@@ -8,14 +8,15 @@ use crate::expr::{BoolVar, Domain, IntVar};
 
 /// What [`CpModel::new_var`] creates, and the handle it returns: an
 /// [`IntVar`] for a [`Domain`] or a bounded range, a [`BoolVar`] for
-/// [`Bool`], and an [`IntervalVar`](crate::prelude::IntervalVar) for an
+/// [`Bool`], a fixed [`BoolVar`] for a `bool`, and an
+/// [`IntervalVar`](crate::prelude::IntervalVar) for an
 /// [`Interval`](crate::prelude::Interval).
 ///
 /// `RangeFrom` and `RangeToInclusive` are missing on purpose, because a
 /// variable whose domain reaches `i64::MIN` or `i64::MAX` is invalid.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` cannot create a variable",
-    label = "expected a bounded `i64` domain, `Bool`, or an `Interval`",
+    label = "expected a bounded `i64` domain, `Bool`, a `bool`, or an `Interval`",
     note = "a variable needs finite `i64` bounds, such as `0..=10`"
 )]
 pub trait NewVar: sealed::Sealed {
@@ -108,5 +109,24 @@ impl NewVar for Named<Bool> {
 
     fn insert(self, model: &mut CpModel) -> BoolVar {
         BoolVar(model.push_variable(vec![0, 1], self.name))
+    }
+}
+
+impl sealed::Sealed for bool {}
+impl WithName for bool {}
+
+impl NewVar for bool {
+    type Output = BoolVar;
+
+    fn insert(self, model: &mut CpModel) -> BoolVar {
+        BoolVar(model.push_variable(vec![self.into(); 2], String::new()))
+    }
+}
+
+impl NewVar for Named<bool> {
+    type Output = BoolVar;
+
+    fn insert(self, model: &mut CpModel) -> BoolVar {
+        BoolVar(model.push_variable(vec![self.var.into(); 2], self.name))
     }
 }
