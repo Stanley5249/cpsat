@@ -163,7 +163,8 @@ impl VarMut<'_> {
     /// Replaces the domain, like Python's `IntVar.with_domain`. A literal of
     /// the variable stays valid only while the domain stays within `[0, 1]`,
     /// which [`validate`](CpModel::validate) checks where the literal fills a
-    /// literal field.
+    /// literal field. A literal used only in arithmetic is not checked, so its
+    /// value then reads inconsistently.
     #[doc(alias("with_domain"))]
     pub fn set_domain(&mut self, domain: impl Into<Domain>) -> &mut Self {
         self.0.domain = domain.into().into_flattened_intervals();
