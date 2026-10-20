@@ -9,6 +9,7 @@ use core::ffi::c_void;
 use std::any::Any;
 use std::ops::ControlFlow;
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use buffa::MessageView;
 
@@ -16,11 +17,17 @@ use crate::error::Result;
 use crate::proto::view::CpSolverResponseView;
 use crate::solver::ffi::Session;
 
-/// A panic payload from a callback.
-type Panic = Box<dyn Any + Send>;
+/// A callback's panic payload, after the sequence number that orders it among
+/// the panics of other callbacks.
+type Panic = (u64, Box<dyn Any + Send>);
 
-/// One callback and the first panic it raised, which the solve resumes after
-/// it returns, as Python's binding reraises the first callback exception.
+/// Numbers panics in the order they happen. The bridge runs one callback at a
+/// time under a mutex, so relaxed ordering is enough.
+static PANICS: AtomicU64 = AtomicU64::new(0);
+
+/// One callback and the first panic it raised. The solve resumes the earliest
+/// panic of all its callbacks, as Python's binding reraises the first callback
+/// exception.
 #[derive(Debug)]
 struct Slot<F> {
     callback: F,
@@ -28,6 +35,7 @@ struct Slot<F> {
 }
 
 impl<F> Slot<F> {
+    /// A slot without a panic.
     fn new(callback: F) -> Self {
         Self {
             callback,
@@ -44,7 +52,7 @@ impl<F> Slot<F> {
             Ok(ControlFlow::Continue(())) => 0,
             Ok(ControlFlow::Break(())) => 1,
             Err(payload) => {
-                self.panic = Some(payload);
+                self.panic = Some((PANICS.fetch_add(1, Ordering::Relaxed), payload));
                 1
             }
         }
@@ -67,18 +75,21 @@ pub struct BestBoundCallback<F>(Slot<F>);
 pub struct LogCallback<F>(Slot<F>);
 
 impl<F> SolutionCallback<F> {
+    /// Wraps `callback` for [`CpSolver::add_solution_callback`](crate::prelude::CpSolver::add_solution_callback).
     pub(crate) fn new(callback: F) -> Self {
         Self(Slot::new(callback))
     }
 }
 
 impl<F> BestBoundCallback<F> {
+    /// Wraps `callback` for [`CpSolver::add_best_bound_callback`](crate::prelude::CpSolver::add_best_bound_callback).
     pub(crate) fn new(callback: F) -> Self {
         Self(Slot::new(callback))
     }
 }
 
 impl<F> LogCallback<F> {
+    /// Wraps `callback` for [`CpSolver::add_log_callback`](crate::prelude::CpSolver::add_log_callback).
     pub(crate) fn new(callback: F) -> Self {
         Self(Slot::new(callback))
     }
@@ -95,7 +106,7 @@ mod sealed {
         /// `self` must neither move nor drop until the solve returns.
         unsafe fn register(&mut self, session: &Session) -> Result<()>;
 
-        /// The first panic, in registration order.
+        /// Takes every stored panic and returns the earliest.
         fn take_panic(&mut self) -> Option<Panic>;
     }
 
@@ -106,6 +117,7 @@ mod sealed {
         /// As for [`Sealed::register`].
         unsafe fn register(&mut self, session: &Session) -> Result<()>;
 
+        /// Takes the stored panic, so the next solve starts without one.
         fn take_panic(&mut self) -> Option<Panic>;
     }
 }
@@ -136,8 +148,12 @@ impl<C: Callbacks, K: sealed::Callback> sealed::Sealed for (C, K) {
     }
 
     fn take_panic(&mut self) -> Option<Panic> {
-        let first = self.0.take_panic();
-        first.or_else(|| self.1.take_panic())
+        match (self.0.take_panic(), self.1.take_panic()) {
+            (Some(first), Some(second)) => {
+                Some(std::cmp::min_by_key(first, second, |panic| panic.0))
+            }
+            (first, second) => first.or(second),
+        }
     }
 }
 

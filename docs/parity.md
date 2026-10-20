@@ -28,11 +28,11 @@ and Names rules in `docs/design.md`.
 - `CpSolver.solve(model)`
   - Rust: `CpModel::solve`, `CpModelProto::solve`, `CpSolver::solve`
   - OR-Tools: `SolveWrapper::Solve`
-  - Test: `samples.rs::cp_sat_example`, `events.rs::solver_solves_again`
+  - Test: `samples.rs::cp_sat_example`, `callbacks.rs::solver_solves_again`
 - `CpSolver.parameters`
   - Rust: `SatParameters` passed to `CpSolver::new`, `CpSolver::parameters`
   - OR-Tools: `SolveWrapper::SetParameters`
-  - Test: `events.rs::forwards_logs_and_parameters`
+  - Test: `callbacks.rs::forwards_logs_and_parameters`
 - `max_time_in_seconds`
   - Rust: `SatParameters` field
   - OR-Tools: none
@@ -46,16 +46,16 @@ and Names rules in `docs/design.md`.
   - Rust: `CpSolverResponseView::solution`, then `Solution::value`, which reads
     a literal as `bool` and a `FloatExpr` as `f64`
   - OR-Tools: none
-  - Test: `events.rs::solution_view_reads_values_and_converts_to_owned`,
+  - Test: `callbacks.rs::solution_view_reads_values_and_converts_to_owned`,
     `solution_view_accessors_match_the_owned_response`
 - `CpSolver.best_bound_callback`
   - Rust: `CpSolver::add_best_bound_callback`
   - OR-Tools: `AddBestBoundCallback`
-  - Test: `events.rs::reports_best_bounds`
+  - Test: `callbacks.rs::reports_best_bounds`
 - `CpSolver.log_callback`
   - Rust: `CpSolver::add_log_callback`
   - OR-Tools: `AddLogCallback`
-  - Test: `events.rs::forwards_logs_and_parameters`
+  - Test: `callbacks.rs::forwards_logs_and_parameters`
 - `CpSolverSolutionCallback.stop_search`
   - Rust: return `ControlFlow::Break`
   - OR-Tools: `StopSearch`
@@ -63,11 +63,11 @@ and Names rules in `docs/design.md`.
 - `CpSolver.stop_search` from another thread
   - Rust: `StopHandle::stop` with `CpSolver::with_stop_handle`
   - OR-Tools: `StopSearch`
-  - Test: `events.rs::stops_from_another_thread`
+  - Test: `callbacks.rs::stops_from_another_thread`
 - Exception in a callback stops the search and is reraised
   - Rust: panic stops the search and resumes after the solve
   - OR-Tools: none
-  - Test: `events.rs::callback_panic_stops_and_resumes_after_solve`
+  - Test: `callbacks.rs::callback_panic_stops_and_resumes_after_solve`
 - `enumerate_all_solutions`
   - Rust: `SatParameters` field with `CpSolver::add_solution_callback`
   - OR-Tools: none
@@ -131,7 +131,7 @@ and Names rules in `docs/design.md`.
   - Rust: A solution callback always receives a response view;
     `MessageView::to_owned_message` retains it after the callback
   - OR-Tools: none
-  - Test: `events.rs::solution_view_reads_values_and_converts_to_owned`
+  - Test: `callbacks.rs::solution_view_reads_values_and_converts_to_owned`
 - Callback `objective_value`, `best_objective_bound`, `num_booleans`,
   `num_conflicts`, `num_branches`, `num_integer_propagations`,
   `num_binary_propagations`, `deterministic_time`, `wall_time`, `user_time`
@@ -139,7 +139,7 @@ and Names rules in `docs/design.md`.
   - OR-Tools: none
   - Test: `samples.rs::solve_and_print_intermediate_solutions` reads objective
     value; the other fields have no direct parity assertions,
-    `events.rs::solution_view_carries_search_statistics`
+    `callbacks.rs::solution_view_carries_search_statistics`
 - `SearchForAllSolutions`
   - Rust: Set `enumerate_all_solutions` and add a solution callback; Python's
     deprecated wrapper also rejects objectives and restores the previous
@@ -149,10 +149,10 @@ and Names rules in `docs/design.md`.
     validation or restoration
 - `ObjectiveSolutionPrinter`, `VarArrayAndObjectiveSolutionPrinter`,
   `VarArraySolutionPrinter`, `solution_count`
-  - Rust: Print or count in a solution-event closure; Python's printer classes
-    and output format are presentation conveniences
+  - Rust: Print or count in a solution callback; Python's printer classes and
+    output format are presentation conveniences
   - OR-Tools: none
-  - Test: `samples.rs::stop_after_n_solutions` counts events; exact Python
+  - Test: `samples.rs::stop_after_n_solutions` counts solutions; exact Python
     printer output has no direct test
 
 ## Model

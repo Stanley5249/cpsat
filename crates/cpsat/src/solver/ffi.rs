@@ -81,6 +81,7 @@ impl Session {
         self.0
     }
 
+    /// Sends the parameters for the solve.
     pub fn set_parameters(&self, parameters: &[u8]) -> Result<()> {
         let mut error = Buffer::new();
         // SAFETY: the session is alive, and the bytes outlive the call.
@@ -95,6 +96,8 @@ impl Session {
         check(code, &error)
     }
 
+    /// Adds a solution callback with its context.
+    ///
     /// # Safety
     ///
     /// `context` must suit `callback` and stay valid until [`Session::solve`]
@@ -117,6 +120,8 @@ impl Session {
         check(code, &error)
     }
 
+    /// Adds a best-bound callback with its context.
+    ///
     /// # Safety
     ///
     /// As for [`Session::add_solution_callback`].
@@ -138,6 +143,8 @@ impl Session {
         check(code, &error)
     }
 
+    /// Adds a log callback with its context.
+    ///
     /// # Safety
     ///
     /// As for [`Session::add_solution_callback`].

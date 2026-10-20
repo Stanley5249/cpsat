@@ -124,6 +124,7 @@ impl<'a, C> CpSolver<'a, C> {
         self.add(LogCallback::new(callback))
     }
 
+    /// The solver with `callback` appended to its callbacks.
     fn add<K>(self, callback: K) -> CpSolver<'a, (C, K)> {
         CpSolver {
             parameters: self.parameters,
@@ -161,6 +162,8 @@ impl<'a, C> CpSolver<'a, C> {
     }
 }
 
+/// Solves `model` once with a fresh session, then resumes the first callback
+/// panic, if any.
 fn run<C: Callbacks>(
     model: &CpModelProto,
     parameters: &SatParameters,
@@ -176,7 +179,7 @@ fn run<C: Callbacks>(
     // SAFETY: the guard drops at the end of this scope, before the session.
     let _attached = stop.map(|stop| unsafe { crate::solver::stop::attach(stop, session.as_ptr()) });
     let response = session.solve(&model);
-    if let Some(payload) = callbacks.take_panic() {
+    if let Some((_, payload)) = callbacks.take_panic() {
         resume_unwind(payload);
     }
     Ok(CpSolverResponse::decode_from_slice(response?.bytes())?)

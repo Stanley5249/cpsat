@@ -3,6 +3,7 @@
 
 use std::ops::ControlFlow;
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -43,6 +44,53 @@ fn callbacks_of_one_kind_run_in_order() {
     let calls = calls.into_inner().unwrap();
     assert_ne!(calls, Vec::<i32>::new());
     assert!(calls.chunks(2).all(|pair| pair == [1, 2]), "{calls:?}");
+}
+
+#[test]
+fn log_callbacks_see_the_same_messages() {
+    let parameters = SatParameters::default()
+        .with_log_search_progress(true)
+        .with_log_to_stdout(false);
+    let (mut first, mut second) = (String::new(), String::new());
+    CpSolver::new(&parameters)
+        .add_log_callback(|line| {
+            first.push_str(line);
+            ControlFlow::Continue(())
+        })
+        .add_log_callback(|line| {
+            second.push_str(line);
+            ControlFlow::Continue(())
+        })
+        .solve(&tiny_model())
+        .unwrap();
+    assert_ne!(first, "");
+    assert_eq!(first, second);
+}
+
+/// The log callback comes first in the tuple but panics last, after the
+/// search, so registration order would resume the wrong panic.
+#[test]
+fn the_earliest_panic_among_callbacks_resumes() {
+    let parameters = SatParameters::default()
+        .with_log_search_progress(true)
+        .with_log_to_stdout(false);
+    let solved = AtomicBool::new(false);
+    let solved = &solved;
+    let panic = catch_unwind(AssertUnwindSafe(|| {
+        CpSolver::new(&parameters)
+            .add_log_callback(|_| {
+                assert!(!solved.load(Ordering::Relaxed), "later");
+                ControlFlow::Continue(())
+            })
+            .add_solution_callback(|_| {
+                solved.store(true, Ordering::Relaxed);
+                panic!("earlier");
+            })
+            .solve(&tiny_model())
+    }))
+    .unwrap_err();
+    assert!(solved.load(Ordering::Relaxed));
+    assert_eq!(panic.downcast_ref::<&str>(), Some(&"earlier"));
 }
 
 #[test]

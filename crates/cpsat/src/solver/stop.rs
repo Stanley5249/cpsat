@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use cpsat_sys::CpsatSession;
 
-/// Stops solves from any thread, including from inside an event callback.
+/// Stops solves from any thread, including from inside a callback.
 ///
 /// Like a cancellation token, one handle stops every solve it is passed to,
 /// including solves running at the same time. A stop is sticky: stopping
