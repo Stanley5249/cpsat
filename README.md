@@ -94,12 +94,12 @@ Run `just` to list the recipes. `just check` is the fast local gate, and
 
 ## Documents
 
-- [Design](docs/design.md)
-- [Build and deployment](docs/build.md)
-- [Conventions](docs/conventions.md)
-- [Roadmap](docs/roadmap.md)
-- [Python parity](docs/parity.md)
-- [Proto2 defaults in Buffa](docs/buffa-proto2-defaults.md)
+- [Design](https://github.com/Stanley5249/cpsat/blob/main/docs/design.md)
+- [Build and deployment](https://github.com/Stanley5249/cpsat/blob/main/docs/build.md)
+- [Conventions](https://github.com/Stanley5249/cpsat/blob/main/docs/conventions.md)
+- [Roadmap](https://github.com/Stanley5249/cpsat/blob/main/docs/roadmap.md)
+- [Python parity](https://github.com/Stanley5249/cpsat/blob/main/docs/parity.md)
+- [Proto2 defaults in Buffa](https://github.com/Stanley5249/cpsat/blob/main/docs/buffa-proto2-defaults.md)
 
 ## License
 

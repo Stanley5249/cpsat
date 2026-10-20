@@ -160,6 +160,9 @@ Every change follows these rules.
 - **Runtime libraries.** Hard-linked or copied into `OUT_DIR/runtime` with their
   license notices. The `cpsat-sys` build script explains why.
 - **Errors.** A `thiserror` enum in `cpsat`, `anyhow` in the build script.
+- **README links.** Absolute URLs on `main` for `docs/`, because crates.io
+  resolves relative links against each crate's directory. The license links stay
+  relative, because each crate holds its own copies.
 - **Solver.** `CpModel::solve` for the plain case, and a `CpSolver` for events
   and stops. `CpSolver` is generic over one `FnMut(Event) -> ControlFlow<()>`
   callback, because a boxed one keeps the closure's borrows alive until the
