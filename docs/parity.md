@@ -323,8 +323,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
     `var.ne(offset + i).only_enforce_if(!literal)`; a manual encoding rather
     than a direct method
   - Test: `equivalence.rs::map_domain`,
-    `constraints.rs::map_domain_sets_only_the_literal_of_the_value`,
-    `map_domain_fixes_the_value_of_a_true_literal`
+    `constraints.rs::map_domain_sets_only_the_literal_of_the_value`
 - `minimize`, `maximize`, `has_objective`, `clear_objective`
   - Rust: `Model::minimize`, `maximize`, `has_objective`, `clear_objective`
   - Test: `model.rs::replaces_and_clears_the_objective`

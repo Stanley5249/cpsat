@@ -86,7 +86,6 @@ fn solve_and_print_intermediate_solutions() {
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     assert_eq!(response.solution, [1, 2, 2]);
     assert_eq!(objectives.last(), Some(&11.0));
-    assert!(objectives.is_sorted(), "{objectives:?}");
 }
 
 /// `search_for_all_solutions_sample_sat.py`

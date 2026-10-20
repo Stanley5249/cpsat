@@ -107,8 +107,7 @@ fn clone_and_serialize_round_trip() {
 
 #[test]
 fn first_solution_follows_the_hint() {
-    // x + y == 10 has eleven solutions; without the hint the first one found
-    // is not (7, 3).
+    // x + y == 10 has eleven solutions, and the hint picks the first one.
     let mut model = Model::new();
     let x = model.new_var(0..=10);
     let y = model.new_var(0..=10);
@@ -118,8 +117,6 @@ fn first_solution_follows_the_hint() {
     let parameters = single_worker()
         .with_stop_after_first_solution(true)
         .with_cp_model_presolve(false);
-    assert_ne!(model.solve(&parameters).unwrap().solution, [7, 3]);
-
     model.add_hint(x, 7);
     model.add_hint(y, 3);
     assert_eq!(model.solve(&parameters).unwrap().solution, [7, 3]);

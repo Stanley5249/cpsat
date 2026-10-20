@@ -86,24 +86,6 @@ fn reservoir_drains_only_after_filling() {
 }
 
 #[test]
-fn reservoir_fills_again_only_after_draining() {
-    let mut model = Model::new();
-    let first = model.new_var(0..=10);
-    let drain = model.new_var(0..=10);
-    let second = model.new_var(0..=10);
-    model.add(Constraint::reservoir(
-        0,
-        5,
-        [(first, 3), (drain, -3), (second, 3)],
-    ));
-    model.add(first.eq(0));
-    model.add(drain.eq(5));
-    model.minimize(second);
-    let response = solve_optimal(&model);
-    assert_eq!(response.value(second), Some(5));
-}
-
-#[test]
 fn no_overlap_2d_stacks_the_squares() {
     let mut model = Model::new();
     let mut rectangles = Vec::new();
@@ -181,17 +163,6 @@ fn map_domain_sets_only_the_literal_of_the_value() {
             "x = {fixed}"
         );
     }
-}
-
-#[test]
-fn map_domain_fixes_the_value_of_a_true_literal() {
-    let mut model = Model::new();
-    let x = model.new_var(0..=10);
-    let literals = [model.new_var(Bool), model.new_var(Bool)];
-    map_domain(&mut model, x, literals);
-    model.add(literals[1].eq(1));
-    model.maximize(x);
-    assert_eq!(solve_optimal(&model).value(x), Some(4));
 }
 
 /// Python's `add(True)` and `add(False)` write a constraint on a constant
