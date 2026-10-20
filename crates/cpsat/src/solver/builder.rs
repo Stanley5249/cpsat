@@ -120,14 +120,13 @@ impl<'a, F> CpSolver<'a, F> {
     }
 
     /// Solves the model and returns the final response. The solver can solve
-    /// again, for example after the model changes. Pass `&model` to keep a
-    /// [`CpModel`](crate::prelude::CpModel), because a `CpModel` by value moves into the call.
+    /// again, for example after the model changes.
     ///
     /// # Errors
     ///
     /// Returns an error if the bridge fails. An invalid model or invalid
     /// parameters are not an error; the response status is `MODEL_INVALID`.
-    pub fn solve(&mut self, model: impl AsRef<CpModelProto>) -> Result<CpSolverResponse>
+    pub fn solve<M: AsRef<CpModelProto> + ?Sized>(&mut self, model: &M) -> Result<CpSolverResponse>
     where
         F: FnMut(Event<'_>) -> ControlFlow<()> + Send,
     {

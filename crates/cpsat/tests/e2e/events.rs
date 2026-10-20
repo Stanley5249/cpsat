@@ -75,7 +75,7 @@ fn reports_best_bounds() {
                 ControlFlow::Break(())
             }
         })
-        .solve(hard_model())
+        .solve(&hard_model())
         .unwrap();
     assert_ne!(bounds, Vec::<f64>::new());
 }
@@ -95,7 +95,7 @@ fn forwards_logs_and_parameters() {
         ControlFlow::Continue(())
     });
     assert_eq!(solver.parameters().num_workers, Some(3));
-    solver.solve(tiny_model()).unwrap();
+    solver.solve(&tiny_model()).unwrap();
     // OR-Tools 9.15 echoes non-default parameters, which proves they reached
     // C++. The wording may change with the pinned version.
     assert!(log.contains("num_workers: 3"), "{log}");
@@ -106,7 +106,7 @@ fn callback_break_stops_search() {
     let start = Instant::now();
     let response = CpSolver::new(&long_parameters())
         .on_event(EventSet::SOLUTION, |_| ControlFlow::Break(()))
-        .solve(hard_model())
+        .solve(&hard_model())
         .unwrap();
     assert_eq!(response.status(), CpSolverStatus::FEASIBLE);
     assert!(start.elapsed() < STOPPED_WITHIN, "{:?}", start.elapsed());
@@ -121,7 +121,7 @@ fn stop_handle_works_inside_callback() {
             ControlFlow::Continue(())
         })
         .with_stop_handle(&stop)
-        .solve(hard_model())
+        .solve(&hard_model())
         .unwrap();
     assert_eq!(response.status(), CpSolverStatus::FEASIBLE);
 }
@@ -146,7 +146,7 @@ fn stops_from_another_thread() {
                 ControlFlow::Continue(())
             })
             .with_stop_handle(stop)
-            .solve(hard_model())
+            .solve(&hard_model())
             .unwrap()
     });
     assert!(start.elapsed() < STOPPED_WITHIN, "{:?}", start.elapsed());
@@ -171,7 +171,7 @@ fn one_handle_stops_concurrent_solves() {
                             ControlFlow::Continue(())
                         })
                         .with_stop_handle(stop)
-                        .solve(hard_model())
+                        .solve(&hard_model())
                         .unwrap()
                         .status()
                 })
@@ -203,7 +203,7 @@ fn stopped_handle_stops_every_later_solve() {
                 ControlFlow::Continue(())
             })
             .with_stop_handle(&stop)
-            .solve(hard_model())
+            .solve(&hard_model())
             .unwrap();
         assert!(start.elapsed() < STOPPED_WITHIN, "{:?}", start.elapsed());
         assert!(solutions <= 1, "{solutions} solutions after a stop");
@@ -214,7 +214,7 @@ fn stopped_handle_stops_every_later_solve() {
 fn stop_after_solve_is_harmless() {
     let stop = StopHandle::new();
     let mut solver = CpSolver::default().with_stop_handle(&stop);
-    solver.solve(tiny_model()).unwrap();
+    solver.solve(&tiny_model()).unwrap();
     stop.stop();
     assert!(stop.is_stopped());
 }
@@ -229,7 +229,7 @@ fn callback_panic_stops_and_resumes_after_solve() {
                 calls += 1;
                 panic!("user callback failed");
             })
-            .solve(hard_model())
+            .solve(&hard_model())
     }))
     .unwrap_err();
     assert_eq!(panic.downcast_ref::<&str>(), Some(&"user callback failed"));
@@ -247,7 +247,7 @@ fn solver_solves_again() {
         ControlFlow::Continue(())
     });
     for _ in 0..20 {
-        let response = solver.solve(tiny_model()).unwrap();
+        let response = solver.solve(&tiny_model()).unwrap();
         assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     }
     assert!(solutions >= 20);
