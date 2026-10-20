@@ -14,8 +14,8 @@ use crate::proto::LinearExpressionProto;
 /// literal `!b` counts as `1 - b`.
 ///
 /// The arithmetic panics when a coefficient or the offset overflows `i64`,
-/// where Python wraps silently, and leaves the expression unchanged. `eq`, `lt`, and `le` panic on a constant
-/// `i64::MIN`, and `eq`, `ge`, and `gt` on a constant `i64::MAX`, because
+/// and leaves the expression unchanged. Python wraps some overflows silently
+/// and fails on others. `eq`, `lt`, and `le` panic on a constant `i64::MIN`, and `eq`, `ge`, and `gt` on a constant `i64::MAX`, because
 /// domains read these limits as infinity. Python raises on these limits too.
 ///
 /// ```

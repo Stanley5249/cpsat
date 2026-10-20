@@ -189,7 +189,7 @@ model.add(constraint) ---- move into model ----> ConstraintRef(i32)
 - **Handles** are typed `i32` indices without a model identity, like `petgraph`
   and `slotmap`.
 - **Expressions** sort, merge, and drop zero terms when written, like Python,
-  and panic on `i64` overflow where Python wraps.
+  and panic on `i64` overflow, where Python wraps silently or fails.
 - **Comparisons** are inherent `eq`, `le`, `in_domain`, and so on, because
   Rust's comparison traits return `bool`. Handles still derive `Ord` by index.
 - **Constraints.** Every family is a constructor on `Constraint`, and
