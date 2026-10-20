@@ -66,7 +66,8 @@ impl LinearExpr {
             .offset
             .checked_mul(factor)
             .and_then(|scaled| self.offset.checked_add(scaled))
-            .filter(|_| scales(&other.terms, factor))
+            // Multiplying by 1 cannot overflow, so adding skips the scan.
+            .filter(|_| factor == 1 || scales(&other.terms, factor))
             .expect(OVERFLOW);
         self.terms.extend(
             other
