@@ -245,11 +245,11 @@ impl Domain {
         )
     }
 
-    /// The schema's flat `[min_0, max_0, ...]` form.
+    /// The schema's flat `[min_0, max_0, ...]` form, borrowed.
     #[doc(alias("FlattenedIntervals"))]
     #[must_use]
-    pub fn flattened_intervals(&self) -> Vec<i64> {
-        self.0.as_flattened().to_vec()
+    pub fn flattened_intervals(&self) -> &[i64] {
+        self.0.as_flattened()
     }
 
     /// The schema's flat form, reusing the domain's buffer without a copy.
