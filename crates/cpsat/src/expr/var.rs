@@ -36,7 +36,7 @@ impl BoolVar {
 
     /// The underlying 0-1 variable, without the negation.
     #[must_use]
-    pub const fn variable(self) -> IntVar {
+    pub const fn to_int_var(self) -> IntVar {
         if self.is_negated() {
             IntVar(!self.0)
         } else {

@@ -15,10 +15,10 @@ fn literals_negate_and_name_their_variable() {
     assert_eq!((b.index(), (!b).index()), (1, -2));
     assert_eq!(!!b, b);
     assert!((!b).is_negated());
-    assert_eq!((!b).variable(), b.variable());
-    assert_eq!(b.variable().index(), 1);
+    assert_eq!((!b).to_int_var(), b.to_int_var());
+    assert_eq!(b.to_int_var().index(), 1);
 
-    assert_eq!(model[(!b).variable()].name, "b");
+    assert_eq!(model[(!b).to_int_var()].name, "b");
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn constraint_builder_sets_enforcement_and_name() {
     );
 
     model.proto_mut().name = "model".into();
-    model.remove_all_names();
+    model.clear_names();
     assert_eq!(model.proto().name, "");
     assert_eq!(model[x].name, "");
     assert_eq!(model[constraint].name, "");
@@ -397,7 +397,7 @@ fn a_zero_one_variable_serves_as_a_literal() {
     let flag = model.new_var(0..=1);
     let wide = model.new_var(0..=2);
     let literal = model.to_bool_var(flag).unwrap();
-    assert_eq!(literal.variable(), flag);
+    assert_eq!(literal.to_int_var(), flag);
     assert_eq!(model.to_bool_var(wide), None);
     model.add(Constraint::bool_or([literal]));
     let response = model.solve(&SatParameters::default()).unwrap();
@@ -421,7 +421,7 @@ fn only_domains_within_zero_and_one_are_literals() {
 fn to_bool_var_panics_without_the_variable() {
     let mut larger = CpModel::new();
     let _ = larger.new_var(Bool);
-    let x = larger.new_var(Bool).variable();
+    let x = larger.new_var(Bool).to_int_var();
     let _ = CpModel::new().to_bool_var(x);
 }
 
@@ -430,9 +430,9 @@ fn a_bool_creates_a_fixed_literal() {
     let mut model = CpModel::new();
     let yes = model.new_var(true.with_name("yes"));
     let no = model.new_var(false);
-    assert_eq!(model[yes.variable()].domain, [1, 1]);
-    assert_eq!(model[yes.variable()].name, "yes");
-    assert_eq!(model[no.variable()].domain, [0, 0]);
+    assert_eq!(model[yes.to_int_var()].domain, [1, 1]);
+    assert_eq!(model[yes.to_int_var()].name, "yes");
+    assert_eq!(model[no.to_int_var()].domain, [0, 0]);
 }
 
 /// Handles order by index, so they key sorted collections, while the

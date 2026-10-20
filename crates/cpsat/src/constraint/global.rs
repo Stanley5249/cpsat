@@ -2,7 +2,7 @@
 
 use buffa::MessageField;
 
-use super::{Constraint, exprs, variables};
+use super::{Constraint, exprs, vars};
 use crate::expr::{IntVar, LinearExpr};
 use crate::proto::{
     AllDifferentConstraintProto, AutomatonConstraintProto, ElementConstraintProto,
@@ -45,8 +45,8 @@ impl Constraint {
         inverse: impl IntoIterator<Item = IntVar>,
     ) -> Self {
         Self::of(InverseConstraintProto {
-            f_direct: variables(direct),
-            f_inverse: variables(inverse),
+            f_direct: vars(direct),
+            f_inverse: vars(inverse),
             ..Default::default()
         })
     }

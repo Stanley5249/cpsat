@@ -10,7 +10,7 @@ from ortools.sat.python import cp_model
 FIXTURES = pathlib.Path(__file__).parent
 
 
-def variables(model: cp_model.CpModel):
+def vars(model: cp_model.CpModel):
     x = model.new_int_var(0, 10, "")
     y = model.new_int_var(0, 10, "")
     b = model.new_bool_var("")
@@ -20,7 +20,7 @@ def variables(model: cp_model.CpModel):
 
 def linear() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    x, y, b, c = variables(model)
+    x, y, b, c = vars(model)
     model.add(x + x + 2 * y - 3 <= 10)
     model.add(y + x <= 3)
     model.add(x == y)
@@ -42,7 +42,7 @@ def linear() -> cp_model.CpModel:
 
 def boolean() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    _, _, b, c = variables(model)
+    _, _, b, c = vars(model)
     model.add_bool_or([b, ~c])
     model.add_bool_and([b, ~c]).only_enforce_if(~b)
     model.add_at_most_one([b, ~c])
@@ -54,7 +54,7 @@ def boolean() -> cp_model.CpModel:
 
 def global_constraints() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    x, y, b, c = variables(model)
+    x, y, b, c = vars(model)
     model.add_all_different([x, y + 1, 2 * b])
     model.add_element(x, [y, 3, b], 2)
     model.add_inverse([x, y], [y, x])
@@ -68,7 +68,7 @@ def global_constraints() -> cp_model.CpModel:
 
 def arithmetic() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    x, y, b, _ = variables(model)
+    x, y, b, _ = vars(model)
     model.add_max_equality(x + 1, [2 * y, 3])
     model.add_min_equality(x, [y, 3])
     model.add_abs_equality(x, y - 4)
@@ -80,7 +80,7 @@ def arithmetic() -> cp_model.CpModel:
 
 def scheduling() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    x, y, b, c = variables(model)
+    x, y, b, c = vars(model)
     i = model.new_interval_var(x, 2, y, "")
     j = model.new_fixed_size_interval_var(x + 1, 3, "")
     k = model.new_optional_interval_var(x, y, x + 5, b, "")
@@ -96,7 +96,7 @@ def scheduling() -> cp_model.CpModel:
 
 def search() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    x, y, b, c = variables(model)
+    x, y, b, c = vars(model)
     model.maximize(x + 2 * y + 1)
     model.add_hint(x, 3)
     model.add_hint(~b, True)
@@ -110,28 +110,28 @@ def search() -> cp_model.CpModel:
 
 def minimize_constant() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    variables(model)
+    vars(model)
     model.minimize(5)
     return model
 
 
 def minimize_float() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    x, y, b, _ = variables(model)
+    x, y, b, _ = vars(model)
     model.minimize(0.5 * x - 1.25 * y + 0.1 + x + 0.5 * ~b)
     return model
 
 
 def maximize_float() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    x, y, _, _ = variables(model)
+    x, y, _, _ = vars(model)
     model.maximize(2.5 * x + y - 0.5)
     return model
 
 
 def constants() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    x, _, b, _ = variables(model)
+    x, _, b, _ = vars(model)
     model.add(x == model.new_constant(5))
     model.add(x <= model.new_constant(5) + model.new_constant(1))
     model.add_bool_or([True, b])
@@ -141,7 +141,7 @@ def constants() -> cp_model.CpModel:
 
 def map_domain() -> cp_model.CpModel:
     model = cp_model.CpModel()
-    x, _, b, c = variables(model)
+    x, _, b, c = vars(model)
     model.add_map_domain(x, [b, c], 3)
     return model
 

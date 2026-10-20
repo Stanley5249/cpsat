@@ -4,9 +4,9 @@
 mod domain;
 mod float;
 mod linear;
-mod variable;
+mod var;
 
 pub use domain::Domain;
 pub use float::FloatExpr;
 pub use linear::LinearExpr;
-pub use variable::{BoolVar, IntVar, IntervalVar};
+pub use var::{BoolVar, IntVar, IntervalVar};

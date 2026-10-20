@@ -79,7 +79,7 @@ macro_rules! domain_var {
 
             fn insert(self, model: &mut CpModel) -> IntVar {
                 let domain = Domain::from(self).into_flattened_intervals();
-                IntVar(model.push_variable(domain, String::new()))
+                IntVar(model.push_var(domain, String::new()))
             }
         }
 
@@ -88,7 +88,7 @@ macro_rules! domain_var {
 
             fn insert(self, model: &mut CpModel) -> IntVar {
                 let domain = Domain::from(self.var).into_flattened_intervals();
-                IntVar(model.push_variable(domain, self.name))
+                IntVar(model.push_var(domain, self.name))
             }
         }
     )*};
@@ -103,7 +103,7 @@ impl NewVar for Bool {
     type Output = BoolVar;
 
     fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.push_variable(vec![0, 1], String::new()))
+        BoolVar(model.push_var(vec![0, 1], String::new()))
     }
 }
 
@@ -111,7 +111,7 @@ impl NewVar for Named<Bool> {
     type Output = BoolVar;
 
     fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.push_variable(vec![0, 1], self.name))
+        BoolVar(model.push_var(vec![0, 1], self.name))
     }
 }
 
@@ -122,7 +122,7 @@ impl NewVar for bool {
     type Output = BoolVar;
 
     fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.push_variable(vec![self.into(); 2], String::new()))
+        BoolVar(model.push_var(vec![self.into(); 2], String::new()))
     }
 }
 
@@ -130,7 +130,7 @@ impl NewVar for Named<bool> {
     type Output = BoolVar;
 
     fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.push_variable(vec![self.var.into(); 2], self.name))
+        BoolVar(model.push_var(vec![self.var.into(); 2], self.name))
     }
 }
 

@@ -252,7 +252,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
     negation
 - `IntVar.is_boolean`, literal `negated`, `NotBooleanVariable`
   - Rust: `CpModel::to_bool_var(var).is_some()`, `!literal`,
-    `BoolVar::is_negated`, `variable`; one Rust literal type represents both
+    `BoolVar::is_negated`, `to_int_var`; one Rust literal type represents both
     signs
   - Test: `model.rs::a_zero_one_variable_serves_as_a_literal`,
     `only_domains_within_zero_and_one_are_literals`,
@@ -358,7 +358,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: `model.rs::literals_negate_and_name_their_variable`,
     `constraint_builder_sets_enforcement_and_name`
 - `remove_all_names`
-  - Rust: `CpModel::remove_all_names`
+  - Rust: `CpModel::clear_names`
   - Test: `model.rs::constraint_builder_sets_enforcement_and_name`
 - Change domains, objectives, constraints, then solve again
   - Rust: `CpModel::var_mut`, the objective setters, and `proto_mut`
@@ -491,7 +491,7 @@ or mutable solver state with types.
   read the stored message
 - `CpModel::proto`, `proto_mut`, `into_proto`, `From`, `AsRef`: Move between
   `CpModel` and `CpModelProto`, and solve, validate, or describe a bare message
-- `BoolVar::variable`, `is_negated`, and `index` on handles: Read a handle's
+- `BoolVar::to_int_var`, `is_negated`, and `index` on handles: Read a handle's
   encoding without a model
 - `+=`, `-=`, `*=`, and `Sum` on `LinearExpr` and `FloatExpr`: Build expressions
   in loops and iterator chains

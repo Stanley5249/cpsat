@@ -105,7 +105,7 @@ impl Evaluate for BoolVar {
     type Output = bool;
 
     fn evaluate(&self, solution: &[i64]) -> bool {
-        (slot(solution, self.variable()) != 0) != self.is_negated()
+        (slot(solution, self.to_int_var()) != 0) != self.is_negated()
     }
 }
 

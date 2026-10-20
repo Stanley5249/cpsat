@@ -16,7 +16,7 @@ impl CpModel {
     #[doc(alias("get_int_var_from_proto_index", "GetIntVarFromProtoIndex"))]
     #[must_use]
     pub fn int_var_from_index(&self, index: i32) -> Option<IntVar> {
-        self.variable(index).map(|_| IntVar(index))
+        self.var_proto(index).map(|_| IntVar(index))
     }
 
     /// `var` as a literal if its domain is within `[0, 1]`, for the places
@@ -110,7 +110,7 @@ impl CpModel {
         }
     }
 
-    fn variable(&self, index: i32) -> Option<&IntegerVariableProto> {
+    fn var_proto(&self, index: i32) -> Option<&IntegerVariableProto> {
         self.0.variables.get(usize::try_from(index).ok()?)
     }
 }

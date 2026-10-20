@@ -116,6 +116,6 @@ fn literals(literals: impl IntoIterator<Item = BoolVar>) -> Vec<i32> {
     literals.into_iter().map(BoolVar::index).collect()
 }
 
-fn variables(vars: impl IntoIterator<Item = IntVar>) -> Vec<i32> {
+fn vars(vars: impl IntoIterator<Item = IntVar>) -> Vec<i32> {
     vars.into_iter().map(IntVar::index).collect()
 }

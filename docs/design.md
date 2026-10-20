@@ -93,7 +93,7 @@ Every change follows these rules.
   variable, and the negative value `-i - 1` is the negation of row `i`, so a
   negation adds no row. `IntVar` holds a row index, which is never negative, and
   `BoolVar` holds a literal, which `!` negates as bitwise not. A literal enters
-  a variable field only through `BoolVar::variable`, which drops the negation,
+  a variable field only through `BoolVar::to_int_var`, which drops the negation,
   or `LinearExpr::from`, which reads `!b` as `1 - b`. A method that edits a row,
   such as a domain change, takes `IntVar`. A method that sets a literal's truth
   value, such as `add_hint`, takes `BoolVar` and flips the value for a negation.

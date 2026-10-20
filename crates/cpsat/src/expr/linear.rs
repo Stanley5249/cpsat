@@ -186,7 +186,7 @@ impl From<IntVar> for LinearExpr {
 impl From<BoolVar> for LinearExpr {
     fn from(literal: BoolVar) -> Self {
         if literal.is_negated() {
-            Self::term(literal.variable().0, -1, 1)
+            Self::term(literal.to_int_var().0, -1, 1)
         } else {
             Self::term(literal.0, 1, 0)
         }

@@ -48,7 +48,10 @@ impl Hint for BoolVar {
 
     /// A negated literal hints its variable with the opposite value.
     fn hint(self, value: bool) -> (i32, i64) {
-        (self.variable().index(), (value != self.is_negated()).into())
+        (
+            self.to_int_var().index(),
+            (value != self.is_negated()).into(),
+        )
     }
 }
 
@@ -180,7 +183,7 @@ impl CpModel {
     }
 
     /// Appends a variable and returns its index.
-    fn push_variable(&mut self, domain: Vec<i64>, name: String) -> i32 {
+    fn push_var(&mut self, domain: Vec<i64>, name: String) -> i32 {
         let index = next_index(self.0.variables.len(), "variables");
         self.0.variables.push(IntegerVariableProto {
             name,
@@ -251,10 +254,11 @@ impl CpModel {
     }
 
     /// Clears the names of the model, its variables, and its constraints.
-    pub fn remove_all_names(&mut self) {
+    #[doc(alias("remove_all_names"))]
+    pub fn clear_names(&mut self) {
         self.0.name.clear();
-        for variable in &mut self.0.variables {
-            variable.name.clear();
+        for var in &mut self.0.variables {
+            var.name.clear();
         }
         for constraint in &mut self.0.constraints {
             constraint.name.clear();
