@@ -97,6 +97,10 @@ Every change follows these rules.
   over a sealed trait, such as `value` over `Evaluate`, `new_var` over `NewVar`,
   and `add_hint` over `Hint`. Take `impl IntoIterator` instead of a single-item
   twin.
+- **Insertion.** `Model::new_var` appends what other parts of the model refer
+  to, a variable or an interval, and returns the handle they take as input.
+  `Model::add` appends a constraint that nothing refers to, and its
+  `ConstraintRef` only reads or edits that row.
 - **Methods.** Operations on a model or response are methods on `Model`,
   `CpModelProto`, and `CpSolverResponse`, and `Model` forwards `solve`,
   `validate`, and `stats` to its message. Only `default_parameters` is a free
@@ -112,7 +116,14 @@ Every change follows these rules.
   `solve` reports the `MODEL_INVALID` status. Types rule out structural
   mistakes, such as a negated literal where the schema wants a variable or an
   unbounded variable domain. The validator checks what depends on the model's
-  current state, such as a variable's domain or an earlier hint.
+  current state, such as a variable's domain or an earlier hint. Check eagerly
+  only what the validator cannot see.
+- **Matched lists.** Items that belong together form one tuple, such as the
+  `(interval, demand)` pairs of `cumulative`, so their lists cannot differ in
+  length. Lists whose lengths must match but whose items do not pair, such as
+  the two permutations of `inverse`, stay separate, and the validator reports a
+  mismatch. Only an encoding that hides the mistake panics, such as table rows
+  flattened into one list, which the validator would read as other rows.
 - **Lookup.** A raw schema index returns `Option`. Indexing with a handle panics
   when the model lacks it, like a slice.
 - **Builders.** A value configured before insertion takes `self` and returns
