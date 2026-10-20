@@ -37,9 +37,14 @@ impl CpModelProto {
 /// use std::ops::ControlFlow;
 ///
 /// use cpsat::prelude::*;
-/// use cpsat::proto::{CpModelProto, SatParameters};
+/// use cpsat::proto::SatParameters;
 ///
-/// let model = CpModelProto::default();
+/// // From `solve_and_print_intermediate_solutions_sample_sat.py`.
+/// let mut model = Model::new();
+/// let [x, y, z] = [(); 3].map(|()| model.new_var(0..=2));
+/// model.add(x.ne(y));
+/// model.maximize(x + 2 * y + 3 * z);
+///
 /// let parameters = SatParameters::default().with_num_workers(8);
 /// let response = Solver::new(&parameters)
 ///     .on_event(EventSet::SOLUTION, |event| {
@@ -48,7 +53,7 @@ impl CpModelProto {
 ///         }
 ///         ControlFlow::Continue(())
 ///     })
-///     .solve(&model)?;
+///     .solve(model.proto())?;
 /// # Ok::<(), cpsat::Error>(())
 /// ```
 #[doc(alias("CpSolver"))]

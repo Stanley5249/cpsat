@@ -63,10 +63,17 @@ impl Constraint {
     /// ```
     /// use cpsat::prelude::*;
     ///
+    /// // From `assignment_groups_sat.py`: which pairs of four workers work.
     /// let mut model = Model::new();
-    /// let x = model.new_var(0..=5);
-    /// let y = model.new_var(0..=5);
-    /// model.add(Constraint::allowed_assignments([x, y], [[1, 2], [3, 4]]));
+    /// let work = [(); 4].map(|()| model.new_var(Bool));
+    /// let group = [
+    ///     [0, 0, 1, 1],
+    ///     [0, 1, 0, 1],
+    ///     [0, 1, 1, 0],
+    ///     [1, 1, 0, 0],
+    ///     [1, 0, 1, 0],
+    /// ];
+    /// model.add(Constraint::allowed_assignments(work, group));
     /// ```
     #[doc(alias("add_allowed_assignments", "AddAllowedAssignments"))]
     #[must_use]

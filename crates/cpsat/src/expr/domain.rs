@@ -11,6 +11,10 @@ use std::ops::{Range, RangeFrom, RangeInclusive, RangeToInclusive};
 /// ```
 /// use cpsat::prelude::*;
 ///
+/// // From `step_function_sample_sat.py`.
+/// let domain = Domain::from_intervals([(5, 6), (8, 10)]);
+/// assert_eq!(domain.flattened_intervals(), [5, 6, 8, 10]);
+///
 /// // x != 0, the domain Python builds for `x != 0`.
 /// let domain = Domain::from_values([0]).complement();
 /// assert_eq!(domain.flattened_intervals(), [i64::MIN, -1, 1, i64::MAX]);

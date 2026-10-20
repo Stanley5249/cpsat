@@ -19,15 +19,17 @@ use crate::proto::{ConstraintProto, IntervalConstraintProto};
 /// ```
 /// use cpsat::prelude::*;
 ///
+/// // From `optional_interval_sample_sat.py`.
 /// let mut model = Model::new();
-/// let start = model.new_var(0..=10);
-/// let present = model.new_var(Bool);
-/// let task = model.new_var(
-///     Interval::fixed_size(start, 3)
-///         .only_enforce_if(present)
-///         .with_name("task"),
+/// let start = model.new_var((0..=100).with_name("start"));
+/// let end = model.new_var((0..=100).with_name("end"));
+/// let presence = model.new_var(Bool.with_name("presence"));
+/// let interval = model.new_var(
+///     Interval::new(start, 10, end + 2)
+///         .only_enforce_if(presence)
+///         .with_name("interval"),
 /// );
-/// model.add(Constraint::no_overlap([task]));
+/// let fixed = model.new_var(Interval::fixed_size(5, 10).only_enforce_if(presence));
 /// ```
 #[derive(Clone, Debug, PartialEq)]
 pub struct Interval(Constraint);

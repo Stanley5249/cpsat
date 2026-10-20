@@ -31,10 +31,15 @@ use crate::proto::{ConstraintProto, LinearExpressionProto};
 /// ```
 /// use cpsat::prelude::*;
 ///
+/// // From `channeling_sample_sat.py`.
 /// let mut model = Model::new();
 /// let x = model.new_var(0..=10);
-/// let enabled = model.new_var(Bool);
-/// model.add(x.ge(5).only_enforce_if(enabled).with_name("x is large"));
+/// let y = model.new_var(0..=10);
+/// let b = model.new_var(Bool);
+/// model.add(x.ge(5).only_enforce_if(b));
+/// model.add(x.lt(5).only_enforce_if(!b));
+/// model.add(y.eq(10 - x).only_enforce_if(b).with_name("y follows x"));
+/// model.add(y.eq(0).only_enforce_if(!b));
 /// ```
 #[derive(Clone, Debug, PartialEq)]
 pub struct Constraint(ConstraintProto);

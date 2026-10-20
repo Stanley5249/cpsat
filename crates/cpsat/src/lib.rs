@@ -16,15 +16,16 @@
 //! use cpsat::prelude::*;
 //! use cpsat::proto::SatParameters;
 //!
+//! // From `simple_sat_program.py`.
 //! let mut model = Model::new();
-//! let x = model.new_var(0..=10);
-//! let y = model.new_var(0..=10);
-//! model.add((x + y).le(4));
-//! model.maximize(2 * x + 3 * y);
+//! let [x, y, z] = [(); 3].map(|()| model.new_var(0..=2));
+//! model.add(x.ne(y));
 //!
 //! let parameters = SatParameters::default().with_num_workers(8);
 //! let response = model.solve(&parameters)?;
-//! println!("{}: x = {:?}", response.status(), response.value(x));
+//! for var in [x, y, z] {
+//!     println!("{:?}", response.value(var));
+//! }
 //! # Ok::<(), cpsat::Error>(())
 //! ```
 //!

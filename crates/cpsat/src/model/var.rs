@@ -32,10 +32,11 @@ pub trait NewVar: sealed::Sealed {
 /// ```
 /// use cpsat::prelude::*;
 ///
+/// // From `bool_or_sample_sat.py`.
 /// let mut model = Model::new();
-/// let b = model.new_var(Bool);
-/// let enabled = model.new_var(Bool.with_name("enabled"));
-/// model.add(Constraint::bool_or([b, !enabled]));
+/// let x = model.new_var(Bool.with_name("x"));
+/// let y = model.new_var(Bool.with_name("y"));
+/// model.add(Constraint::bool_or([x, !y]));
 /// ```
 #[doc(alias("new_bool_var", "NewBoolVar"))]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

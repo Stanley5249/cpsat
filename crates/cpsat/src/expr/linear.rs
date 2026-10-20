@@ -22,11 +22,14 @@ use crate::proto::LinearExpressionProto;
 /// ```
 /// use cpsat::prelude::*;
 ///
+/// // From `cp_sat_example.py`.
 /// let mut model = Model::new();
-/// let x = model.new_var(0..=10);
-/// let y = model.new_var(0..=10);
-/// let total: LinearExpr = [x, y].into_iter().sum();
-/// model.add((total + 2 * y).le(10));
+/// let [x, y, z] = [(); 3].map(|()| model.new_var(0..=50));
+/// model.add((2 * x + 7 * y + 3 * z).le(50));
+/// model.add((3 * x - 5 * y + 7 * z).le(45));
+/// model.add((5 * x + 2 * y - 6 * z).le(37));
+/// let objective: LinearExpr = [2 * x, 2 * y, 3 * z].into_iter().sum();
+/// model.maximize(objective);
 /// ```
 #[derive(Clone, Debug, Default)]
 pub struct LinearExpr {

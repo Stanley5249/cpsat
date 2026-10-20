@@ -43,10 +43,14 @@ impl Constraint {
     /// ```
     /// use cpsat::prelude::*;
     ///
+    /// // From `cumulative_variable_profile_sample_sat.py`, which also
+    /// // varies the capacity.
     /// let mut model = Model::new();
-    /// let start = model.new_var(0..=10);
-    /// let task = model.new_var(Interval::fixed_size(start, 3));
-    /// model.add(Constraint::cumulative(2, [(task, 1)]));
+    /// let start = model.new_var(0..=1380);
+    /// let performed = model.new_var(Bool);
+    /// let task = model.new_var(Interval::fixed_size(start, 60).only_enforce_if(performed));
+    /// let capacity = model.new_var(0..=12);
+    /// model.add(Constraint::cumulative(capacity, [(task, 3)]));
     /// ```
     #[doc(alias("add_cumulative", "AddCumulative"))]
     #[must_use]
