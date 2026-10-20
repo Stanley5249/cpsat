@@ -1,7 +1,7 @@
 //! Handle lookups: indexing with a handle, reading an interval, and finding
 //! a handle by its schema index.
 
-use std::ops::{Index, IndexMut};
+use std::ops::Index;
 
 use super::{CpModel, slot};
 use crate::constraint::ConstraintIndex;
@@ -140,11 +140,5 @@ impl Index<ConstraintIndex> for CpModel {
 
     fn index(&self, constraint: ConstraintIndex) -> &ConstraintProto {
         &self.0.constraints[slot(constraint.0)]
-    }
-}
-
-impl IndexMut<ConstraintIndex> for CpModel {
-    fn index_mut(&mut self, constraint: ConstraintIndex) -> &mut ConstraintProto {
-        &mut self.0.constraints[slot(constraint.0)]
     }
 }

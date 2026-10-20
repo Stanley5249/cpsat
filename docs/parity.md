@@ -360,7 +360,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Rust: `CpModel::remove_all_names`
   - Test: `model.rs::constraint_builder_sets_enforcement_and_name`
 - Change domains, objectives, constraints, then solve again
-  - Rust: `model[constraint]`, `proto_mut`
+  - Rust: `CpModel::var_mut`, the objective setters, and `proto_mut`
   - Test: `solve.rs::resolves_after_model_change`
 - `clone`, `proto`, serialization
   - Rust: `Clone`, `CpModel::proto`, `Message::encode_to_vec`
@@ -372,8 +372,8 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
     `clone_and_serialize_round_trip`
 - `Constraint.proto`, `index`, construction from an existing index
   - Rust: Before insertion, `Constraint::proto` or `into_proto`; after
-    insertion, `model[ConstraintIndex]`; an existing constraint is accessible
-    through `proto().constraints[index]`
+    insertion, `model[ConstraintIndex]` to read and `proto_mut` to change; an
+    existing constraint is accessible through `proto().constraints[index]`
   - Test: `model.rs::constraint_builder_sets_enforcement_and_name`,
     `looks_up_handles_by_index`
 - `IntervalVar.proto`, construction from an existing index;
@@ -486,9 +486,8 @@ or mutable solver state with types.
   the index `CpModel::add` returns
 - `Error`, `Result`: Typed failures where Python raises or returns a string
 - `CpSolverResponseView`: Buffa's zero-copy view of a solution inside an event
-- `Index` on `CpModel`, `IndexMut` for constraints: `model[x]`,
-  `model[interval]`, and `model[constraint]` read the stored message, and only
-  `model[constraint]` changes it
+- `Index` on `CpModel`: `model[x]`, `model[interval]`, and `model[constraint]`
+  read the stored message
 - `CpModel::proto`, `proto_mut`, `into_proto`, `From`, `AsRef`: Move between
   `CpModel` and `CpModelProto`, and solve, validate, or describe a bare message
 - `BoolVar::variable`, `is_negated`, and `index` on handles: Read a handle's
@@ -511,8 +510,8 @@ or mutable solver state with types.
   response access. Constants can still be evaluated without a solution.
 - Python constructors accept names, and constraint methods mutate an already
   inserted constraint. Rust names variables and intervals with `with_name`
-  before `new_var`, configures a `Constraint` before insertion, and uses
-  `model[ConstraintIndex]` for later changes.
+  before `new_var`, configures a `Constraint` before insertion, and changes it
+  later through `proto_mut`.
 - Python accepts dynamic literal inputs and sequence/varargs overloads. Rust
   takes typed `BoolVar` literals and iterator inputs. Use `new_var(true)` for a
   fixed literal and `to_literal` for a 0-1 integer variable. Where Python mixes

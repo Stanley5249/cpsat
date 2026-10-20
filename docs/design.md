@@ -117,7 +117,7 @@ Every change follows these rules.
 - **Insertion.** `CpModel::new_var` appends what other parts of the model refer
   to, a variable or an interval, and returns the handle they take as input.
   `CpModel::add` appends a constraint that nothing refers to, and its
-  `ConstraintIndex` only reads or edits that row.
+  `ConstraintIndex` only reads that row.
 - **Methods.** Operations on a model or response are methods on `CpModel`,
   `CpModelProto`, and `CpSolverResponse`, and `CpModel` forwards `solve`,
   `validate`, and `stats` to its message. Only `default_parameters` is a free
@@ -144,11 +144,12 @@ Every change follows these rules.
 - **Lookup.** A raw schema index returns `Option`. Indexing with a handle panics
   when the model lacks it, like a slice.
 - **Builders.** A value configured before insertion takes `self` and returns
-  `Self` with `#[must_use]`, such as `Constraint::only_enforce_if`. Change a
-  constraint after insertion through `model[constraint]`, and a variable through
-  `CpModel::var_mut`, whose setters keep its fields well formed. Intervals
-  change only through `proto_mut`, because a changed interval body can break the
-  handles that rely on it.
+  `Self` with `#[must_use]`, such as `Constraint::only_enforce_if`. After
+  insertion, `CpModel::var_mut` edits a variable through setters that keep its
+  fields well formed, and everything else changes through `proto_mut`. `CpModel`
+  holds nothing besides its message, so `proto_mut` cannot leave the model
+  inconsistent. It can only break the handles to rows it changes, such as an
+  `IntervalVar` whose row no longer holds an interval.
 - **`#[must_use]`.** Every public method without side effects carries it.
   Appending model methods such as `new_var` do not.
 - **Docs and tests.** `docs/conventions.md` sets the rules for doc comments,
