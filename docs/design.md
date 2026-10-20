@@ -110,6 +110,27 @@ Every change follows these rules.
   A handle takes the OR-Tools name where one exists, such as `IntVar` and
   `IntervalVar`, and is otherwise the noun plus `Index`, such as
   `ConstraintIndex`, because it is a row index and borrows nothing.
+- **Vocabulary.** Each concept has one spelling in identifiers. A type name sets
+  the spelling for every name derived from it: `IntVar` gives `var` and
+  `LinearExpr` gives `expr`, as in `new_var`, `var_mut`, `to_bool_var`, and
+  `exprs`. Prose, doc comments, and panic messages spell the full word.
+- **Abbreviations.** Identifiers use only these short forms: `var` and `expr`
+  from the type names, `proto` for a Protobuf message, `stats` from OR-Tools,
+  and the `std` forms `min`, `max`, `len`, `rhs`, `eq`, `ne`, `lt`, `le`, `gt`,
+  and `ge`. Every other word is spelled in full, such as `parameters`, `index`,
+  `literal`, and `numerator`.
+- **Generated names.** Use Buffa's names as generated, such as
+  `CpModelProto::variables` and `LinearExpressionProto::coeffs`. A binding that
+  destructures such fields takes the field names, as in
+  `let (vars, coeffs, offset)`, and a binding for one element takes the project
+  term, as in `for var in &mut proto.variables`.
+- **Paired forms.** When two forms of one concept share a scope, both get the
+  same pattern of names, such as `model` with `model_proto` and `parameters`
+  with `parameters_proto`.
+- **Files.** A file takes the spelling of the types it holds. Sibling modules
+  may reuse a file name, as `expr/linear.rs` and `constraint/linear.rs` do.
+- **Parity.** Where a Python name breaks a Rust convention or the API's own
+  pattern, the Rust name wins and the Python name becomes a `#[doc(alias)]`.
 - **Entry points.** One method per meaning. Several input types share one method
   over a sealed trait, such as `value` over `Evaluate`, `new_var` over `NewVar`,
   and `add_hint` over `Hint`. Take `impl IntoIterator` instead of a single-item
