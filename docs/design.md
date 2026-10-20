@@ -137,10 +137,8 @@ Every change follows these rules.
   interval body can break the handles that rely on it.
 - **`#[must_use]`.** Every public method without side effects carries it.
   Appending model methods such as `new_var` do not.
-- **Python mapping.** An item that mirrors Python says "like Python's `name`",
-  and a change to it updates its `docs/parity.md` row in the same commit.
-- **Encoding tests.** A new constraint family gets a Python fixture in
-  `tests/e2e/equivalence.rs` and a solve test for its meaning.
+- **Docs and tests.** `docs/conventions.md` sets the rules for doc comments,
+  examples, and tests.
 - **Visibility.** `pub` or private, except `pub(crate)` on handle indices,
   expression terms and evaluation, and `EventSet::bits`, which sibling modules
   share.
