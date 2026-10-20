@@ -122,6 +122,19 @@ fn float_conversion_merges_in_doubles() {
     let objective = model.proto().floating_point_objective.as_option().unwrap();
     assert_eq!(objective.vars, [0]);
     assert_eq!(objective.coeffs, [i64::MAX as f64 + 1.0]);
+
+    // Python 9.15 writes these objectives: 2^53 + 1 rounds to 2^53 before the
+    // merge, so the sum is not 2^53 + 2 and the difference drops `x`.
+    let big = 1 << 53;
+    let y = model.new_var(0..=5);
+    model.minimize(FloatExpr::from(x * (big + 1) + x) + 0.5 * y);
+    let objective = model.proto().floating_point_objective.as_option().unwrap();
+    assert_eq!(objective.vars, [0, 1]);
+    assert_eq!(objective.coeffs, [big as f64, 0.5]);
+    model.minimize(FloatExpr::from(x * (big + 1) - x * big) + 0.5 * y);
+    let objective = model.proto().floating_point_objective.as_option().unwrap();
+    assert_eq!(objective.vars, [1]);
+    assert_eq!(objective.coeffs, [0.5]);
 }
 
 #[test]
