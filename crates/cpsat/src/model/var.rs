@@ -1,10 +1,11 @@
 //! Variable creation through [`CpModel::new_var`], like Python's `new_int_var`
-//! and `new_bool_var`.
+//! and `new_bool_var`, and edits through [`CpModel::var_mut`].
 
 use std::ops::{Range, RangeInclusive};
 
-use super::{CpModel, sealed};
+use super::{CpModel, sealed, slot};
 use crate::expr::{BoolVar, Domain, IntVar};
+use crate::proto::IntegerVariableProto;
 
 /// What [`CpModel::new_var`] creates, and the handle it returns: an
 /// [`IntVar`] for a [`Domain`] or a bounded range, a [`BoolVar`] for
@@ -128,5 +129,48 @@ impl NewVar for Named<bool> {
 
     fn insert(self, model: &mut CpModel) -> BoolVar {
         BoolVar(model.push_variable(vec![self.var.into(); 2], self.name))
+    }
+}
+
+impl CpModel {
+    /// Edits `var`, for example to tighten its domain before solving again.
+    ///
+    /// ```
+    /// use cpsat::prelude::*;
+    ///
+    /// let mut model = CpModel::new();
+    /// let x = model.new_var(0..=10);
+    /// model.var_mut(x).set_domain(0..=5).set_name("x");
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the model lacks `var`, like indexing with it.
+    #[must_use]
+    pub fn var_mut(&mut self, var: IntVar) -> VarMut<'_> {
+        VarMut(&mut self.0.variables[slot(var.0)])
+    }
+}
+
+/// A variable that [`CpModel::var_mut`] edits. Each setter writes a
+/// well-formed field, so the stored domain stays sorted and disjoint.
+#[derive(Debug)]
+pub struct VarMut<'a>(&'a mut IntegerVariableProto);
+
+impl VarMut<'_> {
+    /// Replaces the domain, like Python's `IntVar.with_domain`. A literal of
+    /// the variable stays valid only while the domain stays within `[0, 1]`,
+    /// which [`validate`](CpModel::validate) checks where the literal fills a
+    /// literal field.
+    #[doc(alias("with_domain"))]
+    pub fn set_domain(&mut self, domain: impl Into<Domain>) -> &mut Self {
+        self.0.domain = domain.into().into_flattened_intervals();
+        self
+    }
+
+    /// Replaces the name.
+    pub fn set_name(&mut self, name: impl Into<String>) -> &mut Self {
+        self.0.name = name.into();
+        self
     }
 }

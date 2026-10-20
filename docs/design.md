@@ -145,9 +145,10 @@ Every change follows these rules.
   when the model lacks it, like a slice.
 - **Builders.** A value configured before insertion takes `self` and returns
   `Self` with `#[must_use]`, such as `Constraint::only_enforce_if`. Change a
-  constraint after insertion through `model[constraint]`. Variables and
-  intervals change only through `proto_mut`, because a changed domain or
-  interval body can break the handles that rely on it.
+  constraint after insertion through `model[constraint]`, and a variable through
+  `CpModel::var_mut`, whose setters keep its fields well formed. Intervals
+  change only through `proto_mut`, because a changed interval body can break the
+  handles that rely on it.
 - **`#[must_use]`.** Every public method without side effects carries it.
   Appending model methods such as `new_var` do not.
 - **Docs and tests.** `docs/conventions.md` sets the rules for doc comments,

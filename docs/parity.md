@@ -258,8 +258,8 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
     `literals_negate_and_name_their_variable`
 - `IntVar.domain`, `with_domain`, `with_name`, constructor names
   - Rust: Name with `with_name` before `new_var`, read `model[var].domain` and
-    `.name`, and change the domain with `CpModel::set_domain`; convert domains
-    with `Domain::from_flat_intervals` and `flattened_intervals`
+    `.name`, and change both through `CpModel::var_mut`; convert domains with
+    `Domain::from_flat_intervals` and `flattened_intervals`
   - Test: `solve.rs::resolves_after_model_change`,
     `model.rs::literals_negate_and_name_their_variable`
 - A 0-1 `IntVar` where a literal goes
@@ -352,7 +352,8 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: `model.rs::looks_up_handles_by_index`
 - `IntVar.name`, `IntervalVar.name`, `Constraint.name`, `CpModel.name`
   - Rust: `with_name` before insertion, `model[handle].name` to read,
-    `model.proto_mut()` to change
+    `CpModel::var_mut` to rename a variable, and `model.proto_mut()` for the
+    rest
   - Test: `model.rs::literals_negate_and_name_their_variable`,
     `constraint_builder_sets_enforcement_and_name`
 - `remove_all_names`
