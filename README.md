@@ -89,11 +89,12 @@ For development, also install:
 
 ## Commands
 
-Run `just` to list the recipes. `just check` is the fast local gate, and
-`just ci` adds the tests and docs.
+Run `just` to list the recipes. The contributing guide says which to run before
+a commit.
 
 ## Documents
 
+- [Contributing](https://github.com/Stanley5249/cpsat/blob/main/CONTRIBUTING.md)
 - [Design](https://github.com/Stanley5249/cpsat/blob/main/docs/design.md)
 - [Build and deployment](https://github.com/Stanley5249/cpsat/blob/main/docs/build.md)
 - [Conventions](https://github.com/Stanley5249/cpsat/blob/main/docs/conventions.md)
