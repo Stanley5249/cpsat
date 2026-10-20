@@ -36,12 +36,9 @@ where
     }
     // SAFETY: the bridge passes a valid event for the duration of the call.
     let event = unsafe { &*event };
-    let data = if event.data.is_null() {
-        &[][..]
-    } else {
-        // SAFETY: data points to len bytes valid for the duration of the call.
-        unsafe { core::slice::from_raw_parts(event.data, event.len) }
-    };
+    // SAFETY: data is null or points to len bytes valid for the duration of
+    // the call.
+    let data = unsafe { crate::solver::ffi::bytes(event.data, event.len) };
     let on_event = &mut state.on_event;
     match catch_unwind(AssertUnwindSafe(|| {
         dispatch(on_event, event.kind, data, event.bound)

@@ -19,11 +19,8 @@ impl Buffer {
     }
 
     pub fn bytes(&self) -> &[u8] {
-        if self.0.data.is_null() {
-            return &[];
-        }
         // SAFETY: the bridge filled data with len bytes it owns until drop.
-        unsafe { core::slice::from_raw_parts(self.0.data, self.0.len) }
+        unsafe { bytes(self.0.data, self.0.len) }
     }
 
     pub fn text(&self) -> Cow<'_, str> {
@@ -36,6 +33,19 @@ impl Drop for Buffer {
         // SAFETY: the buffer is empty or was filled by the bridge.
         unsafe { cpsat_sys::cpsat_buffer_free(&raw mut self.0) };
     }
+}
+
+/// Borrows bridge bytes, which the bridge passes as null when empty.
+///
+/// # Safety
+///
+/// `data` must be null or point to `len` bytes valid for `'a`.
+pub unsafe fn bytes<'a>(data: *const u8, len: usize) -> &'a [u8] {
+    if data.is_null() {
+        return &[];
+    }
+    // SAFETY: the caller upholds the contract above.
+    unsafe { core::slice::from_raw_parts(data, len) }
 }
 
 /// Turns a bridge return code into a result, using the bridge's message.
