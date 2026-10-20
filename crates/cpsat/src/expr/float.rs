@@ -23,6 +23,7 @@ use crate::expr::{BoolVar, IntVar, LinearExpr};
 /// model.add((x + y).le(7));
 /// model.maximize(0.5 * x + 1.25 * y + 0.1);
 /// ```
+#[doc(alias("DoubleLinearExpr"))]
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FloatExpr {
     terms: Vec<(i32, f64)>,

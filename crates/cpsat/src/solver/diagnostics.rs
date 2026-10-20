@@ -29,13 +29,14 @@ fn call(
 }
 
 impl CpModelProto {
-    /// Checks the model with OR-Tools' own validation, which a solve also
-    /// runs before it reports `MODEL_INVALID`, like Python's `validate`.
+    /// Checks the model with OR-Tools' own validation, which a solve also runs
+    /// before it reports `MODEL_INVALID`.
     ///
     /// # Errors
     ///
     /// Returns [`Error::InvalidModel`] with OR-Tools' message when the model
     /// is invalid.
+    #[doc(alias("ValidateCpModel"))]
     pub fn validate(&self) -> Result<()> {
         let message = call(cpsat_sys::cpsat_model_validate, &self.encode_to_vec())?;
         if message.is_empty() {
@@ -45,24 +46,24 @@ impl CpModelProto {
         }
     }
 
-    /// OR-Tools' human-readable statistics for the model, like Python's
-    /// `model_stats`.
+    /// OR-Tools' human-readable statistics for the model.
     ///
     /// # Errors
     ///
     /// Returns an error if the bridge call fails.
+    #[doc(alias("model_stats", "CpModelStats"))]
     pub fn stats(&self) -> Result<String> {
         call(cpsat_sys::cpsat_model_stats, &self.encode_to_vec())
     }
 }
 
 impl CpSolverResponse {
-    /// OR-Tools' human-readable statistics for the response, like Python's
-    /// `CpSolver.response_stats`.
+    /// OR-Tools' human-readable statistics for the response.
     ///
     /// # Errors
     ///
     /// Returns an error if the bridge call fails.
+    #[doc(alias("response_stats", "CpSolverResponseStats"))]
     pub fn stats(&self) -> Result<String> {
         call(cpsat_sys::cpsat_response_stats, &self.encode_to_vec())
     }

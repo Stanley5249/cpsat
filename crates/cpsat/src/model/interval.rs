@@ -33,7 +33,8 @@ use crate::proto::{ConstraintProto, IntervalConstraintProto};
 pub struct Interval(Constraint);
 
 impl Interval {
-    /// An interval from `start` to `end`, like Python's `new_interval_var`.
+    /// An interval from `start` to `end`.
+    #[doc(alias("new_interval_var", "NewIntervalVar"))]
     #[must_use]
     pub fn new(
         start: impl Into<LinearExpr>,
@@ -43,8 +44,8 @@ impl Interval {
         Self::of(start.into(), size.into(), end.into())
     }
 
-    /// An interval of a fixed size, like Python's
-    /// `new_fixed_size_interval_var`.
+    /// An interval of a fixed size.
+    #[doc(alias("new_fixed_size_interval_var", "NewFixedSizeIntervalVar"))]
     #[must_use]
     pub fn fixed_size(start: impl Into<LinearExpr>, size: i64) -> Self {
         let start = start.into();
@@ -52,9 +53,15 @@ impl Interval {
         Self::of(start, size.into(), end)
     }
 
-    /// Makes the interval present only when `literal` is true, like Python's
-    /// `new_optional_interval_var`. Scheduling constraints ignore an absent
-    /// interval, and nothing links its start, size, and end.
+    /// Makes the interval present only when `literal` is true. Scheduling
+    /// constraints ignore an absent interval, and nothing links its start,
+    /// size, and end.
+    #[doc(alias(
+        "new_optional_interval_var",
+        "new_optional_fixed_size_interval_var",
+        "NewOptionalIntervalVar",
+        "NewOptionalFixedSizeIntervalVar"
+    ))]
     #[must_use]
     pub fn only_enforce_if(self, literal: BoolVar) -> Self {
         Self(self.0.only_enforce_if(literal))
@@ -62,6 +69,7 @@ impl Interval {
 
     /// Names the interval, like the `name` argument of Python's
     /// `new_interval_var`.
+    #[doc(alias("WithName"))]
     #[must_use]
     pub fn with_name(self, name: impl Into<String>) -> Self {
         Self(self.0.with_name(name))

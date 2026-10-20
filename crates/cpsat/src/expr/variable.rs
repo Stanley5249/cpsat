@@ -23,6 +23,7 @@ impl IntVar {
 ///
 /// The schema writes the negation of variable `i` as `-i - 1`, which is what
 /// [`index`](Self::index) returns for a negated literal.
+#[doc(alias("Literal"))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BoolVar(pub(crate) i32);
 

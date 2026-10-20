@@ -18,9 +18,9 @@ fn arcs(arcs: impl IntoIterator<Item = (i32, i32, BoolVar)>) -> (Vec<i32>, Vec<i
 }
 
 impl Constraint {
-    /// A Hamiltonian circuit through the arcs whose literals are true, like
-    /// Python's `add_circuit`. Each arc is `(tail, head, literal)`, and a node
-    /// outside the circuit needs a true self-loop.
+    /// A Hamiltonian circuit through the arcs whose literals are true. Each arc
+    /// is `(tail, head, literal)`, and a node outside the circuit needs a true
+    /// self-loop.
     ///
     /// ```
     /// use cpsat::prelude::*;
@@ -29,6 +29,7 @@ impl Constraint {
     /// let [a, b, c] = [(); 3].map(|()| model.new_var(Bool));
     /// model.add(Constraint::circuit([(0, 1, a), (1, 2, b), (2, 0, c)]));
     /// ```
+    #[doc(alias("add_circuit", "AddCircuitConstraint"))]
     #[must_use]
     pub fn circuit(arcs: impl IntoIterator<Item = (i32, i32, BoolVar)>) -> Self {
         let (tails, heads, literals) = self::arcs(arcs);
@@ -40,8 +41,9 @@ impl Constraint {
         })
     }
 
-    /// Circuits that all pass through node 0, like Python's
-    /// `add_multiple_circuit`, also called the vehicle routing constraint.
+    /// Circuits that all pass through node 0, also called the vehicle routing
+    /// constraint.
+    #[doc(alias("add_multiple_circuit", "AddMultipleCircuitConstraint"))]
     #[must_use]
     pub fn multiple_circuit(arcs: impl IntoIterator<Item = (i32, i32, BoolVar)>) -> Self {
         let (tails, heads, literals) = self::arcs(arcs);

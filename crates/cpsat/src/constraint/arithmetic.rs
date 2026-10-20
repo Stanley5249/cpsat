@@ -19,7 +19,8 @@ fn linear_argument(
 }
 
 impl Constraint {
-    /// `target == max(exprs)`, like Python's `add_max_equality`.
+    /// `target == max(exprs)`.
+    #[doc(alias("add_max_equality", "AddMaxEquality"))]
     #[must_use]
     pub fn max_equality(
         target: impl Into<LinearExpr>,
@@ -28,8 +29,8 @@ impl Constraint {
         linear_argument(Kind::LinMax, target, exprs)
     }
 
-    /// `target == min(exprs)`, like Python's `add_min_equality`, which
-    /// writes `-target == max(-exprs)`.
+    /// `target == min(exprs)`, which writes `-target == max(-exprs)`.
+    #[doc(alias("add_min_equality", "AddMinEquality"))]
     #[must_use]
     pub fn min_equality(
         target: impl Into<LinearExpr>,
@@ -39,8 +40,8 @@ impl Constraint {
         linear_argument(Kind::LinMax, -target.into(), negated)
     }
 
-    /// `target == |expr|`, like Python's `add_abs_equality`, which writes
-    /// `target == max(expr, -expr)`.
+    /// `target == |expr|`, which writes `target == max(expr, -expr)`.
+    #[doc(alias("add_abs_equality", "AddAbsEquality"))]
     #[must_use]
     pub fn abs_equality(target: impl Into<LinearExpr>, expr: impl Into<LinearExpr>) -> Self {
         let expr = expr.into();
@@ -48,8 +49,8 @@ impl Constraint {
         linear_argument(Kind::LinMax, target, [expr, negated])
     }
 
-    /// `target == numerator / denominator`, rounded towards zero, like
-    /// Python's `add_division_equality`.
+    /// `target == numerator / denominator`, rounded towards zero.
+    #[doc(alias("add_division_equality", "AddDivisionEquality"))]
     #[must_use]
     pub fn division_equality(
         target: impl Into<LinearExpr>,
@@ -59,8 +60,8 @@ impl Constraint {
         linear_argument(Kind::IntDiv, target, [numerator.into(), denominator.into()])
     }
 
-    /// `target == expr % modulus`, with the sign of `expr` as in C, like
-    /// Python's `add_modulo_equality`.
+    /// `target == expr % modulus`, with the sign of `expr` as in C.
+    #[doc(alias("add_modulo_equality", "AddModuloEquality"))]
     #[must_use]
     pub fn modulo_equality(
         target: impl Into<LinearExpr>,
@@ -70,8 +71,8 @@ impl Constraint {
         linear_argument(Kind::IntMod, target, [expr.into(), modulus.into()])
     }
 
-    /// `target == exprs[0] * exprs[1] * ...`, like Python's
-    /// `add_multiplication_equality`.
+    /// `target == exprs[0] * exprs[1] * ...`.
+    #[doc(alias("add_multiplication_equality", "AddMultiplicationEquality"))]
     #[must_use]
     pub fn multiplication_equality(
         target: impl Into<LinearExpr>,

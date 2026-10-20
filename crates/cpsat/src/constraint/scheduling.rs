@@ -10,7 +10,8 @@ use crate::proto::{
 };
 
 impl Constraint {
-    /// The present intervals do not overlap, like Python's `add_no_overlap`.
+    /// The present intervals do not overlap.
+    #[doc(alias("add_no_overlap", "AddNoOverlap"))]
     #[must_use]
     pub fn no_overlap(intervals: impl IntoIterator<Item = IntervalVar>) -> Self {
         Self::of(NoOverlapConstraintProto {
@@ -20,8 +21,8 @@ impl Constraint {
     }
 
     /// The present rectangles do not overlap. Each rectangle is an `(x, y)`
-    /// pair of intervals, and it is absent when either interval is, like
-    /// Python's `add_no_overlap_2d`.
+    /// pair of intervals, and it is absent when either interval is.
+    #[doc(alias("add_no_overlap_2d", "AddNoOverlap2D"))]
     #[must_use]
     pub fn no_overlap_2d(rectangles: impl IntoIterator<Item = (IntervalVar, IntervalVar)>) -> Self {
         let (x_intervals, y_intervals) = rectangles
@@ -35,10 +36,9 @@ impl Constraint {
         })
     }
 
-    /// At every time, the demands of the present intervals that cover it sum
-    /// to at most `capacity`, like Python's `add_cumulative`. Each task is
-    /// `(interval, demand)`, and a demand must be non-negative. CP-SAT accepts
-    /// affine capacities and demands.
+    /// At every time, the demands of the present intervals that cover it sum to
+    /// at most `capacity`. Each task is `(interval, demand)`, and a demand must
+    /// be non-negative. CP-SAT accepts affine capacities and demands.
     ///
     /// ```
     /// use cpsat::prelude::*;
@@ -48,6 +48,7 @@ impl Constraint {
     /// let task = model.new_var(Interval::fixed_size(start, 3));
     /// model.add(Constraint::cumulative(2, [(task, 1)]));
     /// ```
+    #[doc(alias("add_cumulative", "AddCumulative"))]
     #[must_use]
     pub fn cumulative(
         capacity: impl Into<LinearExpr>,
@@ -65,10 +66,9 @@ impl Constraint {
         })
     }
 
-    /// A level that starts at 0 and stays within `[min_level, max_level]`,
-    /// like Python's `add_reservoir_constraint`. Each event is
-    /// `(time, change)`: the level changes by `change` at `time`. OR-Tools
-    /// requires `min_level <= 0 <= max_level`.
+    /// A level that starts at 0 and stays within `[min_level, max_level]`. Each
+    /// event is `(time, change)`: the level changes by `change` at `time`.
+    /// OR-Tools requires `min_level <= 0 <= max_level`.
     ///
     /// ```
     /// use cpsat::prelude::*;
@@ -78,6 +78,7 @@ impl Constraint {
     /// let drain = model.new_var(0..=10);
     /// model.add(Constraint::reservoir(0, 5, [(fill, 3), (drain, -3)]));
     /// ```
+    #[doc(alias("add_reservoir_constraint", "AddReservoirConstraint"))]
     #[must_use]
     pub fn reservoir(
         min_level: i64,
@@ -92,8 +93,8 @@ impl Constraint {
     }
 
     /// Like [`reservoir`](Self::reservoir), with events `(time, change,
-    /// active)` that apply only when `active` is true, like Python's
-    /// `add_reservoir_constraint_with_active`.
+    /// active)` that apply only when `active` is true.
+    #[doc(alias("add_reservoir_constraint_with_active", "AddOptionalEvent"))]
     #[must_use]
     pub fn reservoir_with_active(
         min_level: i64,

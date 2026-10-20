@@ -15,6 +15,7 @@ use std::ops::{Range, RangeFrom, RangeInclusive, RangeToInclusive};
 /// let domain = Domain::from_values([0]).complement();
 /// assert_eq!(domain.flattened_intervals(), [i64::MIN, -1, 1, i64::MAX]);
 /// ```
+#[doc(alias("greater_or_equal", "lower_or_equal", "GreaterOrEqual", "LowerOrEqual"))]
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Domain(Vec<(i64, i64)>);
 
@@ -26,6 +27,7 @@ impl Domain {
     }
 
     /// Every `i64`.
+    #[doc(alias("all_values", "AllValues"))]
     #[must_use]
     pub fn all() -> Self {
         Self(vec![(i64::MIN, i64::MAX)])
@@ -33,6 +35,7 @@ impl Domain {
 
     /// The domain that holds exactly `values`, in any order and with
     /// duplicates allowed.
+    #[doc(alias("FromValues"))]
     #[must_use]
     pub fn from_values(values: impl IntoIterator<Item = i64>) -> Self {
         Self::from_intervals(values.into_iter().map(|value| (value, value)))
@@ -40,6 +43,7 @@ impl Domain {
 
     /// Normalizes any intervals: empty ones are dropped, and overlapping or
     /// adjacent ones merge.
+    #[doc(alias("FromIntervals", "FromVectorIntervals"))]
     #[must_use]
     pub fn from_intervals(intervals: impl IntoIterator<Item = (i64, i64)>) -> Self {
         let mut intervals: Vec<_> = intervals
@@ -60,6 +64,7 @@ impl Domain {
     }
 
     /// Reads a schema `domain` field, or `None` if it has an odd length.
+    #[doc(alias("FromFlatIntervals", "FromFlatSpanOfIntervals"))]
     #[must_use]
     pub fn from_flat_intervals(flat: &[i64]) -> Option<Self> {
         let (pairs, rest) = flat.as_chunks::<2>();
@@ -78,6 +83,7 @@ impl Domain {
     }
 
     /// Whether the domain holds no value.
+    #[doc(alias("IsEmpty"))]
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -134,6 +140,7 @@ impl Domain {
     /// Whether every value of this domain is in `other`. Each interval must
     /// fit in one interval of `other`, because `other` has gaps between its
     /// intervals.
+    #[doc(alias("IsIncludedIn"))]
     #[must_use]
     pub fn is_included_in(&self, other: &Self) -> bool {
         let mut rest = other.0.as_slice();
@@ -151,6 +158,7 @@ impl Domain {
     }
 
     /// Whether this domain and `other` share a value.
+    #[doc(alias("OverlapsWith"))]
     #[must_use]
     pub fn overlaps_with(&self, other: &Self) -> bool {
         Overlaps {
@@ -162,6 +170,7 @@ impl Domain {
     }
 
     /// The values in either domain.
+    #[doc(alias("UnionWith"))]
     #[must_use]
     pub fn union_with(&self, other: &Self) -> Self {
         let mut merged = Vec::with_capacity(self.0.len() + other.0.len());
@@ -179,6 +188,7 @@ impl Domain {
     }
 
     /// The values in both domains.
+    #[doc(alias("IntersectionWith"))]
     #[must_use]
     pub fn intersection_with(&self, other: &Self) -> Self {
         Self(
@@ -190,8 +200,8 @@ impl Domain {
         )
     }
 
-    /// `-x` for every `x` in this domain, like Python's `negation`. `i64::MIN`
-    /// drops out, because its negation does not fit in `i64`.
+    /// `-x` for every `x` in this domain. `i64::MIN` drops out, because its
+    /// negation does not fit in `i64`.
     #[must_use]
     pub fn negation(&self) -> Self {
         Self::from_exact(
@@ -201,8 +211,9 @@ impl Domain {
         )
     }
 
-    /// `x + y` for every `x` in this domain and `y` in `other`, like Python's
-    /// `addition_with`. Sums outside `i64` drop out.
+    /// `x + y` for every `x` in this domain and `y` in `other`. Sums outside
+    /// `i64` drop out.
+    #[doc(alias("AdditionWith"))]
     #[must_use]
     pub fn addition_with(&self, other: &Self) -> Self {
         Self::from_exact(self.0.iter().flat_map(|&(lower, upper)| {
@@ -231,6 +242,7 @@ impl Domain {
     }
 
     /// The schema's flat `[min_0, max_0, ...]` form.
+    #[doc(alias("FlattenedIntervals"))]
     #[must_use]
     pub fn flattened_intervals(&self) -> Vec<i64> {
         self.0

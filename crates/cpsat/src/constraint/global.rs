@@ -12,6 +12,7 @@ use crate::proto::{
 impl Constraint {
     /// Every expression takes a different value. CP-SAT accepts affine
     /// expressions `a * x + b` here.
+    #[doc(alias("add_all_different", "AddAllDifferent"))]
     #[must_use]
     pub fn all_different(exprs: impl IntoIterator<Item = impl Into<LinearExpr>>) -> Self {
         Self::of(AllDifferentConstraintProto {
@@ -20,8 +21,8 @@ impl Constraint {
         })
     }
 
-    /// `exprs[index] == target`, like Python's `add_element`. CP-SAT accepts
-    /// affine expressions here.
+    /// `exprs[index] == target`. CP-SAT accepts affine expressions here.
+    #[doc(alias("add_element", "AddElement", "AddVariableElement"))]
     #[must_use]
     pub fn element(
         index: impl Into<LinearExpr>,
@@ -36,8 +37,8 @@ impl Constraint {
         })
     }
 
-    /// `direct[i] == j` exactly when `inverse[j] == i`, like Python's
-    /// `add_inverse`.
+    /// `direct[i] == j` exactly when `inverse[j] == i`.
+    #[doc(alias("add_inverse", "AddInverseConstraint"))]
     #[must_use]
     pub fn inverse(
         direct: impl IntoIterator<Item = IntVar>,
@@ -50,8 +51,8 @@ impl Constraint {
         })
     }
 
-    /// The expressions equal one of the rows, like Python's
-    /// `add_allowed_assignments`. Each row lists one value per expression.
+    /// The expressions equal one of the rows. Each row lists one value per
+    /// expression.
     ///
     /// # Panics
     ///
@@ -67,6 +68,7 @@ impl Constraint {
     /// let y = model.new_var(0..=5);
     /// model.add(Constraint::allowed_assignments([x, y], [[1, 2], [3, 4]]));
     /// ```
+    #[doc(alias("add_allowed_assignments", "AddAllowedAssignments"))]
     #[must_use]
     pub fn allowed_assignments(
         exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
@@ -75,13 +77,13 @@ impl Constraint {
         Self::of(table(exprs, rows))
     }
 
-    /// The expressions equal none of the rows, like Python's
-    /// `add_forbidden_assignments`.
+    /// The expressions equal none of the rows.
     ///
     /// # Panics
     ///
     /// If a row's length differs from the number of expressions, as in
     /// [`allowed_assignments`](Self::allowed_assignments).
+    #[doc(alias("add_forbidden_assignments", "AddForbiddenAssignments"))]
     #[must_use]
     pub fn forbidden_assignments(
         exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
@@ -93,9 +95,8 @@ impl Constraint {
         })
     }
 
-    /// The expressions spell a word that the automaton accepts, like Python's
-    /// `add_automaton`. Each transition is `(tail, label, head)`, in the order
-    /// of Python's transition triples.
+    /// The expressions spell a word that the automaton accepts. Each transition
+    /// is `(tail, label, head)`, in the order of Python's transition triples.
     ///
     /// ```
     /// use cpsat::prelude::*;
@@ -106,6 +107,7 @@ impl Constraint {
     /// let transitions = [(0, 0, 0), (0, 1, 1), (1, 0, 0)];
     /// model.add(Constraint::automaton(labels, 0, [0, 1], transitions));
     /// ```
+    #[doc(alias("add_automaton", "AddAutomaton"))]
     #[must_use]
     pub fn automaton(
         exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,

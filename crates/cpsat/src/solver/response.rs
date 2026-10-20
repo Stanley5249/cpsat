@@ -111,6 +111,7 @@ impl<T: Evaluate> Evaluate for &T {
 
 impl CpSolverResponse {
     /// The status, with values from a newer schema read as `UNKNOWN`.
+    #[doc(alias("status_name"))]
     #[must_use]
     pub fn status(&self) -> CpSolverStatus {
         self.status.as_known().unwrap_or(CpSolverStatus::UNKNOWN)
@@ -126,6 +127,12 @@ impl CpSolverResponse {
     /// # Panics
     ///
     /// If an integer value overflows `i64`.
+    #[doc(alias(
+        "boolean_value",
+        "float_value",
+        "SolutionIntegerValue",
+        "SolutionBooleanValue"
+    ))]
     #[must_use]
     pub fn value<E: Evaluate>(&self, expr: E) -> Option<E::Output> {
         expr.evaluate(&self.solution)
@@ -139,13 +146,13 @@ impl CpSolverResponseView<'_> {
         self.status.as_known().unwrap_or(CpSolverStatus::UNKNOWN)
     }
 
-    /// The value of a variable, literal, or expression in the solution, like
-    /// Python's `CpSolverSolutionCallback.value`, `boolean_value`, and
-    /// `float_value`. See [`CpSolverResponse::value`].
+    /// The value of a variable, literal, or expression in the solution. See
+    /// [`CpSolverResponse::value`].
     ///
     /// # Panics
     ///
     /// If an integer value overflows `i64`.
+    #[doc(alias("boolean_value", "float_value"))]
     #[must_use]
     pub fn value<E: Evaluate>(&self, expr: E) -> Option<E::Output> {
         expr.evaluate(&self.solution)

@@ -67,6 +67,7 @@ macro_rules! comparisons {
     ($($ty:ty),*) => {$(
         impl $ty {
             /// `self == rhs`.
+            #[doc(alias("AddEquality"))]
             #[must_use]
             pub fn eq(self, rhs: impl Into<LinearExpr>) -> Constraint {
                 compare(self.into(), rhs.into(), &Domain::new(0, 0), |c| {
@@ -75,6 +76,7 @@ macro_rules! comparisons {
             }
 
             /// `self != rhs`.
+            #[doc(alias("AddNotEqual"))]
             #[must_use]
             pub fn ne(self, rhs: impl Into<LinearExpr>) -> Constraint {
                 compare(self.into(), rhs.into(), &Domain::new(0, 0).complement(), |c| {
@@ -83,6 +85,7 @@ macro_rules! comparisons {
             }
 
             /// `self <= rhs`.
+            #[doc(alias("AddLessOrEqual"))]
             #[must_use]
             pub fn le(self, rhs: impl Into<LinearExpr>) -> Constraint {
                 compare(self.into(), rhs.into(), &Domain::new(i64::MIN, 0), |c| {
@@ -91,6 +94,7 @@ macro_rules! comparisons {
             }
 
             /// `self < rhs`, which is `self <= rhs - 1` over integers.
+            #[doc(alias("AddLessThan"))]
             #[must_use]
             pub fn lt(self, rhs: impl Into<LinearExpr>) -> Constraint {
                 compare(self.into(), rhs.into(), &Domain::new(i64::MIN, -1), |c| {
@@ -99,6 +103,7 @@ macro_rules! comparisons {
             }
 
             /// `self >= rhs`.
+            #[doc(alias("AddGreaterOrEqual"))]
             #[must_use]
             pub fn ge(self, rhs: impl Into<LinearExpr>) -> Constraint {
                 compare(self.into(), rhs.into(), &Domain::new(0, i64::MAX), |c| {
@@ -107,6 +112,7 @@ macro_rules! comparisons {
             }
 
             /// `self > rhs`, which is `self >= rhs + 1` over integers.
+            #[doc(alias("AddGreaterThan"))]
             #[must_use]
             pub fn gt(self, rhs: impl Into<LinearExpr>) -> Constraint {
                 compare(self.into(), rhs.into(), &Domain::new(1, i64::MAX), |c| {
@@ -114,8 +120,12 @@ macro_rules! comparisons {
                 })
             }
 
-            /// `self` lies in `domain`, like Python's
-            /// `add_linear_expression_in_domain`.
+            /// `self` lies in `domain`.
+            #[doc(alias(
+                "add_linear_constraint",
+                "add_linear_expression_in_domain",
+                "AddLinearConstraint"
+            ))]
             #[must_use]
             pub fn in_domain(self, domain: impl Into<Domain>) -> Constraint {
                 linear(self.into(), &domain.into())

@@ -12,7 +12,8 @@ use crate::proto::{
 };
 
 impl Model {
-    /// The variable at `index`, like Python's `get_int_var_from_proto_index`.
+    /// The variable at `index`.
+    #[doc(alias("get_int_var_from_proto_index", "GetIntVarFromProtoIndex"))]
     #[must_use]
     pub fn int_var_from_index(&self, index: i32) -> Option<IntVar> {
         self.variable(index).map(|_| IntVar(index))
@@ -22,6 +23,7 @@ impl Model {
     /// where Python accepts a 0-1 integer variable as a literal. With
     /// [`int_var_from_index`](Self::int_var_from_index), it replaces Python's
     /// `get_bool_var_from_proto_index`.
+    #[doc(alias("get_bool_var_from_proto_index"))]
     #[must_use]
     pub fn to_literal(&self, var: IntVar) -> Option<BoolVar> {
         // Reads the flat field in place: a nonempty list of pairs with every
@@ -34,53 +36,57 @@ impl Model {
         (rest.is_empty() && within && nonempty).then_some(BoolVar(var.0))
     }
 
-    /// The interval at constraint `index`, like Python's
-    /// `get_interval_var_from_proto_index`.
+    /// The interval at constraint `index`.
+    #[doc(alias("get_interval_var_from_proto_index", "GetIntervalVarFromProtoIndex"))]
     #[must_use]
     pub fn interval_var_from_index(&self, index: i32) -> Option<IntervalVar> {
         let constraint = self.0.constraints.get(usize::try_from(index).ok()?)?;
         matches!(constraint.constraint, Some(Kind::Interval(_))).then_some(IntervalVar(index))
     }
 
-    /// The start of `interval`, like Python's `IntervalVar.start_expr`.
+    /// The start of `interval`.
     ///
     /// # Panics
     ///
     /// If `interval` is not an interval of this model, or if its start has
     /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
+    #[doc(alias("start_expr", "StartExpr"))]
     #[must_use]
     pub fn interval_start(&self, interval: IntervalVar) -> LinearExpr {
         interval_part(interval, &self.interval_proto(interval).start)
     }
 
-    /// The size of `interval`, like Python's `IntervalVar.size_expr`.
+    /// The size of `interval`.
     ///
     /// # Panics
     ///
     /// If `interval` is not an interval of this model, or if its size has
     /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
+    #[doc(alias("size_expr", "SizeExpr"))]
     #[must_use]
     pub fn interval_size(&self, interval: IntervalVar) -> LinearExpr {
         interval_part(interval, &self.interval_proto(interval).size)
     }
 
-    /// The end of `interval`, like Python's `IntervalVar.end_expr`.
+    /// The end of `interval`.
     ///
     /// # Panics
     ///
     /// If `interval` is not an interval of this model, or if its end has
     /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
+    #[doc(alias("end_expr", "EndExpr"))]
     #[must_use]
     pub fn interval_end(&self, interval: IntervalVar) -> LinearExpr {
         interval_part(interval, &self.interval_proto(interval).end)
     }
 
     /// The literals that make `interval` present, none for an interval that is
-    /// always present, like Python's `IntervalVar.presence_literals`.
+    /// always present.
     ///
     /// # Panics
     ///
     /// If `interval` is not an interval of this model.
+    #[doc(alias("presence_literals", "PresenceBoolVar"))]
     pub fn interval_presence_literals(
         &self,
         interval: IntervalVar,

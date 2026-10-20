@@ -16,13 +16,14 @@ use crate::solver::stop::StopHandle;
 pub type NoEvents = fn(Event<'_>) -> ControlFlow<()>;
 
 impl CpModelProto {
-    /// Solves the model and returns the final response, like Python's
-    /// `CpSolver.solve` without a callback. [`Solver`] adds events and stops.
+    /// Solves the model and returns the final response without a callback.
+    /// [`Solver`] adds events and stops.
     ///
     /// # Errors
     ///
     /// Returns an error if the bridge fails. An invalid model is not an
     /// error; the response status is `MODEL_INVALID`.
+    #[doc(alias("SolveWithParameters"))]
     pub fn solve(&self, parameters: &SatParameters) -> Result<CpSolverResponse> {
         run(self, parameters, EventSet::NONE, None, |_| {
             ControlFlow::Continue(())
@@ -30,7 +31,7 @@ impl CpModelProto {
     }
 }
 
-/// Configures a solve with events and cancellation, like Python's `CpSolver`.
+/// Configures a solve with events and cancellation.
 ///
 /// ```no_run
 /// use std::ops::ControlFlow;
@@ -50,6 +51,7 @@ impl CpModelProto {
 ///     .solve(&model)?;
 /// # Ok::<(), cpsat::Error>(())
 /// ```
+#[doc(alias("CpSolver"))]
 #[derive(Debug)]
 pub struct Solver<'a, F = NoEvents> {
     parameters: &'a SatParameters,
@@ -81,7 +83,7 @@ impl Default for Solver<'_> {
 }
 
 impl<'a, F> Solver<'a, F> {
-    /// The parameters, like Python's `solver.parameters`.
+    /// The parameters.
     #[must_use]
     pub fn parameters(&self) -> &'a SatParameters {
         self.parameters
@@ -104,8 +106,7 @@ impl<'a, F> Solver<'a, F> {
         }
     }
 
-    /// Lets [`StopHandle::stop`] on `stop` stop the solve from any thread, like Python's
-    /// `CpSolver.stop_search`.
+    /// Lets [`StopHandle::stop`] on `stop` stop the solve from any thread.
     #[must_use]
     pub fn with_stop_handle(self, stop: &'a StopHandle) -> Self {
         Self {

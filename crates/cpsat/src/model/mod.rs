@@ -77,6 +77,7 @@ impl Hint for BoolVar {
 /// assert_eq!(response.value(x + y), Some(12));
 /// # Ok::<(), cpsat::Error>(())
 /// ```
+#[doc(alias("CpModel", "CpModelBuilder"))]
 #[derive(Clone, Debug, Default)]
 pub struct Model(CpModelProto, Constants);
 
@@ -103,13 +104,14 @@ fn next_index(len: usize, what: &str) -> i32 {
 }
 
 impl Model {
-    /// An empty model, like Python's `CpModel()`.
+    /// An empty model.
     #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// The model's message.
+    #[doc(alias("Build"))]
     #[must_use]
     pub fn proto(&self) -> &CpModelProto {
         &self.0
@@ -117,6 +119,7 @@ impl Model {
 
     /// The model's message, for anything the high-level API does not cover.
     /// Removing variables or constraints here invalidates their handles.
+    #[doc(alias("MutableProto"))]
     pub fn proto_mut(&mut self) -> &mut CpModelProto {
         &mut self.0
     }
@@ -127,41 +130,41 @@ impl Model {
         self.0
     }
 
-    /// Solves the model, like Python's `CpSolver().solve(model)`. See
-    /// [`CpModelProto::solve`].
+    /// Solves the model. See [`CpModelProto::solve`].
     ///
     /// # Errors
     ///
     /// Returns an error if the bridge fails.
+    #[doc(alias("SolveWithParameters"))]
     pub fn solve(&self, parameters: &SatParameters) -> Result<CpSolverResponse> {
         self.0.solve(parameters)
     }
 
-    /// Validates the model, like Python's `validate`. See
-    /// [`CpModelProto::validate`].
+    /// Validates the model. See [`CpModelProto::validate`].
     ///
     /// # Errors
     ///
     /// Returns [`Error::InvalidModel`](crate::Error::InvalidModel) when the
     /// model is invalid.
+    #[doc(alias("ValidateCpModel"))]
     pub fn validate(&self) -> Result<()> {
         self.0.validate()
     }
 
-    /// OR-Tools' statistics for the model, like Python's `model_stats`.
+    /// OR-Tools' statistics for the model.
     ///
     /// # Errors
     ///
     /// Returns an error if the bridge call fails.
+    #[doc(alias("model_stats", "CpModelStats"))]
     pub fn stats(&self) -> Result<String> {
         self.0.stats()
     }
 
-    /// A variable or an interval, like Python's `new_int_var`,
-    /// `new_int_var_from_domain`, `new_bool_var`, and `new_*interval_var`:
-    /// an [`IntVar`] for a domain or a bounded range, a [`BoolVar`] for
-    /// [`Bool`], and an [`IntervalVar`](crate::prelude::IntervalVar) for an
-    /// [`Interval`]. [`WithName::with_name`] names a variable.
+    /// A variable or an interval: an [`IntVar`] for a domain or a bounded
+    /// range, a [`BoolVar`] for [`Bool`], and an
+    /// [`IntervalVar`](crate::prelude::IntervalVar) for an [`Interval`].
+    /// [`WithName::with_name`] names a variable.
     ///
     /// ```
     /// use cpsat::prelude::*;
@@ -177,6 +180,7 @@ impl Model {
     ///
     /// Panics if the model already holds `i32::MAX` variables or
     /// constraints.
+    #[doc(alias("new_int_var", "new_int_var_from_domain", "NewIntVar"))]
     pub fn new_var<V: NewVar>(&mut self, var: V) -> V::Output {
         var.insert(self)
     }
@@ -204,8 +208,8 @@ impl Model {
         self.0.variables[slot(var.0)].domain = domain.into().flattened_intervals();
     }
 
-    /// A variable fixed to `value`, like Python's `new_constant`. Calls with
-    /// one value share one variable while its domain stays `[value, value]`.
+    /// A variable fixed to `value`. Calls with one value share one variable
+    /// while its domain stays `[value, value]`.
     ///
     /// Use it where the schema needs a variable, such as in
     /// [`Constraint::inverse`]. An expression takes a plain `i64` or
@@ -214,6 +218,7 @@ impl Model {
     /// # Panics
     ///
     /// Panics if the model already holds `i32::MAX` variables.
+    #[doc(alias("new_constant", "NewConstant"))]
     pub fn constant(&mut self, value: i64) -> IntVar {
         if let Some(&index) = self.1.get(&value)
             && self
@@ -236,11 +241,12 @@ impl Model {
     /// # Panics
     ///
     /// Panics if the model already holds `i32::MAX` variables.
+    #[doc(alias("TrueVar", "FalseVar"))]
     pub fn bool_constant(&mut self, value: bool) -> BoolVar {
         BoolVar(self.constant(value.into()).0)
     }
 
-    /// Inserts a constraint, like Python's `add` and `add_*` methods.
+    /// Inserts a constraint.
     ///
     /// # Panics
     ///
@@ -251,8 +257,9 @@ impl Model {
         ConstraintIndex(index)
     }
 
-    /// Hints that `var` has `value`, like Python's `add_hint`: an `i64` for
-    /// an integer variable and a `bool` for a literal.
+    /// Hints that `var` has `value`: an `i64` for an integer variable and a
+    /// `bool` for a literal.
+    #[doc(alias("AddHint"))]
     pub fn add_hint<H: Hint>(&mut self, var: H, value: H::Value) {
         let (var, value) = var.hint(value);
         let hint = self.0.solution_hint.get_or_insert_default();
@@ -260,29 +267,31 @@ impl Model {
         hint.values.push(value);
     }
 
-    /// Removes every hint, like Python's `clear_hints`.
+    /// Removes every hint.
+    #[doc(alias("ClearHints"))]
     pub fn clear_hints(&mut self) {
         self.0.solution_hint = MessageField::none();
     }
 
-    /// Solves under the assumption that each literal is true, like Python's
-    /// `add_assumption` and `add_assumptions`. An infeasible response lists a
-    /// subset of the failed assumptions in
+    /// Solves under the assumption that each literal is true. An infeasible
+    /// response lists a subset of the failed assumptions in
     /// `sufficient_assumptions_for_infeasibility`.
+    #[doc(alias("add_assumption", "AddAssumptions", "AddAssumption"))]
     pub fn add_assumptions(&mut self, literals: impl IntoIterator<Item = BoolVar>) {
         self.0
             .assumptions
             .extend(literals.into_iter().map(BoolVar::index));
     }
 
-    /// Removes every assumption, like Python's `clear_assumptions`.
+    /// Removes every assumption.
+    #[doc(alias("ClearAssumptions"))]
     pub fn clear_assumptions(&mut self) {
         self.0.assumptions.clear();
     }
 
-    /// Adds a search strategy over `exprs`, like Python's
-    /// `add_decision_strategy`. A literal `!b` becomes the expression `1 - b`,
-    /// as in Python.
+    /// Adds a search strategy over `exprs`. A literal `!b` becomes the
+    /// expression `1 - b`, as in Python.
+    #[doc(alias("AddDecisionStrategy"))]
     pub fn add_decision_strategy(
         &mut self,
         exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
@@ -297,8 +306,7 @@ impl Model {
         });
     }
 
-    /// Clears the names of the model, its variables, and its constraints, like
-    /// Python's `remove_all_names`.
+    /// Clears the names of the model, its variables, and its constraints.
     pub fn remove_all_names(&mut self) {
         self.0.name.clear();
         for variable in &mut self.0.variables {

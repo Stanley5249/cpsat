@@ -27,7 +27,7 @@ pub trait NewVar: sealed::Sealed {
     fn insert(self, model: &mut Model) -> Self::Output;
 }
 
-/// A 0-1 variable for [`Model::new_var`], like Python's `new_bool_var`.
+/// A 0-1 variable for [`Model::new_var`].
 ///
 /// ```
 /// use cpsat::prelude::*;
@@ -37,6 +37,7 @@ pub trait NewVar: sealed::Sealed {
 /// let enabled = model.new_var(Bool.with_name("enabled"));
 /// model.add(Constraint::bool_or([b, !enabled]));
 /// ```
+#[doc(alias("new_bool_var", "NewBoolVar"))]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Bool;
 
@@ -51,6 +52,7 @@ pub struct Named<T> {
 /// argument of Python's `new_int_var` and `new_bool_var`.
 pub trait WithName: sealed::Sealed + Sized {
     /// Attaches `name`, which the model stores with the variable.
+    #[doc(alias("WithName"))]
     #[must_use]
     fn with_name(self, name: impl Into<String>) -> Named<Self> {
         Named {

@@ -40,18 +40,19 @@ use crate::proto::{ConstraintProto, LinearExpressionProto};
 pub struct Constraint(ConstraintProto);
 
 impl Constraint {
-    /// Enforces this constraint only when `literal` is true, like Python's
-    /// `only_enforce_if`. Several calls require all their literals. Every
-    /// family accepts it, but OR-Tools notes that an enforced circuit,
-    /// multiple circuit, no-overlap, 2D no-overlap, or cumulative constraint
-    /// may solve slower.
+    /// Enforces this constraint only when `literal` is true. Several calls
+    /// require all their literals. Every family accepts it, but OR-Tools notes
+    /// that an enforced circuit, multiple circuit, no-overlap, 2D no-overlap,
+    /// or cumulative constraint may solve slower.
+    #[doc(alias("OnlyEnforceIf"))]
     #[must_use]
     pub fn only_enforce_if(mut self, literal: BoolVar) -> Self {
         self.0.enforcement_literal.push(literal.0);
         self
     }
 
-    /// Names the constraint, like Python's `with_name`.
+    /// Names the constraint.
+    #[doc(alias("WithName"))]
     #[must_use]
     pub fn with_name(mut self, name: impl Into<String>) -> Self {
         self.0.name = name.into();

@@ -57,14 +57,18 @@ impl BitOrAssign for EventSet {
 }
 
 /// One solver event. Borrowed data is valid only during the callback.
+#[doc(alias("CpSolverSolutionCallback"))]
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Event<'a> {
     /// A new solution, as a zero-copy view of the intermediate response. Call
     /// [`buffa::MessageView::to_owned_message`] to keep it.
+    #[doc(alias("on_solution_callback", "NewFeasibleSolutionObserver"))]
     Solution(&'a CpSolverResponseView<'a>),
     /// A new best objective bound.
+    #[doc(alias("best_bound_callback", "NewBestBoundCallback"))]
     BestBound(f64),
     /// One log message, decoded lossily as UTF-8.
+    #[doc(alias("log_callback"))]
     Log(&'a str),
 }

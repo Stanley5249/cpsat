@@ -55,12 +55,12 @@ impl Objective for f64 {
 }
 
 impl Model {
-    /// Minimizes `expr`, replacing any objective, like Python's `minimize`.
+    /// Minimizes `expr`, replacing any objective.
     pub fn minimize(&mut self, expr: impl Objective) {
         expr.set(self, false);
     }
 
-    /// Maximizes `expr`, replacing any objective, like Python's `maximize`.
+    /// Maximizes `expr`, replacing any objective.
     pub fn maximize(&mut self, expr: impl Objective) {
         expr.set(self, true);
     }
@@ -93,14 +93,15 @@ impl Model {
         });
     }
 
-    /// Whether the model has an objective, like Python's `has_objective`.
+    /// Whether the model has an objective.
+    #[doc(alias("HasObjective"))]
     #[must_use]
     pub fn has_objective(&self) -> bool {
         self.0.objective.is_set() || self.0.floating_point_objective.is_set()
     }
 
-    /// Removes the integer and the floating-point objectives, like Python's
-    /// `clear_objective`.
+    /// Removes the integer and the floating-point objectives.
+    #[doc(alias("ClearObjective"))]
     pub fn clear_objective(&mut self) {
         self.0.objective = MessageField::none();
         self.0.floating_point_objective = MessageField::none();
