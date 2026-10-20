@@ -99,6 +99,11 @@ impl LinearExpr {
         (vars, coeffs, self.offset)
     }
 
+    /// The terms in insertion order, unsorted and unmerged, and the offset.
+    pub(crate) fn into_raw_parts(self) -> (Vec<(i32, i64)>, i64) {
+        (self.terms, self.offset)
+    }
+
     /// The value if the expression has no variables.
     pub(crate) fn constant_value(&self) -> Option<i64> {
         self.terms.is_empty().then_some(self.offset)

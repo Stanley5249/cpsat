@@ -113,6 +113,18 @@ fn a_panicking_objective_keeps_the_previous_one() {
 }
 
 #[test]
+#[expect(clippy::cast_precision_loss, reason = "the test compares in doubles")]
+fn float_conversion_merges_in_doubles() {
+    let mut model = CpModel::new();
+    let x = model.new_var(0..=5);
+    let expr = FloatExpr::from(x * i64::MAX + x);
+    model.minimize(expr);
+    let objective = model.proto().floating_point_objective.as_option().unwrap();
+    assert_eq!(objective.vars, [0]);
+    assert_eq!(objective.coeffs, [i64::MAX as f64 + 1.0]);
+}
+
+#[test]
 fn constants_and_true_literals_solve_to_their_values() {
     let mut model = CpModel::new();
     let seven = model.new_var(7..=7);

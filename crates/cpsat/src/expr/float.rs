@@ -94,21 +94,18 @@ impl From<f64> for FloatExpr {
 
 impl From<LinearExpr> for FloatExpr {
     /// Converts each coefficient and the offset to `f64`, which rounds a
-    /// magnitude above `2^53`.
-    ///
-    /// # Panics
-    ///
-    /// If a merged coefficient overflows `i64`, as [`LinearExpr`] describes.
+    /// magnitude above `2^53`. The terms merge later in `f64`, when the
+    /// expression enters the objective.
     #[expect(
         clippy::cast_precision_loss,
         reason = "the schema stores float objectives as doubles, like Python"
     )]
     fn from(expr: LinearExpr) -> Self {
-        let (vars, coeffs, offset) = expr.into_terms();
+        let (terms, offset) = expr.into_raw_parts();
         Self {
-            terms: vars
+            terms: terms
                 .into_iter()
-                .zip(coeffs.into_iter().map(|coeff| coeff as f64))
+                .map(|(var, coeff)| (var, coeff as f64))
                 .collect(),
             offset: offset as f64,
         }
