@@ -10,6 +10,29 @@ Python install, and normal builds regenerate neither Protobuf code nor OR-Tools.
 A persistent incremental solver, OR-Tools subsystems outside CP-SAT, custom
 propagation, and a CP-SAT-only fork are out of scope.
 
+## Terms
+
+Names follow the
+[Rust API Guidelines](https://rust-lang.github.io/api-guidelines/naming.html)
+and the C convention `prefix_object_verb`.
+
+- **OR-Tools**: the upstream C++ library and its files.
+- **bridge**: our C++ code and its C ABI in `crates/cpsat-sys/bridge/`, with
+  functions named `cpsat_<object>_<operation>`, such as `cpsat_model_stats`.
+- **Buffa**: the Rust Protobuf library that generates the `proto` types the API
+  exposes.
+- **view**: a borrowed, zero-copy reading of an encoded message, such as
+  `CpSolverResponseView`.
+- **FFI**: the Rust side of the C ABI, in `cpsat-sys` and `cpsat`'s private
+  `ffi` module.
+- **session**: the bridge object that serves one solve.
+- **mode**: how the build acquires OR-Tools, the `download-libortools` or
+  `build-libortools` feature, or `ORTOOLS_ROOT`.
+- **wrapper**: a hand-written type that owns a Protobuf message, such as
+  `CpModel`.
+- **handle**: `IntVar`, `BoolVar`, `IntervalVar`, or `ConstraintIndex`.
+- **literal**: a `BoolVar`, negated or not.
+
 ## Architecture
 
 ```text
@@ -56,26 +79,6 @@ Recheck these when the pinned OR-Tools version changes.
 - Both prebuilt archives are dynamic, and `ortools.dll` loads HiGHS and SCIP
   even for CP-SAT.
 - `cp_model.proto` is proto3 and `sat_parameters.proto` is proto2.
-
-## Terms
-
-Names follow the
-[Rust API Guidelines](https://rust-lang.github.io/api-guidelines/naming.html)
-and the C convention `prefix_object_verb`.
-
-- **OR-Tools**: the upstream C++ library and its files.
-- **bridge**: our C++ code and its C ABI in `crates/cpsat-sys/bridge/`, with
-  functions named `cpsat_<object>_<operation>` after the Rust method, such as
-  `cpsat_model_stats`.
-- **FFI**: the Rust side of the C ABI, in `cpsat-sys` and `cpsat`'s private
-  `ffi` module.
-- **session**: the bridge object that serves one solve.
-- **mode**: how the build acquires OR-Tools, the `download-libortools` or
-  `build-libortools` feature, or `ORTOOLS_ROOT`.
-- **wrapper**: a hand-written type that owns a Protobuf message, such as
-  `CpModel`.
-- **handle**: `IntVar`, `BoolVar`, `IntervalVar`, or `ConstraintIndex`.
-- **literal**: a `BoolVar`, negated or not.
 
 ## Rules
 
