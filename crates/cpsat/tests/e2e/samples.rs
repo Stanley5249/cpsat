@@ -13,7 +13,7 @@ use crate::common::solve_optimal;
 
 /// The three variables in `[0, 2]` that most samples share.
 fn three_vars(model: &mut Model) -> [IntVar; 3] {
-    [(); 3].map(|()| model.new_var(0..=2))
+    std::array::from_fn(|_| model.new_var(0..=2))
 }
 
 /// Every solution of `model`, as the values of `exprs`, in the order found.
@@ -53,7 +53,7 @@ fn simple_sat_program() {
 #[test]
 fn cp_sat_example() {
     let mut model = Model::new();
-    let [x, y, z] = [(); 3].map(|()| model.new_var(0..=50));
+    let [x, y, z] = std::array::from_fn(|_| model.new_var(0..=50));
     model.add((2 * x + 7 * y + 3 * z).le(50));
     model.add((3 * x - 5 * y + 7 * z).le(45));
     model.add((5 * x + 2 * y - 6 * z).le(37));
@@ -144,8 +144,8 @@ fn stop_after_n_solutions() {
 )]
 fn assumptions() {
     let mut model = Model::new();
-    let [x, y, z] = [(); 3].map(|()| model.new_var(0..=10));
-    let [a, b, c] = [(); 3].map(|()| model.new_var(Bool));
+    let [x, y, z] = std::array::from_fn(|_| model.new_var(0..=10));
+    let [a, b, c] = std::array::from_fn(|_| model.new_var(Bool));
     model.add(x.gt(y).only_enforce_if(a));
     model.add(y.gt(z).only_enforce_if(b));
     model.add(z.gt(x).only_enforce_if(c));
@@ -192,7 +192,7 @@ fn rabbits_and_pheasants() {
 #[test]
 fn boolean_product() {
     let mut model = Model::new();
-    let [x, y, p] = [(); 3].map(|()| model.new_var(Bool));
+    let [x, y, p] = std::array::from_fn(|_| model.new_var(Bool));
     model.add(Constraint::bool_or([!x, !y, p]));
     model.add(Constraint::implication(p, x));
     model.add(Constraint::implication(p, y));

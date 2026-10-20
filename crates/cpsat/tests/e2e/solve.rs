@@ -50,7 +50,7 @@ fn reads_negated_literals_and_expressions() {
 
     // A handle from a larger model is out of range here.
     let mut larger = Model::new();
-    let far = [(); 3].map(|()| larger.new_var(0..=1))[2];
+    let [.., far]: [IntVar; 3] = std::array::from_fn(|_| larger.new_var(0..=1));
     assert_eq!(response.value(far), None);
 }
 
@@ -211,7 +211,7 @@ fn evaluates_collections_in_order() {
     let response = model.solve(&SatParameters::default()).unwrap();
 
     let mut larger = Model::new();
-    let far = [(); 6].map(|()| larger.new_var(0..=1))[5];
+    let [.., far]: [IntVar; 6] = std::array::from_fn(|_| larger.new_var(0..=1));
     let values: Vec<_> = vars
         .iter()
         .chain([&far])

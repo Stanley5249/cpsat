@@ -24,7 +24,7 @@ use crate::proto::LinearExpressionProto;
 ///
 /// // From `cp_sat_example.py`.
 /// let mut model = Model::new();
-/// let [x, y, z] = [(); 3].map(|()| model.new_var(0..=50));
+/// let [x, y, z] = std::array::from_fn(|_| model.new_var(0..=50));
 /// model.add((2 * x + 7 * y + 3 * z).le(50));
 /// model.add((3 * x - 5 * y + 7 * z).le(45));
 /// model.add((5 * x + 2 * y - 6 * z).le(37));

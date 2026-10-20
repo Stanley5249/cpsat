@@ -18,7 +18,7 @@
 //!
 //! // From `simple_sat_program.py`.
 //! let mut model = Model::new();
-//! let [x, y, z] = [(); 3].map(|()| model.new_var(0..=2));
+//! let [x, y, z] = std::array::from_fn(|_| model.new_var(0..=2));
 //! model.add(x.ne(y));
 //!
 //! let parameters = SatParameters::default().with_num_workers(8);

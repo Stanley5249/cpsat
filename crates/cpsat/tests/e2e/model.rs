@@ -54,7 +54,7 @@ fn looks_up_handles_by_index() {
 fn constraint_builder_sets_enforcement_and_name() {
     let mut model = Model::new();
     let x = model.new_var((0..=5).with_name("x"));
-    let [a, b] = [(); 2].map(|()| model.new_var(Bool));
+    let [a, b] = std::array::from_fn(|_| model.new_var(Bool));
     let interval = model.new_var(Interval::fixed_size(x, 2).with_name("task"));
     let constraint = model.add(
         x.ge(1)
@@ -270,7 +270,7 @@ fn merging_cancels_coefficients_before_overflow() {
 #[test]
 fn overflowing_arithmetic_leaves_the_expression_intact() {
     let mut model = Model::new();
-    let [x, y, z, w] = [(); 4].map(|()| model.new_var(0..=1));
+    let [x, y, z, w] = std::array::from_fn(|_| model.new_var(0..=1));
     let mut expr = LinearExpr::from(x);
     let failed = std::panic::catch_unwind(AssertUnwindSafe(|| expr -= w + y * i64::MIN));
     assert!(failed.is_err());

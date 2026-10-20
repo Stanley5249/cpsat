@@ -65,7 +65,7 @@ impl Constraint {
     ///
     /// // From `assignment_groups_sat.py`: which pairs of four workers work.
     /// let mut model = Model::new();
-    /// let work = [(); 4].map(|()| model.new_var(Bool));
+    /// let work: [BoolVar; 4] = std::array::from_fn(|_| model.new_var(Bool));
     /// let group = [
     ///     [0, 0, 1, 1],
     ///     [0, 1, 0, 1],
@@ -109,7 +109,7 @@ impl Constraint {
     /// use cpsat::prelude::*;
     ///
     /// let mut model = Model::new();
-    /// let labels = [(); 3].map(|()| model.new_var(0..=1));
+    /// let labels: [IntVar; 3] = std::array::from_fn(|_| model.new_var(0..=1));
     /// // Accepts words without two consecutive 1s.
     /// let transitions = [(0, 0, 0), (0, 1, 1), (1, 0, 0)];
     /// model.add(Constraint::automaton(labels, 0, [0, 1], transitions));

@@ -25,8 +25,8 @@ fn element_picks_the_index_of_the_target() {
 #[test]
 fn inverse_inverts_the_permutation() {
     let mut model = Model::new();
-    let direct = [(); 3].map(|()| model.new_var(0..=2));
-    let inverse = [(); 3].map(|()| model.new_var(0..=2));
+    let direct: [IntVar; 3] = std::array::from_fn(|_| model.new_var(0..=2));
+    let inverse: [IntVar; 3] = std::array::from_fn(|_| model.new_var(0..=2));
     model.add(Constraint::inverse(direct, inverse));
     for (var, value) in direct.into_iter().zip([2, 0, 1]) {
         model.add(var.eq(value));
@@ -39,7 +39,7 @@ fn inverse_inverts_the_permutation() {
 #[test]
 fn automaton_rejects_consecutive_ones() {
     let mut model = Model::new();
-    let labels = [(); 3].map(|()| model.new_var(0..=1));
+    let labels: [IntVar; 3] = std::array::from_fn(|_| model.new_var(0..=1));
     // State 5 follows a 0 and state 7 follows a 1, so no label equals a state.
     let transitions = [(5, 0, 5), (5, 1, 7), (7, 0, 5)];
     model.add(Constraint::automaton(labels, 5, [5, 7], transitions));
@@ -135,7 +135,7 @@ fn multiple_circuit_takes_two_routes_through_the_depot() {
 #[test]
 fn cumulative_runs_two_tasks_at_a_time() {
     let mut model = Model::new();
-    let starts = [(); 3].map(|()| model.new_var(0..=10));
+    let starts: [IntVar; 3] = std::array::from_fn(|_| model.new_var(0..=10));
     let tasks: Vec<(IntervalVar, i64)> = starts
         .iter()
         .map(|&start| (model.new_var(Interval::fixed_size(start, 2)), 1))
@@ -235,7 +235,7 @@ fn modulo_equality_keeps_the_sign_of_the_dividend() {
 #[test]
 fn bool_xor_needs_an_odd_count() {
     let mut model = Model::new();
-    let literals = [(); 3].map(|()| model.new_var(Bool));
+    let literals: [BoolVar; 3] = std::array::from_fn(|_| model.new_var(Bool));
     model.add(Constraint::bool_xor(literals));
     model.add(literals[0].eq(1));
     model.add(literals[1].eq(1));

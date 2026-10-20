@@ -265,7 +265,7 @@ fn solution_view_accessors_match_the_owned_response() {
     model.maximize(x);
     // Handles from a larger model are out of range here.
     let mut larger = Model::new();
-    let far = [(); 4].map(|()| larger.new_var(0..=1))[3];
+    let [.., far]: [IntVar; 4] = std::array::from_fn(|_| larger.new_var(0..=1));
     let far_literal = larger.new_var(Bool);
 
     let read = |value: &dyn Fn(LinearExpr) -> Option<i64>,

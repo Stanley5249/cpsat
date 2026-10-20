@@ -62,7 +62,7 @@ fn rejects_what_python_rejects_only_at_solve_time() {
 
     // A handle from a larger model names a variable this model lacks.
     let mut larger = Model::new();
-    let far = [(); 3].map(|()| larger.new_var(0..=1))[2];
+    let [.., far]: [IntVar; 3] = std::array::from_fn(|_| larger.new_var(0..=1));
     let mut unknown_variable = Model::new();
     unknown_variable.new_var(0..=1);
     unknown_variable.add(far.le(1));
