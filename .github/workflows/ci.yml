@@ -77,6 +77,11 @@ jobs:
           setup_only: true
       - uses: extractions/setup-just@v4
       - run: just check-proto
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: bindgen-cli
+      - run: sudo apt-get install -y --no-install-recommends libclang-dev
+      - run: just check-bindings
       - name: The Buffa plugin matches the buffa crate
         run: |
           plugin=$(sed -n 's|.*buf.build/anthropics/buffa:v\(.*\)|\1|p' crates/cpsat/proto/buf.gen.yaml)
