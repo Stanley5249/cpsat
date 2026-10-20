@@ -14,9 +14,12 @@ fmt: _fmt-cargo _fmt-tombi _fmt-oxfmt _fmt-just
 fix: fmt
     cargo clippy --fix --allow-dirty --workspace --all-targets
 
+# Recipes list features instead of --all-features, which would turn on
+# build-libortools and build OR-Tools from source.
+
 # Run Clippy with warnings as errors
 lint *args:
-    cargo clippy --quiet --locked --workspace --all-targets --all-features {{ args }} -- -D warnings
+    cargo clippy --quiet --locked --workspace --all-targets --features cpsat/json {{ args }} -- -D warnings
 
 # Fast local gate: format checks and lints
 [parallel]
@@ -24,12 +27,12 @@ check: (_fmt-cargo "--check") (_fmt-tombi "--check") (_fmt-oxfmt "--check") (_fm
 
 # Run tests
 test *args:
-    cargo test --locked --workspace --all-features {{ args }}
+    cargo test --locked --workspace --features cpsat/json {{ args }}
 
 # Build rustdoc with warnings as errors
 [env("RUSTDOCFLAGS", "-D warnings")]
 doc *args:
-    cargo doc --locked --workspace --all-features --no-deps {{ args }}
+    cargo doc --locked --workspace --features cpsat/json --no-deps {{ args }}
 
 # Full gate
 ci: check test doc

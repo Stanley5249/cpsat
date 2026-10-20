@@ -16,5 +16,12 @@ anyhow.workspace = true
 cc.workspace = true
 sha2.workspace = true
 
+[features]
+default = ["download-libortools"]
+# Build OR-Tools from source with CMake. Wins over download-libortools.
+build-libortools = []
+# Download the official OR-Tools release.
+download-libortools = []
+
 [lints]
 workspace = true

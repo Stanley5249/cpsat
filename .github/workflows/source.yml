@@ -6,7 +6,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  CPSAT_ORTOOLS: source
   CPSAT_CACHE_DIR: ${{ github.workspace }}/.cpsat-cache
 
 jobs:
@@ -25,4 +24,6 @@ jobs:
           key:
             ortools-source-${{ runner.os }}-${{
             hashFiles('crates/cpsat-sys/build/**') }}
-      - run: cargo test --locked --workspace --all-features
+      - run:
+          cargo test --locked --workspace --features
+          cpsat/json,cpsat/build-libortools

@@ -20,7 +20,10 @@ thiserror.workspace = true
 serde_json.workspace = true
 
 [features]
-default = ["text", "views"]
+default = ["download-libortools", "text", "views"]
+# See the cpsat-sys features.
+build-libortools = ["cpsat-sys/build-libortools"]
+download-libortools = ["cpsat-sys/download-libortools"]
 # Proto3 JSON through serde.
 json = ["buffa/json", "dep:serde"]
 # Protobuf text format through buffa::text.

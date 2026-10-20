@@ -19,7 +19,7 @@ cpsat = { git = "https://github.com/Stanley5249/cpsat" }
 Supported targets are `x86_64-pc-windows-msvc` and `x86_64-unknown-linux-gnu` on
 glibc 2.28 or newer, which CI tests on AlmaLinux 8 and Ubuntu 26.04. Building
 needs a C++ compiler (MSVC 2022 or GCC 11 or newer), `curl`, and `tar`, plus
-CMake for `CPSAT_ORTOOLS=source`.
+CMake for the `build-libortools` feature.
 
 ## Usage
 
@@ -59,23 +59,27 @@ cover.
 
 ## Configuration
 
+Cargo features choose where OR-Tools comes from:
+
+- `download-libortools` (default): download the official release
+- `build-libortools`: build OR-Tools from source with CMake, which wins over
+  `download-libortools`
+
 The build script reads these environment variables:
 
-- `CPSAT_ORTOOLS`: `prebuilt` (default), `source` to build OR-Tools with CMake,
-  or `dir:<path>`
+- `ORTOOLS_ROOT`: an existing OR-Tools install, which wins over both features
 - `CPSAT_CACHE_DIR`: Download and build cache, by default
   `%LOCALAPPDATA%\cpsat`, or `$XDG_CACHE_HOME/cpsat` then `~/.cache/cpsat`
 
 For an offline build, extract the official OR-Tools archive for the target and
-set `CPSAT_ORTOOLS=dir:<path>` to the extracted directory that holds `include`
-and `lib`. `crates/cpsat-sys/build/artifacts.rs` lists each archive's URL and
-SHA-256.
+set `ORTOOLS_ROOT` to the extracted directory that holds `include` and `lib`.
+`crates/cpsat-sys/build/artifacts.rs` lists each archive's URL and SHA-256.
 
-Deleting `CPSAT_CACHE_DIR` makes the next build download and extract again. The
-`dir:` path and `CPSAT_CACHE_DIR` must be absolute. `cargo run` and `cargo test`
-find the OR-Tools shared libraries while Cargo's `build.build-dir` stays inside
-the target directory, which is the default. The `cpsat-sys` build script
-explains why.
+Deleting `CPSAT_CACHE_DIR` makes the next build download and extract again.
+`ORTOOLS_ROOT` and `CPSAT_CACHE_DIR` must be absolute. `cargo run` and
+`cargo test` find the OR-Tools shared libraries while Cargo's `build.build-dir`
+stays inside the target directory, which is the default. The `cpsat-sys` build
+script explains why.
 
 ## Deployment
 

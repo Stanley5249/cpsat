@@ -140,7 +140,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.name }}
-      - run: cargo test --locked --workspace --all-features
+      - run: cargo test --locked --workspace --features cpsat/json
       # Copies the runtime directory beside the executable, as the README's
       # Deployment section describes, and runs it without Cargo's library path.
       - name: Run from a directory with only the runtime beside it
@@ -153,9 +153,9 @@ jobs:
           cp -a "$runtime"/. ship/
           cp target/debug/examples/solve$([ "$RUNNER_OS" = Windows ] && echo .exe) ship/
           cd ship && ./solve
-      - name: The dir mode links the extracted archive
+      - name: ORTOOLS_ROOT links the extracted archive
         if: matrix.name == 'ubuntu-26.04'
         shell: bash
         run: |
           root=$(find "$CPSAT_CACHE_DIR/extracted" -mindepth 2 -maxdepth 2 -type d | head -n 1)
-          CPSAT_ORTOOLS="dir:$root" cargo run --locked -p cpsat --example solve
+          ORTOOLS_ROOT="$root" cargo run --locked -p cpsat --example solve

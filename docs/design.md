@@ -70,8 +70,8 @@ and the C convention `prefix_object_verb`.
 - **FFI**: the Rust side of the C ABI, in `cpsat-sys` and `cpsat`'s private
   `ffi` module.
 - **session**: the bridge object that serves one solve.
-- **mode**: how the build acquires OR-Tools, `prebuilt`, `source`, or
-  `dir:<path>`.
+- **mode**: how the build acquires OR-Tools, the `download-libortools` or
+  `build-libortools` feature, or `ORTOOLS_ROOT`.
 - **wrapper**: a hand-written type that owns a Protobuf message, such as
   `CpModel`.
 - **handle**: `IntVar`, `BoolVar`, `IntervalVar`, or `ConstraintIndex`.
@@ -152,7 +152,7 @@ Every change follows these rules.
 - **Codegen.** `just gen-proto` runs `buf generate` with the remote Buffa
   plugin, and the output is committed, so normal builds need no `protoc`.
 - **Bridge build.** The `cc` crate with definitions read from
-  `ortoolsTargets.cmake`, so prebuilt mode needs no CMake.
+  `ortoolsTargets.cmake`, so the download mode needs no CMake.
 - **Download.** The system `curl` and `tar`, which bring the system proxy and CA
   store. `build/fetch.rs` says when to switch to `ureq`.
 - **Cache.** Archives, extractions, and source builds live in `CPSAT_CACHE_DIR`,
