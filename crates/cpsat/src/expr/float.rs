@@ -12,7 +12,8 @@ use crate::expr::{BoolVar, IntVar, LinearExpr};
 /// `0.5 * x` does in Python. CP-SAT accepts floating-point coefficients only
 /// in the objective, so a `FloatExpr` serves
 /// [`CpModel::minimize`](crate::prelude::CpModel::minimize) and `value`
-/// and converts into no constraint.
+/// and converts into no constraint. `PartialEq` compares the stored terms in
+/// order, so `x + y` and `y + x` differ.
 ///
 /// ```
 /// use cpsat::prelude::*;
@@ -91,6 +92,12 @@ impl From<f64> for FloatExpr {
 }
 
 impl From<LinearExpr> for FloatExpr {
+    /// Converts each coefficient and the offset to `f64`, which rounds a
+    /// magnitude above `2^53`.
+    ///
+    /// # Panics
+    ///
+    /// If a merged coefficient overflows `i64`, as [`LinearExpr`] describes.
     #[expect(
         clippy::cast_precision_loss,
         reason = "the schema stores float objectives as doubles, like Python"

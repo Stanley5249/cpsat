@@ -132,9 +132,9 @@ Every change follows these rules.
   OR-Tools returns `Error`. `validate` returns `Error::InvalidModel`, while
   `solve` reports the `MODEL_INVALID` status. Types rule out structural
   mistakes, such as a negated literal where the schema wants a variable or an
-  unbounded variable domain. The validator checks what depends on the model's
-  current state, such as a variable's domain or an earlier hint. Check eagerly
-  only what the validator cannot see.
+  open range such as `0..` as a variable domain. The validator checks what
+  depends on the model's current state, such as a variable's domain or an
+  earlier hint. Check eagerly only what the validator cannot see.
 - **Matched lists.** Items that belong together form one tuple, such as the
   `(interval, demand)` pairs of `cumulative`, so their lists cannot differ in
   length. Lists whose lengths must match but whose items do not pair, such as
@@ -211,7 +211,8 @@ model.add(constraint) ---- move into model ----> ConstraintIndex(i32)
 - **Expressions** sort, merge, and drop zero terms when written, like Python,
   and panic on `i64` overflow, where Python wraps silently or fails.
 - **Comparisons** are inherent `eq`, `le`, `in_domain`, and so on, because
-  Rust's comparison traits return `bool`. Handles still derive `Ord` by index.
+  Rust's comparison traits return `bool`. Handles still derive `Ord` by their
+  `i32`, so negated literals sort before plain ones.
 - **Constraints.** Every family is a constructor on `Constraint`, and
   `CpModel::add` is their only insertion path. Variables and intervals come from
   `CpModel::new_var`. The schema stores an interval as a constraint, but

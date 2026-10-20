@@ -56,11 +56,21 @@ impl Objective for f64 {
 
 impl CpModel {
     /// Minimizes `expr`, replacing any objective.
+    ///
+    /// # Panics
+    ///
+    /// On an `i64` overflow in `expr`, as
+    /// [`LinearExpr`](crate::prelude::LinearExpr) describes.
     pub fn minimize(&mut self, expr: impl Objective) {
         expr.set(self, false);
     }
 
     /// Maximizes `expr`, replacing any objective.
+    ///
+    /// # Panics
+    ///
+    /// On an `i64` overflow in `expr`, as
+    /// [`LinearExpr`](crate::prelude::LinearExpr) describes.
     pub fn maximize(&mut self, expr: impl Objective) {
         expr.set(self, true);
     }

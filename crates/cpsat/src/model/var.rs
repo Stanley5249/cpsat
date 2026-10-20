@@ -13,8 +13,10 @@ use crate::proto::IntegerVariableProto;
 /// [`IntervalVar`](crate::prelude::IntervalVar) for an
 /// [`Interval`](crate::prelude::Interval).
 ///
-/// `RangeFrom` and `RangeToInclusive` are missing on purpose, because a
-/// variable whose domain reaches `i64::MIN` or `i64::MAX` is invalid.
+/// `RangeFrom` and `RangeToInclusive` are missing on purpose, because they
+/// always reach `i64::MAX` or `i64::MIN`, which makes a variable invalid. A
+/// closed range or a [`Domain`] that reaches either limit compiles, and
+/// [`validate`](CpModel::validate) rejects it.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` cannot create a variable",
     label = "expected a bounded `i64` domain, `Bool`, a `bool`, or an `Interval`",

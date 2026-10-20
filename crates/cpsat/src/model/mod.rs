@@ -164,7 +164,7 @@ impl CpModel {
     ///
     /// # Panics
     ///
-    /// Panics if the model already holds `i32::MAX` variables or
+    /// Panics if the model already holds more than `i32::MAX` variables or
     /// constraints.
     #[doc(alias(
         "new_int_var",
@@ -194,7 +194,7 @@ impl CpModel {
     ///
     /// # Panics
     ///
-    /// Panics if the model already holds `i32::MAX` constraints.
+    /// Panics if the model already holds more than `i32::MAX` constraints.
     pub fn add(&mut self, constraint: impl Into<Constraint>) -> ConstraintIndex {
         let index = next_index(self.0.constraints.len(), "constraints");
         self.0.constraints.push(constraint.into().into_proto());

@@ -21,8 +21,8 @@ impl CpModelProto {
     ///
     /// # Errors
     ///
-    /// Returns an error if the bridge fails. An invalid model is not an
-    /// error; the response status is `MODEL_INVALID`.
+    /// Returns an error if the bridge fails. An invalid model or invalid
+    /// parameters are not an error; the response status is `MODEL_INVALID`.
     #[doc(alias("SolveWithParameters"))]
     pub fn solve(&self, parameters: &SatParameters) -> Result<CpSolverResponse> {
         run(self, parameters, EventSet::NONE, None, |_| {
@@ -125,8 +125,8 @@ impl<'a, F> CpSolver<'a, F> {
     ///
     /// # Errors
     ///
-    /// Returns an error if the bridge fails. An invalid model is not an
-    /// error; the response status is `MODEL_INVALID`.
+    /// Returns an error if the bridge fails. An invalid model or invalid
+    /// parameters are not an error; the response status is `MODEL_INVALID`.
     pub fn solve(&mut self, model: impl AsRef<CpModelProto>) -> Result<CpSolverResponse>
     where
         F: FnMut(Event<'_>) -> ControlFlow<()> + Send,

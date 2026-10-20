@@ -67,6 +67,11 @@ macro_rules! comparisons {
     ($($ty:ty),*) => {$(
         impl $ty {
             /// `self == rhs`.
+            ///
+            /// # Panics
+            ///
+            /// On a constant `rhs` at a domain limit or an `i64` overflow, as
+            /// [`LinearExpr`] describes.
             #[doc(alias("AddEquality"))]
             #[must_use]
             pub fn eq(self, rhs: impl Into<LinearExpr>) -> Constraint {
@@ -76,6 +81,10 @@ macro_rules! comparisons {
             }
 
             /// `self != rhs`.
+            ///
+            /// # Panics
+            ///
+            /// On an `i64` overflow, as [`LinearExpr`] describes.
             #[doc(alias("AddNotEqual"))]
             #[must_use]
             pub fn ne(self, rhs: impl Into<LinearExpr>) -> Constraint {
@@ -85,6 +94,11 @@ macro_rules! comparisons {
             }
 
             /// `self <= rhs`.
+            ///
+            /// # Panics
+            ///
+            /// On a constant `rhs` at a domain limit or an `i64` overflow, as
+            /// [`LinearExpr`] describes.
             #[doc(alias("AddLessOrEqual"))]
             #[must_use]
             pub fn le(self, rhs: impl Into<LinearExpr>) -> Constraint {
@@ -94,6 +108,11 @@ macro_rules! comparisons {
             }
 
             /// `self < rhs`, which is `self <= rhs - 1` over integers.
+            ///
+            /// # Panics
+            ///
+            /// On a constant `rhs` at a domain limit or an `i64` overflow, as
+            /// [`LinearExpr`] describes.
             #[doc(alias("AddLessThan"))]
             #[must_use]
             pub fn lt(self, rhs: impl Into<LinearExpr>) -> Constraint {
@@ -103,6 +122,11 @@ macro_rules! comparisons {
             }
 
             /// `self >= rhs`.
+            ///
+            /// # Panics
+            ///
+            /// On a constant `rhs` at a domain limit or an `i64` overflow, as
+            /// [`LinearExpr`] describes.
             #[doc(alias("AddGreaterOrEqual"))]
             #[must_use]
             pub fn ge(self, rhs: impl Into<LinearExpr>) -> Constraint {
@@ -112,6 +136,11 @@ macro_rules! comparisons {
             }
 
             /// `self > rhs`, which is `self >= rhs + 1` over integers.
+            ///
+            /// # Panics
+            ///
+            /// On a constant `rhs` at a domain limit or an `i64` overflow, as
+            /// [`LinearExpr`] describes.
             #[doc(alias("AddGreaterThan"))]
             #[must_use]
             pub fn gt(self, rhs: impl Into<LinearExpr>) -> Constraint {
@@ -121,6 +150,10 @@ macro_rules! comparisons {
             }
 
             /// `self` lies in `domain`.
+            ///
+            /// # Panics
+            ///
+            /// On an `i64` overflow, as [`LinearExpr`] describes.
             #[doc(alias(
                 "add_linear_constraint",
                 "add_linear_expression_in_domain",

@@ -36,6 +36,10 @@ pub struct Interval(Constraint);
 
 impl Interval {
     /// An interval from `start` to `end`.
+    ///
+    /// # Panics
+    ///
+    /// On an `i64` overflow, as [`LinearExpr`] describes.
     #[doc(alias("new_interval_var", "NewIntervalVar"))]
     #[must_use]
     pub fn new(
@@ -47,6 +51,10 @@ impl Interval {
     }
 
     /// An interval of a fixed size.
+    ///
+    /// # Panics
+    ///
+    /// On an `i64` overflow, including in `start + size`, as [`LinearExpr`] describes.
     #[doc(alias("new_fixed_size_interval_var", "NewFixedSizeIntervalVar"))]
     #[must_use]
     pub fn fixed_size(start: impl Into<LinearExpr>, size: i64) -> Self {
@@ -57,7 +65,8 @@ impl Interval {
 
     /// Makes the interval present only when `literal` is true. Scheduling
     /// constraints ignore an absent interval, and nothing links its start,
-    /// size, and end.
+    /// size, and end. Several calls make the interval present only when every
+    /// literal is true.
     #[doc(alias(
         "new_optional_interval_var",
         "new_optional_fixed_size_interval_var",
