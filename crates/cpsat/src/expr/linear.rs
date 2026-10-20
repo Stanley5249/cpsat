@@ -15,8 +15,9 @@ use crate::proto::LinearExpressionProto;
 ///
 /// The arithmetic panics when a coefficient or the offset overflows `i64`,
 /// and leaves the expression unchanged. Python wraps some overflows silently
-/// and fails on others. `eq`, `lt`, and `le` panic on a constant `i64::MIN`, and `eq`, `ge`, and `gt` on a constant `i64::MAX`, because
-/// domains read these limits as infinity. Python raises on these limits too.
+/// and fails on others. `eq`, `lt`, and `le` panic on a constant `i64::MIN`,
+/// and `eq`, `ge`, and `gt` on a constant `i64::MAX`, because domains read
+/// these limits as infinity. Python raises on these limits too.
 ///
 /// ```
 /// use cpsat::prelude::*;
