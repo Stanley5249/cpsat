@@ -18,38 +18,43 @@ cpsat = { git = "https://github.com/Stanley5249/cpsat" }
 
 Supported targets are `x86_64-pc-windows-msvc` and `x86_64-unknown-linux-gnu` on
 glibc 2.28 or newer, which CI tests on AlmaLinux 8 and Ubuntu 26.04. Building
-needs a C++ compiler (MSVC 2022 or GCC 11 or newer), `curl`, and `tar`, plus
-CMake for the `build-libortools` feature.
+needs Rust at the `rust-version` in `Cargo.toml` or newer, a C++ compiler (MSVC
+2022 or GCC 11 or newer), `curl`, and `tar`, plus CMake for the
+`build-libortools` feature.
 
 ## Usage
 
-```rust
+```rust no_run
 use std::ops::ControlFlow;
 
 use cpsat::prelude::*;
 use cpsat::proto::SatParameters;
 
 // From `solve_and_print_intermediate_solutions_sample_sat.py`.
-let mut model = CpModel::new();
-let x = model.new_var((0..=2).with_name("x"));
-let y = model.new_var((0..=2).with_name("y"));
-let z = model.new_var((0..=2).with_name("z"));
-model.add(x.ne(y));
-model.maximize(x + 2 * y + 3 * z);
+fn main() -> cpsat::Result<()> {
+    let mut model = CpModel::new();
+    let x = model.new_var((0..=2).with_name("x"));
+    let y = model.new_var((0..=2).with_name("y"));
+    let z = model.new_var((0..=2).with_name("z"));
+    model.add(x.ne(y));
+    model.maximize(x + 2 * y + 3 * z);
 
-let response = model.solve(&SatParameters::default())?;
-println!("{}: x = {:?}", response.status(), response.value(x));
+    let response = model.solve(&SatParameters::default())?;
+    println!("{}: x = {:?}", response.status(), response.value(x));
 
-let stop = StopHandle::new();
-let response = CpSolver::new(&SatParameters::default().with_num_workers(8))
-    .on_event(EventSet::SOLUTION, |event| {
-        if let Event::Solution(view) = event {
-            println!("objective {}", view.objective_value);
-        }
-        ControlFlow::Continue(())
-    })
-    .with_stop_handle(&stop)
-    .solve(&model)?;
+    let stop = StopHandle::new();
+    let response = CpSolver::new(&SatParameters::default().with_num_workers(8))
+        .on_event(EventSet::SOLUTION, |event| {
+            if let Event::Solution(view) = event {
+                println!("objective {}", view.objective_value);
+            }
+            ControlFlow::Continue(())
+        })
+        .with_stop_handle(&stop)
+        .solve(&model)?;
+    println!("{}", response.status());
+    Ok(())
+}
 ```
 
 `crates/cpsat/tests/e2e/samples.rs` ports the official OR-Tools samples, and
@@ -59,11 +64,18 @@ cover.
 
 ## Configuration
 
-Cargo features choose where OR-Tools comes from:
+These features choose where OR-Tools comes from, and
+`crates/cpsat-sys/build/artifacts.rs` pins its version:
 
 - `download-libortools` (default): download the official release
 - `build-libortools`: build OR-Tools from source with CMake, which wins over
   `download-libortools`
+
+These features choose the message formats:
+
+- `text` (default): Protobuf text format through `buffa::text`
+- `views` (default): required, because the solver passes solutions as views
+- `json`: Proto3 JSON through serde
 
 The build script reads these environment variables:
 
@@ -78,7 +90,6 @@ the OR-Tools runtime libraries beside your executable.
 
 For development, also install:
 
-- [Rust](https://rustup.rs/)
 - [just](https://github.com/casey/just), and on Windows
   [PowerShell 7](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows)
   for its recipes

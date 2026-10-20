@@ -33,7 +33,8 @@ a vendored copy.
 
 To build without network, do one of these:
 
-- Extract the official archive for the target and set `ORTOOLS_ROOT` to it.
+- Extract the official archive for the target, and set `ORTOOLS_ROOT` to the
+  directory inside it that holds `include` and `lib`.
 - Copy a filled `CPSAT_CACHE_DIR` from a machine with network.
 
 Deleting `CPSAT_CACHE_DIR` makes the next build download and extract again.
