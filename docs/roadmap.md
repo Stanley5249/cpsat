@@ -2,9 +2,9 @@
 
 ## Open work
 
-- **Source mode CMake options.** The `source` workflow passes on Ubuntu.
-  `build/source.rs` holds the options that drop what CP-SAT does not need.
-  Inspect the configured targets instead of trusting those options.
+- **Source mode CMake options.** `build/source.rs` holds the options that drop
+  what CP-SAT does not need. Inspect the configured targets instead of trusting
+  those options.
 - **Benchmarks.** Measure Buffa encode and decode, model transfer, solve
   overhead, callback latency, and view decoding against C++ and Python on the
   same models. Add zero-copy paths only for a measured bottleneck.

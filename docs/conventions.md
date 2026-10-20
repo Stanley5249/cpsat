@@ -90,8 +90,9 @@ are out of scope.
   property of its meaning.
 - **`samples.rs`** ports official samples and asserts what the Python sample
   prints, checked by running it with the pinned `ortools`. Each constraint
-  family and solver feature has at least one sample, preferring samples that
-  exist in both C++ and Python.
+  family and solver feature with an official sample has one ported, preferring
+  samples that exist in both C++ and Python. Families without one rely on
+  `equivalence.rs` and `constraints.rs`.
 - **The other files** cover the binding's own mechanics: encoding, the FFI,
   events, callback panics, stops across threads, and response reading. These get
   full coverage, because nothing upstream tests them.

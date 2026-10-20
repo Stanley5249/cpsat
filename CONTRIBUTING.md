@@ -8,8 +8,6 @@ The README lists the tools to install, and `just` lists the recipes.
   `docs/design.md`, so the design is agreed before the code.
 - Follow the rules in `docs/design.md` for public API, and `docs/conventions.md`
   for doc comments, examples, and tests.
-- When a change adds or alters the Rust counterpart of a Python method, update
-  its entry in `docs/parity.md`.
 - Change the generated code in `crates/cpsat/src/proto` through
   `just gen-proto`, and edit the `.proto` files only when bumping OR-Tools.
 

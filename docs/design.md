@@ -173,9 +173,9 @@ Every change follows these rules.
   resolves relative links against each crate's directory. The license links stay
   relative, because each crate holds its own copies.
 - **Solver.** `CpModel::solve` for the plain case, and a `CpSolver` for events
-  and stops. `CpSolver` is generic over one `FnMut(Event) -> ControlFlow<()>`
-  callback, because a boxed one keeps the closure's borrows alive until the
-  solver drops.
+  and stops. `CpSolver` is generic over one
+  `FnMut(Event) -> ControlFlow<()> + Send` callback, because a boxed one keeps
+  the closure's borrows alive until the solver drops.
 - **Stop.** `StopHandle` stops every solve attached to it, and a stop is sticky,
   like a cancellation token.
 - **Model transfer.** Each solve encodes the model once in Rust and parses it
@@ -216,5 +216,5 @@ model.add(constraint) ---- move into model ----> ConstraintIndex(i32)
 - **Compositions.** Python helpers that compose other calls, such as
   `add_map_domain` and `weighted_sum`, stay compositions, and `docs/parity.md`
   gives each encoding.
-- **Responses.** `value` takes any `Evaluate` input and returns `i64`, `bool`,
-  or `f64` to match it, on both the owned response and the view.
+- **Responses.** `value` takes any `Evaluate` input and returns an `Option` of
+  `i64`, `bool`, or `f64` to match it, on both the owned response and the view.

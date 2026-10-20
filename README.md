@@ -71,15 +71,17 @@ The build script reads these environment variables:
 - `CPSAT_CACHE_DIR`: Download and build cache, by default
   `%LOCALAPPDATA%\cpsat`, or `$XDG_CACHE_HOME/cpsat` then `~/.cache/cpsat`
 
-`docs/build.md` covers the mode order, offline builds, linking, and deployment,
-which copies the OR-Tools runtime libraries beside the executable.
+`docs/build.md` covers the mode order, offline builds, linking, and how to ship
+the OR-Tools runtime libraries beside your executable.
 
 ## Requirements
 
 For development, also install:
 
 - [Rust](https://rustup.rs/)
-- [just](https://github.com/casey/just)
+- [just](https://github.com/casey/just), and on Windows
+  [PowerShell 7](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows)
+  for its recipes
 - [tombi](https://tombi-toml.github.io/tombi/)
 - [Bun](https://bun.sh/) for `bunx oxfmt`
 - [Buf](https://buf.build/docs/cli/installation/), only for `just gen-proto` and
