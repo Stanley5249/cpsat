@@ -50,27 +50,28 @@ const TOOLCHAIN: &[&str] = &[
 pub fn build(cache: &Path, target: &str) -> Result<PathBuf> {
     let source = fetch::extracted(&artifacts::SOURCE, cache)?;
     let mut key = Sha256::new();
-    for part in [artifacts::SOURCE.sha256, target].iter().chain(OPTIONS) {
-        key.update(part.as_bytes());
+    let mut feed = |part: &[u8]| {
+        key.update(part);
         key.update([0]);
+    };
+    for part in [artifacts::SOURCE.sha256, target].iter().chain(OPTIONS) {
+        feed(part.as_bytes());
     }
     // Only set variables enter the key, so the default environment keeps the
     // directory that builds before this key existed.
     for var in TOOLCHAIN {
         println!("cargo::rerun-if-env-changed={var}");
         if let Some(value) = env::var_os(var) {
-            for part in [var.as_bytes(), value.as_encoded_bytes()] {
-                key.update(part);
-                key.update([0]);
-            }
+            feed(var.as_bytes());
+            feed(value.as_encoded_bytes());
         }
     }
     let dir = cache
         .join("source")
-        .join(&fetch::hex(&key.finalize())[..16]);
+        .join(&format!("{:x}", key.finalize())[..16]);
     let install = dir.join("install");
     let jobs = jobs();
-    fetch::once(&dir, |dir| {
+    fetch::once(&dir, || {
         let build = dir.join("build");
         fetch::run(
             cmake(jobs)

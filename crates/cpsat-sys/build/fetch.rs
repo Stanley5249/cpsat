@@ -8,7 +8,6 @@
 //! platform lacks either tool, or to extract only the files the build needs.
 
 use std::env;
-use std::fmt::Write;
 use std::fs::{self, File};
 use std::io;
 use std::path::{Path, PathBuf};
@@ -20,15 +19,7 @@ use sha2::{Digest, Sha256};
 use crate::artifacts::Archive;
 
 pub fn cache_dir() -> Result<PathBuf> {
-    if let Some(dir) = env::var_os("CPSAT_CACHE_DIR") {
-        let dir = PathBuf::from(dir);
-        // The build script runs in the package directory, so a relative path
-        // would not mean what the user typed.
-        ensure!(
-            dir.is_absolute(),
-            "CPSAT_CACHE_DIR must be absolute: {}",
-            dir.display()
-        );
+    if let Some(dir) = crate::absolute_path_var("CPSAT_CACHE_DIR")? {
         return Ok(dir);
     }
     default_cache_base()
@@ -51,7 +42,7 @@ fn default_cache_base() -> Option<PathBuf> {
 /// Fills `dir` once across all builds. A lock file serializes concurrent
 /// builds, and `fill` runs again after an interrupted attempt, because only a
 /// finished one writes the `.complete` marker.
-pub fn once(dir: &Path, fill: impl FnOnce(&Path) -> Result<()>) -> Result<()> {
+pub fn once(dir: &Path, fill: impl FnOnce() -> Result<()>) -> Result<()> {
     let marker = dir.join(".complete");
     if marker.exists() {
         return Ok(());
@@ -60,7 +51,7 @@ pub fn once(dir: &Path, fill: impl FnOnce(&Path) -> Result<()>) -> Result<()> {
     let lock = File::create(dir.with_extension("lock"))?;
     lock.lock()?;
     if !marker.exists() {
-        fill(dir)?;
+        fill()?;
         fs::write(&marker, "")?;
     }
     Ok(())
@@ -71,8 +62,12 @@ pub fn extracted(archive: &Archive, cache: &Path) -> Result<PathBuf> {
     let key = &archive.sha256[..16];
     let file = download(archive, &cache.join("archives").join(key))?;
     let dir = cache.join("extracted").join(key);
-    once(&dir, |dir| {
-        run(Command::new(tar()).arg("-xf").arg(&file).arg("-C").arg(dir))
+    once(&dir, || {
+        run(Command::new(tar())
+            .arg("-xf")
+            .arg(&file)
+            .arg("-C")
+            .arg(&dir))
     })?;
     single_subdir(&dir)
 }
@@ -84,7 +79,7 @@ fn download(archive: &Archive, dir: &Path) -> Result<PathBuf> {
         .next()
         .expect("archive URLs end in a file name");
     let file = dir.join(name);
-    once(dir, |_| {
+    once(dir, || {
         run(Command::new("curl")
             .args(["--fail", "--location", "--silent", "--show-error"])
             // Refuse a redirect to plain HTTP, even though the checksum is pinned.
@@ -136,17 +131,10 @@ fn single_subdir(dir: &Path) -> Result<PathBuf> {
     }
 }
 
-pub fn sha256(file: &Path) -> Result<String> {
+fn sha256(file: &Path) -> Result<String> {
     let mut hasher = Sha256::new();
     io::copy(&mut File::open(file)?, &mut hasher)?;
-    Ok(hex(&hasher.finalize()))
-}
-
-pub fn hex(bytes: &[u8]) -> String {
-    bytes.iter().fold(String::new(), |mut hex, byte| {
-        write!(hex, "{byte:02x}").expect("writing to a String never fails");
-        hex
-    })
+    Ok(format!("{:x}", hasher.finalize()))
 }
 
 pub fn run(command: &mut Command) -> Result<()> {

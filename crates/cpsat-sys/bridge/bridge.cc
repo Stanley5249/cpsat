@@ -26,28 +26,33 @@ struct Error {
   std::string message;
 };
 
+// Points *out at size bridge-owned bytes, or at nothing when size is 0.
+uint8_t* Allocate(CpsatBuffer* out, size_t size) {
+  *out = CpsatBuffer{};
+  if (size == 0) return nullptr;
+  auto* data = static_cast<uint8_t*>(std::malloc(size));
+  if (data == nullptr) throw std::bad_alloc();
+  *out = CpsatBuffer{data, size};
+  return data;
+}
+
 void Fill(CpsatBuffer* out, const std::string& bytes) {
-  out->data = nullptr;
-  out->len = bytes.size();
-  if (bytes.empty()) return;
-  out->data = static_cast<uint8_t*>(std::malloc(bytes.size()));
-  if (out->data == nullptr) throw std::bad_alloc();
-  std::memcpy(out->data, bytes.data(), bytes.size());
+  if (uint8_t* data = Allocate(out, bytes.size())) {
+    std::memcpy(data, bytes.data(), bytes.size());
+  }
 }
 
 // Serializes straight into the bridge-owned buffer, without an intermediate
 // std::string.
 void FillMessage(CpsatBuffer* out, const google::protobuf::Message& message) {
   const size_t size = message.ByteSizeLong();
-  const std::string name(message.GetTypeName());
-  out->data = nullptr;
-  out->len = size;
-  if (size == 0) return;
-  if (size > static_cast<size_t>(INT_MAX)) throw Error{name + " exceeds 2 GiB"};
-  out->data = static_cast<uint8_t*>(std::malloc(size));
-  if (out->data == nullptr) throw std::bad_alloc();
-  if (!message.SerializeToArray(out->data, static_cast<int>(size))) {
-    throw Error{"failed to serialize " + name};
+  if (size > static_cast<size_t>(INT_MAX)) {
+    throw Error{std::string(message.GetTypeName()) + " exceeds 2 GiB"};
+  }
+  uint8_t* data = Allocate(out, size);
+  if (data != nullptr &&
+      !message.SerializeToArray(data, static_cast<int>(size))) {
+    throw Error{"failed to serialize " + std::string(message.GetTypeName())};
   }
 }
 
@@ -114,8 +119,7 @@ void SetError(CpsatBuffer* error, const std::string& message) noexcept {
   try {
     Fill(error, message);
   } catch (...) {
-    error->data = nullptr;
-    error->len = 0;
+    *error = CpsatBuffer{};
   }
 }
 
@@ -123,10 +127,8 @@ void SetError(CpsatBuffer* error, const std::string& message) noexcept {
 // through Guard, which also empties both output buffers first.
 template <typename Body>
 int32_t Guard(CpsatBuffer* out, CpsatBuffer* error, Body body) noexcept {
-  out->data = nullptr;
-  out->len = 0;
-  error->data = nullptr;
-  error->len = 0;
+  *out = CpsatBuffer{};
+  *error = CpsatBuffer{};
   try {
     body();
     return CPSAT_OK;
@@ -139,10 +141,6 @@ int32_t Guard(CpsatBuffer* out, CpsatBuffer* error, Body body) noexcept {
   }
   return CPSAT_ERROR;
 }
-
-}  // namespace
-
-namespace {
 
 class Observer : public SolutionCallback {
  public:
@@ -280,8 +278,7 @@ int32_t cpsat_parameters_default(CpsatBuffer* parameters, CpsatBuffer* error) {
 
 void cpsat_buffer_free(CpsatBuffer* buffer) {
   std::free(buffer->data);
-  buffer->data = nullptr;
-  buffer->len = 0;
+  *buffer = CpsatBuffer{};
 }
 
 }  // extern "C"

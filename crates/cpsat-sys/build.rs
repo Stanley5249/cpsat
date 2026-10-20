@@ -120,15 +120,7 @@ fn main() -> Result<()> {
 }
 
 fn mode() -> Result<Mode> {
-    if let Some(path) = env::var_os("ORTOOLS_ROOT") {
-        let path = PathBuf::from(path);
-        // The build script runs in the package directory, so a relative path
-        // would not mean what the user typed.
-        ensure!(
-            path.is_absolute(),
-            "ORTOOLS_ROOT must be absolute: {}",
-            path.display()
-        );
+    if let Some(path) = absolute_path_var("ORTOOLS_ROOT")? {
         return Ok(Mode::Root(path));
     }
     if env::var_os("CARGO_FEATURE_BUILD_LIBORTOOLS").is_some() {
@@ -138,6 +130,20 @@ fn mode() -> Result<Mode> {
         return Ok(Mode::Download);
     }
     bail!("no OR-Tools source; enable download-libortools or build-libortools, or set ORTOOLS_ROOT")
+}
+
+/// Reads a path variable. The build script runs in the package directory, so a
+/// relative path would not mean what the user typed.
+fn absolute_path_var(var: &str) -> Result<Option<PathBuf>> {
+    let Some(path) = env::var_os(var).map(PathBuf::from) else {
+        return Ok(None);
+    };
+    ensure!(
+        path.is_absolute(),
+        "{var} must be absolute: {}",
+        path.display()
+    );
+    Ok(Some(path))
 }
 
 fn toolchain(target: &str) -> Result<Toolchain> {
