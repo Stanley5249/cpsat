@@ -110,6 +110,7 @@ a commit.
 - [Contributing](https://github.com/Stanley5249/cpsat/blob/main/CONTRIBUTING.md)
 - [Design](https://github.com/Stanley5249/cpsat/blob/main/docs/design.md)
 - [Build and deployment](https://github.com/Stanley5249/cpsat/blob/main/docs/build.md)
+- [Maintenance](https://github.com/Stanley5249/cpsat/blob/main/docs/maintenance.md)
 - [Conventions](https://github.com/Stanley5249/cpsat/blob/main/docs/conventions.md)
 - [Roadmap](https://github.com/Stanley5249/cpsat/blob/main/docs/roadmap.md)
 - [Python parity](https://github.com/Stanley5249/cpsat/blob/main/docs/parity.md)

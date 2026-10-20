@@ -95,6 +95,10 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.0 # no major-version tag exists
       - uses: extractions/setup-just@v4
+      - name: The fixture pin matches the pinned OR-Tools tag
+        run: |
+          tag=$(sed -n 's|.*/archive/refs/tags/v\([0-9.]*\)\.tar\.gz.*|\1|p' crates/cpsat-sys/build/artifacts.rs)
+          grep -q "ortools==$tag\." justfile
       - run: just check-fixtures
 
   test:
