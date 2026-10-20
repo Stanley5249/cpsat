@@ -1,7 +1,7 @@
 // C ABI over OR-Tools' SolveWrapper and CpSatHelper.
 //
-// Messages cross the ABI as serialized Protobuf bytes, except the response that
-// a solution callback borrows. Functions that return int32_t return CPSAT_OK or CPSAT_ERROR; on error, *error holds a UTF-8
+// Every message crosses the ABI as serialized Protobuf bytes. Functions that
+// return int32_t return CPSAT_OK or CPSAT_ERROR; on error, *error holds a UTF-8
 // message. Buffers in CpsatBuffer outputs are owned by the bridge and must be
 // released with cpsat_buffer_free.
 //
@@ -27,31 +27,12 @@ typedef struct CpsatBuffer {
   size_t len;
 } CpsatBuffer;
 
-// A CpSolverResponse borrowed during a solution callback. Each field holds the
-// response field of the same name, and solution points into the response.
-typedef struct CpsatResponseRef {
-  int32_t status;
-  const int64_t* solution;
-  size_t solution_len;
-  double objective_value;
-  double best_objective_bound;
-  int64_t num_booleans;
-  int64_t num_conflicts;
-  int64_t num_branches;
-  int64_t num_binary_propagations;
-  int64_t num_integer_propagations;
-  double wall_time;
-  double user_time;
-  double deterministic_time;
-  // The CpSolverResponse, for cpsat_response_ref_serialize.
-  const void* response;
-} CpsatResponseRef;
-
 // Each callback runs with at most one other callback call at a time, possibly
 // on a solver worker thread, and borrows its arguments only during the call.
 // A nonzero return requests the solver to stop.
-typedef int32_t (*CpsatSolutionCallback)(void* context,
-                                         const CpsatResponseRef* response);
+// response holds a serialized CpSolverResponse.
+typedef int32_t (*CpsatSolutionCallback)(void* context, const uint8_t* response,
+                                         size_t response_len);
 typedef int32_t (*CpsatBestBoundCallback)(void* context, double bound);
 // message may not be valid UTF-8.
 typedef int32_t (*CpsatLogCallback)(void* context, const uint8_t* message,
@@ -90,10 +71,6 @@ int32_t cpsat_session_add_log_callback(CpsatSession* session,
 int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
                             size_t model_len, CpsatBuffer* response,
                             CpsatBuffer* error);
-
-// Serializes the whole response. Valid only during the solution callback.
-int32_t cpsat_response_ref_serialize(const CpsatResponseRef* response_ref,
-                                     CpsatBuffer* response, CpsatBuffer* error);
 
 // *message is empty when the model is valid.
 int32_t cpsat_model_validate(const uint8_t* model, size_t model_len,

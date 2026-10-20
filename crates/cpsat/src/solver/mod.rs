@@ -11,5 +11,5 @@ mod stop;
 pub use builder::CpSolver;
 pub use callback::{BestBoundCallback, Callbacks, LogCallback, SolutionCallback};
 pub use diagnostics::default_parameters;
-pub use response::{CpSolverResponseRef, Evaluate, Solution};
+pub use response::{Evaluate, Solution};
 pub use stop::StopHandle;

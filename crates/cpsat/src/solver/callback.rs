@@ -10,11 +10,11 @@ use std::any::Any;
 use std::ops::ControlFlow;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use cpsat_sys::CpsatResponseRef;
+use buffa::MessageView;
 
 use crate::error::Result;
+use crate::proto::view::CpSolverResponseView;
 use crate::solver::ffi::Session;
-use crate::solver::response::CpSolverResponseRef;
 
 /// A panic payload from a callback.
 type Panic = Box<dyn Any + Send>;
@@ -145,7 +145,7 @@ impl<C: Callbacks, K: sealed::Callback> Callbacks for (C, K) {}
 
 impl<F> sealed::Callback for SolutionCallback<F>
 where
-    F: FnMut(CpSolverResponseRef<'_>) -> ControlFlow<()> + Send,
+    F: FnMut(&CpSolverResponseView<'_>) -> ControlFlow<()> + Send,
 {
     unsafe fn register(&mut self, session: &Session) -> Result<()> {
         // SAFETY: the trampoline matches the context type, and the caller
@@ -197,14 +197,27 @@ unsafe fn slot<'a, F>(context: *mut c_void) -> &'a mut Slot<F> {
     unsafe { &mut *context.cast::<Slot<F>>() }
 }
 
-unsafe extern "C" fn solution<F>(context: *mut c_void, response: *const CpsatResponseRef) -> i32
+unsafe extern "C" fn solution<F>(
+    context: *mut c_void,
+    response: *const u8,
+    response_len: usize,
+) -> i32
 where
-    F: FnMut(CpSolverResponseRef<'_>) -> ControlFlow<()>,
+    F: FnMut(&CpSolverResponseView<'_>) -> ControlFlow<()>,
 {
     // SAFETY: the bridge passes the context it was given and a response valid
     // for the duration of the call.
-    let (slot, response) = unsafe { (slot::<F>(context), &*response) };
-    slot.call(|callback| callback(CpSolverResponseRef::new(response)))
+    let (slot, response) = unsafe {
+        (
+            slot::<F>(context),
+            crate::solver::ffi::slice(response, response_len),
+        )
+    };
+    slot.call(|callback| {
+        let view = CpSolverResponseView::decode_view(response)
+            .expect("the bridge sends a serialized CpSolverResponse");
+        callback(&view)
+    })
 }
 
 unsafe extern "C" fn best_bound<F>(context: *mut c_void, bound: f64) -> i32

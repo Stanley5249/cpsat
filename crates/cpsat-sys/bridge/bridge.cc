@@ -5,7 +5,6 @@
 #include <cstring>
 #include <exception>
 #include <list>
-#include <memory>
 #include <mutex>
 #include <string>
 
@@ -189,24 +188,12 @@ struct CpsatSession {
 };
 
 void Observer::OnSolutionCallback() const {
-  const std::shared_ptr<CpSolverResponse> response = SharedResponse();
-  const CpsatResponseRef ref{
-      static_cast<int32_t>(response->status()),
-      response->solution().data(),
-      static_cast<size_t>(response->solution_size()),
-      response->objective_value(),
-      response->best_objective_bound(),
-      response->num_booleans(),
-      response->num_conflicts(),
-      response->num_branches(),
-      response->num_binary_propagations(),
-      response->num_integer_propagations(),
-      response->wall_time(),
-      response->user_time(),
-      response->deterministic_time(),
-      response.get(),
-  };
-  session_->Dispatch([&] { return callback_(context_, &ref); });
+  std::string bytes;
+  SharedResponse()->SerializeToString(&bytes);
+  session_->Dispatch([&] {
+    return callback_(context_, reinterpret_cast<const uint8_t*>(bytes.data()),
+                     bytes.size());
+  });
 }
 
 extern "C" {
@@ -292,15 +279,6 @@ int32_t cpsat_session_solve(CpsatSession* session, const uint8_t* model,
     // Solve joins its worker threads before it returns, so every callback
     // happens before the caller reads its callback state.
     FillMessage(response, session->solve_wrapper.Solve(model_proto));
-  });
-}
-
-int32_t cpsat_response_ref_serialize(const CpsatResponseRef* response_ref,
-                                     CpsatBuffer* response,
-                                     CpsatBuffer* error) {
-  return Guard(response, error, [&] {
-    FillMessage(response,
-                *static_cast<const CpSolverResponse*>(response_ref->response));
   });
 }
 

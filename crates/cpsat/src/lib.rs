@@ -45,6 +45,9 @@
 #[doc = include_str!("../../../README.md")]
 struct ReadmeDoctests;
 
+#[cfg(not(feature = "views"))]
+compile_error!("the `views` feature is required, because solution callbacks read views");
+
 mod constraint;
 mod error;
 mod expr;

@@ -39,16 +39,15 @@ and Names rules in `docs/design.md`.
   - Test: `solve.rs::honors_time_limit`
 - `CpSolverSolutionCallback.on_solution_callback`
   - Rust: `CpSolver::add_solution_callback`, which passes a
-    `CpSolverResponseRef`; callbacks run in the order added
+    `CpSolverResponseView`; callbacks run in the order added
   - OR-Tools: `AddSolutionCallback`
   - Test: `samples.rs::solve_and_print_intermediate_solutions`
 - `CpSolverSolutionCallback.value`, `boolean_value`, `float_value`
-  - Rust: `CpSolverResponseRef::solution`, then `Solution::value`, which reads a
-    literal as `bool` and a `FloatExpr` as `f64`; `Solution::values` gives the
-    raw `&[i64]`
+  - Rust: `CpSolverResponseView::solution`, then `Solution::value`, which reads
+    a literal as `bool` and a `FloatExpr` as `f64`
   - OR-Tools: none
-  - Test: `events.rs::solution_ref_reads_values_and_converts_to_owned`,
-    `solution_ref_accessors_match_the_owned_response`
+  - Test: `events.rs::solution_view_reads_values_and_converts_to_owned`,
+    `solution_view_accessors_match_the_owned_response`
 - `CpSolver.best_bound_callback`
   - Rust: `CpSolver::add_best_bound_callback`
   - OR-Tools: `AddBestBoundCallback`
@@ -129,19 +128,18 @@ and Names rules in `docs/design.md`.
   - OR-Tools: none
   - Test: `solve.rs::evaluates_collections_in_order`
 - `CpSolverSolutionCallback.has_response`, `response_proto`
-  - Rust: `CpSolverResponseRef` is always present in a solution callback;
-    `CpSolverResponseRef::to_owned_message` retains the response after the
-    callback
+  - Rust: A solution callback always receives a response view;
+    `MessageView::to_owned_message` retains it after the callback
   - OR-Tools: none
-  - Test: `events.rs::solution_ref_reads_values_and_converts_to_owned`
+  - Test: `events.rs::solution_view_reads_values_and_converts_to_owned`
 - Callback `objective_value`, `best_objective_bound`, `num_booleans`,
   `num_conflicts`, `num_branches`, `num_integer_propagations`,
   `num_binary_propagations`, `deterministic_time`, `wall_time`, `user_time`
-  - Rust: Same-named `CpSolverResponseRef` methods
+  - Rust: Same-named solution-view fields
   - OR-Tools: none
   - Test: `samples.rs::solve_and_print_intermediate_solutions` reads objective
     value; the other fields have no direct parity assertions,
-    `events.rs::solution_ref_carries_search_statistics`
+    `events.rs::solution_view_carries_search_statistics`
 - `SearchForAllSolutions`
   - Rust: Set `enumerate_all_solutions` and add a solution callback; Python's
     deprecated wrapper also rejects objectives and restores the previous
@@ -489,8 +487,8 @@ or mutable solver state with types.
 - `Constraint` and `ConstraintIndex`: A constraint value before insertion, and
   the index `CpModel::add` returns
 - `Error`, `Result`: Typed failures where Python raises or returns a string
-- `CpSolverResponseRef`: A borrowed reading of the live C++ response inside a
-  solution callback
+- `CpSolverResponseView`: Buffa's zero-copy view of a solution inside a solution
+  callback
 - `Index` on `CpModel`: `model[x]`, `model[interval]`, and `model[constraint]`
   read the stored message
 - `CpModel::proto`, `proto_mut`, `into_proto`, `From`, `AsRef`: Move between
@@ -529,9 +527,9 @@ or mutable solver state with types.
   in the Domain entries. Compare supported values and explicit edge cases
   instead of assuming all error paths match.
 - Rust registers callbacks with `CpSolver::add_solution_callback` and its
-  siblings before solving and borrows the response only during the callback.
-  Python passes a reusable callback object to `solve` and exposes
-  response-presence checks on that object.
+  siblings before solving and borrows the view only during the callback. Python
+  passes a reusable callback object to `solve` and exposes response-presence
+  checks on that object.
 - An unset `SatParameters` field reads as `None` instead of its proto2 default.
   `docs/buffa-proto2-defaults.md` explains why and how to read the defaults.
 - An OR-Tools `CHECK` failure aborts the process, as in Python.

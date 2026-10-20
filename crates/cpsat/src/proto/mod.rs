@@ -3,5 +3,4 @@
 include!("operations_research.sat.rs");
 
 /// Zero-copy views of the messages above.
-#[cfg(feature = "views")]
 pub use __buffa::view;

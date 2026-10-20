@@ -80,7 +80,7 @@ fn solve_and_print_intermediate_solutions() {
     let mut objectives = Vec::new();
     let response = CpSolver::default()
         .add_solution_callback(|response| {
-            objectives.push(response.objective_value());
+            objectives.push(response.objective_value);
             ControlFlow::Continue(())
         })
         .solve(model.proto())
@@ -101,7 +101,7 @@ fn search_for_all_solutions() {
     let mut solutions = Vec::new();
     let response = CpSolver::new(&parameters)
         .add_solution_callback(|response| {
-            solutions.push(response.solution().unwrap().values().to_vec());
+            solutions.push(response.solution.to_vec());
             ControlFlow::Continue(())
         })
         .solve(model.proto())

@@ -47,7 +47,7 @@ fn main() -> cpsat::Result<()> {
     let stop = StopHandle::new();
     let response = CpSolver::new(&SatParameters::default().with_num_workers(8))
         .add_solution_callback(|response| {
-            println!("objective {}", response.objective_value());
+            println!("objective {}", response.objective_value);
             ControlFlow::Continue(())
         })
         .with_stop_handle(&stop)
@@ -74,7 +74,7 @@ These features choose where OR-Tools comes from, and
 These features choose the message formats:
 
 - `text` (default): Protobuf text format through `buffa::text`
-- `views` (default): zero-copy views of encoded messages through `buffa::view`
+- `views` (default): required, because solution callbacks read views
 - `json`: Proto3 JSON through serde
 
 The build script reads these environment variables:

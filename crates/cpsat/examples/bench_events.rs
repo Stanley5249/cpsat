@@ -9,10 +9,12 @@
 //! The solver spends about 10 ms on each solution, which hides the callback in
 //! the wall time, so each case times the work inside its callback instead:
 //!
-//! 1. reading the borrowed solution's length,
-//! 2. reading every variable of the borrowed solution,
-//! 3. copying the whole response with `to_owned_message`, which costs about
-//!    what every solution cost before callbacks borrowed the response.
+//! 1. reading every variable of the solution view,
+//! 2. copying the view into an owned response with `to_owned_message`,
+//! 3. that copy, then encoding it and decoding a view again.
+//!
+//! The bridge's serialize and the view decode before each callback stay out of
+//! the timing, so case 3 minus case 2 estimates them.
 //!
 //! Run it with:
 //!
@@ -23,7 +25,9 @@
 use std::ops::ControlFlow;
 use std::time::{Duration, Instant};
 
+use buffa::{Message, MessageView};
 use cpsat::prelude::*;
+use cpsat::proto::view::CpSolverResponseView;
 use cpsat::proto::{CpModelProto, SatParameters};
 
 const NUM_VARS: usize = 20_000;
@@ -31,7 +35,7 @@ const FREE: usize = 8;
 const RUNS: usize = 5;
 
 /// The work one case does inside its callback.
-type Work<'a> = &'a (dyn Fn(CpSolverResponseRef<'_>) -> i64 + Sync);
+type Work<'a> = &'a (dyn Fn(&CpSolverResponseView<'_>) -> i64 + Sync);
 
 fn build() -> (CpModel, Vec<IntVar>) {
     let mut model = CpModel::new();
@@ -57,7 +61,7 @@ fn parameters() -> SatParameters {
 fn time_callback(
     proto: &CpModelProto,
     parameters: &SatParameters,
-    mut work: impl FnMut(CpSolverResponseRef<'_>) -> i64 + Send,
+    mut work: impl FnMut(&CpSolverResponseView<'_>) -> i64 + Send,
 ) -> (u32, Duration) {
     let mut solutions = 0;
     let mut inside = Duration::ZERO;
@@ -83,11 +87,6 @@ fn main() {
     println!("{NUM_VARS} vars, 2^{FREE} solutions, median of {RUNS} runs, 1 worker");
 
     let cases: [(&str, Work<'_>); 3] = [
-        ("borrow solution", &|response| {
-            response
-                .solution()
-                .map_or(0, |solution| solution.values().len().try_into().unwrap())
-        }),
         ("read all values", &|response| {
             response.solution().map_or(0, |solution| {
                 vars.iter().map(|&var| solution.value(var)).sum()
@@ -95,6 +94,10 @@ fn main() {
         }),
         ("copy response", &|response| {
             response.to_owned_message().unwrap().solution[0]
+        }),
+        ("copy, round trip", &|response| {
+            let bytes = response.to_owned_message().unwrap().encode_to_vec();
+            CpSolverResponseView::decode_view(&bytes).unwrap().solution[0]
         }),
     ];
     for (name, work) in cases {

@@ -21,10 +21,8 @@ and the C convention `prefix_object_verb`.
   functions named `cpsat_<object>_<verb>`, such as `cpsat_model_stats`.
 - **Buffa**: the Rust Protobuf library that generates the `proto` types the API
   exposes.
-- **view**: a borrowed, zero-copy reading of an encoded message, that Buffa
-  generates under the `views` feature.
-- **ref**: a borrowed reading of a live C++ message, such as
-  `CpSolverResponseRef`, which is valid only while its C++ owner lives.
+- **view**: a borrowed, zero-copy reading of an encoded message, such as
+  `CpSolverResponseView`.
 - **FFI**: the Rust side of the C ABI, in `cpsat-sys` and `cpsat`'s private
   `ffi` module.
 - **session**: the bridge object that serves one solve and holds its callbacks.
@@ -93,16 +91,14 @@ Every change follows these rules.
 - **Wrappers.** A hand-written type is a cheap wrapper over data that OR-Tools
   or Buffa already lays out. It holds or borrows that data and adds no copy,
   cache, or translation, as `CpModel` holds only its `CpModelProto` and
-  `Solution` borrows one `repeated int64` row, and `CpSolverResponseRef` borrows
-  the live C++ response. A type that regroups OR-Tools entry points needs a
-  reason under Decisions.
+  `Solution` borrows one `repeated int64` row. A type that regroups OR-Tools
+  entry points needs a reason under Decisions.
 - **Layers.** Each OR-Tools entry point maps to one bridge function and one Rust
   method, and its name adapts per layer, as `SolveWrapper::AddLogCallback`
   becomes `cpsat_session_add_log_callback` and `CpSolver::add_log_callback`.
-- **Boundary.** Data crosses the C ABI by borrowed pointer while its C++ owner
-  lives. It crosses as serialized bytes only where one side needs its own
-  message: a model, parameters, or a response in, and a response, defaults, or
-  text out.
+- **Boundary.** A message crosses the C ABI as serialized bytes. Borrow part of
+  a live C++ message by pointer only when a benchmark shows the copy matters,
+  and name that cost under Decisions.
 - **Literals.** The schema refers to a row of `CpModelProto::variables` by its
   `i32` index. A field named `literal` reads that index as a Boolean on a 0-1
   variable, and the negative value `-i - 1` is the negation of row `i`, so a
@@ -195,8 +191,8 @@ Every change follows these rules.
 - **Docs and tests.** `docs/conventions.md` sets the rules for doc comments,
   examples, and tests.
 - **Visibility.** `pub` or private, except `pub(crate)` on handle indices,
-  expression terms and evaluation, the callback wrappers' `new`, and
-  `CpSolverResponseRef::new`, which sibling modules share.
+  expression terms and evaluation, and the callback wrappers' `new`, which
+  sibling modules share.
 
 ## Decisions
 
@@ -236,13 +232,14 @@ rules above instead of taking it as given.
 - **Model transfer.** Each solve, `validate`, and `stats` call encodes its
   message once in Rust and parses it once in C++. Skipping the copy needs a C++
   model that lives across calls.
-- **Solution payload.** `CpSolverResponseRef` borrows the C++ response, so a
-  solution costs a pointer read, not a serialized copy. The cost is that it is
-  valid only during the callback, and a field without a method needs
-  `to_owned_message`, which serializes and decodes the whole response.
-- **Formats.** Buffa's `text`, `json`, and `views` features, each optional,
-  because the solver needs none of them. `text` and `views` are on by default,
-  which costs compile time for callers who use neither.
+- **Solution payload.** The bridge serializes each solution, and the callback
+  reads a zero-copy `CpSolverResponseView`, which `to_owned_message` keeps. This
+  costs about 55 us per solution with 20,000 variables, about 0.5% of the
+  solver's own time, as `examples/bench_events.rs` measures. Borrowing the C++
+  response would skip it, but needs a hand-written mirror of the response
+  fields.
+- **Formats.** Buffa's `text` and `json` features. `views` is required, because
+  Buffa gates views with the formats and solution callbacks read views.
 - **Defaults.** `default_parameters` fills `SatParameters` through C++
   reflection, because Buffa generates no proto2 default getters. Each call costs
   one reflection walk, one encode, and one decode.
@@ -278,7 +275,7 @@ model.add(constraint) ---- move into model ----> ConstraintIndex(i32)
   `add_map_domain` and `weighted_sum`, stay compositions, and `docs/parity.md`
   gives each encoding.
 - **Responses.** `solution` returns a `Solution` when the status has one, on
-  both the owned response and `CpSolverResponseRef`, and `Solution::value` takes
-  any `Evaluate` input and returns an `i64`, `bool`, or `f64` to match it. A
+  both the owned response and the view, and `Solution::value` takes any
+  `Evaluate` input and returns an `i64`, `bool`, or `f64` to match it. A
   `Solution` borrows one `repeated int64` row, so `additional_solutions` reads
   the same way.

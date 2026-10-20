@@ -7,6 +7,7 @@ use std::sync::{Mutex, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
+use buffa::MessageView;
 use cpsat::prelude::*;
 use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
 
@@ -45,7 +46,7 @@ fn callbacks_of_one_kind_run_in_order() {
 }
 
 #[test]
-fn solution_ref_reads_values_and_converts_to_owned() {
+fn solution_view_reads_values_and_converts_to_owned() {
     let model = CpModel::from(tiny_model());
     let x = model.int_var_from_index(0).unwrap();
     let mut owned = None;
@@ -257,10 +258,10 @@ fn solver_solves_again() {
     assert!(solutions >= 20);
 }
 
-/// Every accessor on the borrowed solution agrees with the owned response, as
+/// Every accessor on the solution view agrees with the owned response, as
 /// Python's callback and `CpSolver` accessors agree.
 #[test]
-fn solution_ref_accessors_match_the_owned_response() {
+fn solution_view_accessors_match_the_owned_response() {
     let mut model = CpModel::new();
     let x = model.new_var(0..=3);
     let b = model.new_var(Bool);
@@ -294,7 +295,7 @@ fn solution_ref_accessors_match_the_owned_response() {
 }
 
 #[test]
-fn solution_ref_carries_search_statistics() {
+fn solution_view_carries_search_statistics() {
     let model = CpModel::from(tiny_model());
     let x = model.int_var_from_index(0).unwrap();
     let mut checked = false;
@@ -303,16 +304,16 @@ fn solution_ref_carries_search_statistics() {
             // The objective is x, maximized.
             let value = response.solution().unwrap().value(x);
             let objective = f64::from(i32::try_from(value).unwrap());
-            assert!((response.objective_value() - objective).abs() < 1e-9);
+            assert!((response.objective_value - objective).abs() < 1e-9);
             assert!(
-                response.num_booleans() >= 0
-                    && response.num_conflicts() >= 0
-                    && response.num_branches() >= 0
+                response.num_booleans >= 0
+                    && response.num_conflicts >= 0
+                    && response.num_branches >= 0
             );
             for time in [
-                response.wall_time(),
-                response.user_time(),
-                response.deterministic_time(),
+                response.wall_time,
+                response.user_time,
+                response.deterministic_time,
             ] {
                 assert!(time.is_finite() && time >= 0.0, "{time}");
             }

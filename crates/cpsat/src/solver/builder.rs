@@ -5,10 +5,10 @@ use std::sync::LazyLock;
 use buffa::Message;
 
 use crate::error::Result;
+use crate::proto::view::CpSolverResponseView;
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
 use crate::solver::callback::{BestBoundCallback, Callbacks, LogCallback, SolutionCallback};
 use crate::solver::ffi::Session;
-use crate::solver::response::CpSolverResponseRef;
 use crate::solver::stop::StopHandle;
 
 impl CpModelProto {
@@ -42,7 +42,7 @@ impl CpModelProto {
 /// let parameters = SatParameters::default().with_num_workers(8);
 /// let response = CpSolver::new(&parameters)
 ///     .add_solution_callback(|response| {
-///         println!("objective {}", response.objective_value());
+///         println!("objective {}", response.objective_value);
 ///         ControlFlow::Continue(())
 ///     })
 ///     .solve(model.proto())?;
@@ -83,7 +83,8 @@ impl<'a, C> CpSolver<'a, C> {
         self.parameters
     }
 
-    /// Adds a callback for each improving solution.
+    /// Adds a callback for each improving solution, which reads it as a
+    /// zero-copy view. Call [`buffa::MessageView::to_owned_message`] to keep it.
     ///
     /// Every callback runs on a solver thread, one call at a time, and
     /// callbacks of one kind run in the order they were added. Returning
@@ -93,7 +94,7 @@ impl<'a, C> CpSolver<'a, C> {
     #[must_use]
     pub fn add_solution_callback<F>(self, callback: F) -> CpSolver<'a, (C, SolutionCallback<F>)>
     where
-        F: FnMut(CpSolverResponseRef<'_>) -> ControlFlow<()> + Send,
+        F: FnMut(&CpSolverResponseView<'_>) -> ControlFlow<()> + Send,
     {
         self.add(SolutionCallback::new(callback))
     }
