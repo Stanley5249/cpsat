@@ -726,7 +726,8 @@ fn cumulative_variable_profile() {
             .sum::<LinearExpr>(),
     );
 
-    let response = solve_optimal(&model);
+    let response = model.solve(&SatParameters::default()).unwrap();
+    assert!(response.status().has_solution(), "{}", response.status());
 
     // The sample's `check_solution`.
     let mut load_profile = vec![0; usize::try_from(horizon).unwrap()];
