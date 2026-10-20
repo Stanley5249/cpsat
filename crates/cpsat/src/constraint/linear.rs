@@ -25,12 +25,12 @@ fn linear(expr: LinearExpr, domain: &Domain) -> Constraint {
         domain
             .intervals()
             .iter()
-            .map(|&(lower, upper)| (shift(lower), shift(upper))),
+            .map(|&[lower, upper]| [shift(lower), shift(upper)]),
     );
     Constraint::of(LinearConstraintProto {
         vars,
         coeffs,
-        domain: domain.flattened_intervals(),
+        domain: domain.into_flattened_intervals(),
         ..Default::default()
     })
 }

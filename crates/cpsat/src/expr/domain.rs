@@ -21,20 +21,20 @@ use std::ops::{Range, RangeFrom, RangeInclusive, RangeToInclusive};
 /// ```
 #[doc(alias("greater_or_equal", "lower_or_equal", "GreaterOrEqual", "LowerOrEqual"))]
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-pub struct Domain(Vec<(i64, i64)>);
+pub struct Domain(Vec<[i64; 2]>);
 
 impl Domain {
     /// The interval `[lower, upper]`, or the empty domain if `lower > upper`.
     #[must_use]
     pub fn new(lower: i64, upper: i64) -> Self {
-        Self::from_intervals([(lower, upper)])
+        Self::from_intervals([[lower, upper]])
     }
 
     /// Every `i64`.
-    #[doc(alias("all_values", "AllValues"))]
+    #[doc(alias("AllValues"))]
     #[must_use]
-    pub fn all() -> Self {
-        Self(vec![(i64::MIN, i64::MAX)])
+    pub fn all_values() -> Self {
+        Self(vec![[i64::MIN, i64::MAX]])
     }
 
     /// The domain that holds exactly `values`, in any order and with
@@ -42,25 +42,27 @@ impl Domain {
     #[doc(alias("FromValues"))]
     #[must_use]
     pub fn from_values(values: impl IntoIterator<Item = i64>) -> Self {
-        Self::from_intervals(values.into_iter().map(|value| (value, value)))
+        Self::from_intervals(values.into_iter().map(|value| [value, value]))
     }
 
-    /// Normalizes any intervals: empty ones are dropped, and overlapping or
-    /// adjacent ones merge.
+    /// Normalizes any `[min, max]` intervals, given as tuples like Python's or
+    /// as arrays like [`intervals`](Self::intervals) returns: empty ones are
+    /// dropped, and overlapping or adjacent ones merge.
     #[doc(alias("FromIntervals", "FromVectorIntervals"))]
     #[must_use]
-    pub fn from_intervals(intervals: impl IntoIterator<Item = (i64, i64)>) -> Self {
-        let mut intervals: Vec<_> = intervals
+    pub fn from_intervals(intervals: impl IntoIterator<Item = impl Into<[i64; 2]>>) -> Self {
+        let mut intervals: Vec<[i64; 2]> = intervals
             .into_iter()
-            .filter(|&(lower, upper)| lower <= upper)
+            .map(Into::into)
+            .filter(|&[lower, upper]| lower <= upper)
             .collect();
         intervals.sort_unstable();
         // Merges in place: `dedup_by` hands each interval with the last kept
         // one, which absorbs it when they overlap or touch.
-        intervals.dedup_by(|&mut (lower, upper), last| {
-            let touches = last.1.checked_add(1).is_none_or(|next| lower <= next);
+        intervals.dedup_by(|&mut [lower, upper], last| {
+            let touches = last[1].checked_add(1).is_none_or(|next| lower <= next);
             if touches {
-                last.1 = last.1.max(upper);
+                last[1] = last[1].max(upper);
             }
             touches
         });
@@ -75,14 +77,12 @@ impl Domain {
         if !rest.is_empty() {
             return None;
         }
-        Some(Self::from_intervals(
-            pairs.iter().map(|&[lower, upper]| (lower, upper)),
-        ))
+        Some(Self::from_intervals(pairs.iter().copied()))
     }
 
     /// The sorted, disjoint, non-adjacent `[min, max]` intervals.
     #[must_use]
-    pub fn intervals(&self) -> &[(i64, i64)] {
+    pub fn intervals(&self) -> &[[i64; 2]] {
         &self.0
     }
 
@@ -96,20 +96,20 @@ impl Domain {
     /// The smallest value, or `None` if the domain is empty.
     #[must_use]
     pub fn min(&self) -> Option<i64> {
-        self.0.first().map(|&(lower, _)| lower)
+        self.0.first().map(|&[lower, _]| lower)
     }
 
     /// The largest value, or `None` if the domain is empty.
     #[must_use]
     pub fn max(&self) -> Option<i64> {
-        self.0.last().map(|&(_, upper)| upper)
+        self.0.last().map(|&[_, upper]| upper)
     }
 
-    /// The number of values. It saturates at `u64::MAX` for [`Domain::all`],
+    /// The number of values. It saturates at `u64::MAX` for [`Domain::all_values`],
     /// where Python's saturates at `i64::MAX` for any larger domain.
     #[must_use]
     pub fn size(&self) -> u64 {
-        self.0.iter().fold(0, |size: u64, &(lower, upper)| {
+        self.0.iter().fold(0, |size: u64, &[lower, upper]| {
             size.saturating_add(upper.abs_diff(lower).saturating_add(1))
         })
     }
@@ -119,7 +119,7 @@ impl Domain {
     pub fn contains(&self, value: i64) -> bool {
         self.0
             .iter()
-            .any(|&(lower, upper)| (lower..=upper).contains(&value))
+            .any(|&[lower, upper]| (lower..=upper).contains(&value))
     }
 
     /// Every `i64` outside this domain.
@@ -127,16 +127,16 @@ impl Domain {
     pub fn complement(&self) -> Self {
         let mut gaps = Vec::with_capacity(self.0.len() + 1);
         let mut next = Some(i64::MIN);
-        for &(lower, upper) in &self.0 {
+        for &[lower, upper] in &self.0 {
             if let Some(start) = next
                 && start < lower
             {
-                gaps.push((start, lower - 1));
+                gaps.push([start, lower - 1]);
             }
             next = upper.checked_add(1);
         }
         if let Some(start) = next {
-            gaps.push((start, i64::MAX));
+            gaps.push([start, i64::MAX]);
         }
         Self(gaps)
     }
@@ -148,14 +148,14 @@ impl Domain {
     #[must_use]
     pub fn is_included_in(&self, other: &Self) -> bool {
         let mut rest = other.0.as_slice();
-        self.0.iter().all(|&(lower, upper)| {
+        self.0.iter().all(|&[lower, upper]| {
             while rest
                 .first()
-                .is_some_and(|&(_, other_upper)| other_upper < lower)
+                .is_some_and(|&[_, other_upper]| other_upper < lower)
             {
                 rest = &rest[1..];
             }
-            rest.first().is_some_and(|&(other_lower, other_upper)| {
+            rest.first().is_some_and(|&[other_lower, other_upper]| {
                 other_lower <= lower && upper <= other_upper
             })
         })
@@ -211,7 +211,7 @@ impl Domain {
         Self::from_exact(
             self.0
                 .iter()
-                .map(|&(lower, upper)| (-i128::from(upper), -i128::from(lower))),
+                .map(|&[lower, upper]| (-i128::from(upper), -i128::from(lower))),
         )
     }
 
@@ -220,8 +220,8 @@ impl Domain {
     #[doc(alias("AdditionWith"))]
     #[must_use]
     pub fn addition_with(&self, other: &Self) -> Self {
-        Self::from_exact(self.0.iter().flat_map(|&(lower, upper)| {
-            other.0.iter().map(move |&(other_lower, other_upper)| {
+        Self::from_exact(self.0.iter().flat_map(|&[lower, upper]| {
+            other.0.iter().map(move |&[other_lower, other_upper]| {
                 (
                     i128::from(lower) + i128::from(other_lower),
                     i128::from(upper) + i128::from(other_upper),
@@ -241,7 +241,7 @@ impl Domain {
             intervals
                 .into_iter()
                 .filter(|&(lower, upper)| lower <= max && upper >= min)
-                .map(|(lower, upper)| (cut(lower), cut(upper))),
+                .map(|(lower, upper)| [cut(lower), cut(upper)]),
         )
     }
 
@@ -249,10 +249,13 @@ impl Domain {
     #[doc(alias("FlattenedIntervals"))]
     #[must_use]
     pub fn flattened_intervals(&self) -> Vec<i64> {
-        self.0
-            .iter()
-            .flat_map(|&(lower, upper)| [lower, upper])
-            .collect()
+        self.0.as_flattened().to_vec()
+    }
+
+    /// The schema's flat form, reusing the domain's buffer without a copy.
+    #[must_use]
+    pub fn into_flattened_intervals(self) -> Vec<i64> {
+        self.0.into_flattened()
     }
 }
 
@@ -301,12 +304,12 @@ impl From<RangeToInclusive<i64>> for Domain {
 
 /// Appends `interval`, which starts no earlier than the last one, merging it
 /// into the last one when they overlap or touch.
-fn push_merged(merged: &mut Vec<(i64, i64)>, (lower, upper): (i64, i64)) {
+fn push_merged(merged: &mut Vec<[i64; 2]>, [lower, upper]: [i64; 2]) {
     match merged.last_mut() {
-        Some(last) if last.1.checked_add(1).is_none_or(|next| lower <= next) => {
-            last.1 = last.1.max(upper);
+        Some(last) if last[1].checked_add(1).is_none_or(|next| lower <= next) => {
+            last[1] = last[1].max(upper);
         }
-        _ => merged.push((lower, upper)),
+        _ => merged.push([lower, upper]),
     }
 }
 
@@ -314,16 +317,16 @@ fn push_merged(merged: &mut Vec<(i64, i64)>, (lower, upper): (i64, i64)) {
 /// Each step drops the interval that ends first, because it meets nothing
 /// further on the other side.
 struct Overlaps<'a> {
-    left: &'a [(i64, i64)],
-    right: &'a [(i64, i64)],
+    left: &'a [[i64; 2]],
+    right: &'a [[i64; 2]],
 }
 
 impl Iterator for Overlaps<'_> {
-    type Item = (i64, i64);
+    type Item = [i64; 2];
 
-    fn next(&mut self) -> Option<(i64, i64)> {
+    fn next(&mut self) -> Option<[i64; 2]> {
         loop {
-            let (&(a_lower, a_upper), &(b_lower, b_upper)) =
+            let (&[a_lower, a_upper], &[b_lower, b_upper]) =
                 (self.left.first()?, self.right.first()?);
             if a_upper < b_upper {
                 self.left = &self.left[1..];
@@ -332,7 +335,7 @@ impl Iterator for Overlaps<'_> {
             }
             let (lower, upper) = (a_lower.max(b_lower), a_upper.min(b_upper));
             if lower <= upper {
-                return Some((lower, upper));
+                return Some([lower, upper]);
             }
         }
     }

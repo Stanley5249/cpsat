@@ -229,7 +229,7 @@ impl CpModel {
     ///
     /// Panics if the model lacks `var`, like indexing with it.
     pub fn set_domain(&mut self, var: IntVar, domain: impl Into<Domain>) {
-        self.0.variables[slot(var.0)].domain = domain.into().flattened_intervals();
+        self.0.variables[slot(var.0)].domain = domain.into().into_flattened_intervals();
     }
 
     /// A variable fixed to `value`: an [`IntVar`] for an `i64`, and a

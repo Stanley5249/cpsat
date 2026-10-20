@@ -74,7 +74,8 @@ macro_rules! domain_var {
             type Output = IntVar;
 
             fn insert(self, model: &mut CpModel) -> IntVar {
-                IntVar(model.push_variable(Domain::from(self).flattened_intervals(), String::new()))
+                let domain = Domain::from(self).into_flattened_intervals();
+                IntVar(model.push_variable(domain, String::new()))
             }
         }
 
@@ -82,7 +83,8 @@ macro_rules! domain_var {
             type Output = IntVar;
 
             fn insert(self, model: &mut CpModel) -> IntVar {
-                IntVar(model.push_variable(Domain::from(self.var).flattened_intervals(), self.name))
+                let domain = Domain::from(self.var).into_flattened_intervals();
+                IntVar(model.push_variable(domain, self.name))
             }
         }
     )*};

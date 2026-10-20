@@ -6,20 +6,28 @@ use cpsat::proto::{CpSolverStatus, SatParameters};
 #[test]
 fn normalizes_intervals() {
     let domain = Domain::from_intervals([(5, 7), (1, 2), (3, 3), (9, 8), (10, 12)]);
-    assert_eq!(domain.intervals(), [(1, 3), (5, 7), (10, 12)]);
+    assert_eq!(domain.intervals(), [[1, 3], [5, 7], [10, 12]]);
+    assert_eq!(
+        Domain::from_intervals(domain.intervals().iter().copied()),
+        domain
+    );
+    assert_eq!(
+        domain.clone().into_flattened_intervals(),
+        domain.flattened_intervals()
+    );
     assert!(Domain::new(3, 1).is_empty());
     assert_eq!(
         Domain::from_values([4, 2, 3, 9]).intervals(),
-        [(2, 4), (9, 9)]
+        [[2, 4], [9, 9]]
     );
 }
 
 #[test]
 fn complements_at_the_i64_limits() {
-    assert_eq!(Domain::all().complement(), Domain::default());
-    assert_eq!(Domain::default().complement(), Domain::all());
+    assert_eq!(Domain::all_values().complement(), Domain::default());
+    assert_eq!(Domain::default().complement(), Domain::all_values());
     let edges = Domain::from_values([i64::MIN, i64::MAX]).complement();
-    assert_eq!(edges.intervals(), [(i64::MIN + 1, i64::MAX - 1)]);
+    assert_eq!(edges.intervals(), [[i64::MIN + 1, i64::MAX - 1]]);
     let domain = Domain::from_intervals([(0, 3), (8, 9)]);
     assert_eq!(domain.complement().complement(), domain);
 }
@@ -28,8 +36,8 @@ fn complements_at_the_i64_limits() {
 fn unions_and_intersects() {
     let a = Domain::from_intervals([(0, 5), (10, 15)]);
     let b = Domain::from_intervals([(4, 11)]);
-    assert_eq!(a.union_with(&b).intervals(), [(0, 15)]);
-    assert_eq!(a.intersection_with(&b).intervals(), [(4, 5), (10, 11)]);
+    assert_eq!(a.union_with(&b).intervals(), [[0, 15]]);
+    assert_eq!(a.intersection_with(&b).intervals(), [[4, 5], [10, 11]]);
     assert!(a.contains(12) && !a.contains(7));
 }
 
@@ -62,7 +70,7 @@ fn reports_bounds_and_size() {
     let empty = Domain::default();
     assert_eq!((empty.min(), empty.max(), empty.size()), (None, None, 0));
     assert_eq!(Domain::new(0, 5).size(), 6);
-    assert_eq!(Domain::all().size(), u64::MAX);
+    assert_eq!(Domain::all_values().size(), u64::MAX);
     assert_eq!(Domain::new(i64::MIN, -1).size(), 1 << 63);
     let edges = Domain::from_values([i64::MIN, i64::MAX]);
     assert_eq!((edges.min(), edges.max()), (Some(i64::MIN), Some(i64::MAX)));
@@ -89,7 +97,7 @@ fn negates_and_adds_like_python() {
     // The results of Python's OR-Tools 9.15 `Domain` for the same sets.
     let holes = Domain::from_intervals([(1, 3), (7, 9)]);
     assert_eq!(flat(holes.negation()), [-9, -7, -3, -1]);
-    assert_eq!(flat(Domain::all().negation()), [MIN + 1, MAX]);
+    assert_eq!(flat(Domain::all_values().negation()), [MIN + 1, MAX]);
     assert_eq!(flat(Domain::new(MIN, MIN).negation()), [] as [i64; 0]);
     assert_eq!(flat(Domain::new(MIN, 0).negation()), [0, MAX]);
 
@@ -149,7 +157,7 @@ fn set_operations_handle_touching_and_limit_intervals() {
     let high = Domain::from_intervals([(3, 4), (10, i64::MAX)]);
     assert_eq!(
         low.union_with(&high).intervals(),
-        [(i64::MIN, -5), (0, 4), (10, i64::MAX)]
+        [[i64::MIN, -5], [0, 4], [10, i64::MAX]]
     );
     assert!(low.intersection_with(&high).is_empty());
     assert!(!low.overlaps_with(&high));
@@ -158,11 +166,11 @@ fn set_operations_handle_touching_and_limit_intervals() {
     let parts = Domain::from_intervals([(-3, -1), (6, 7), (19, 25)]);
     assert_eq!(
         wide.intersection_with(&parts).intervals(),
-        [(-3, -1), (6, 7), (19, 20)]
+        [[-3, -1], [6, 7], [19, 20]]
     );
     assert!(!parts.is_included_in(&wide));
     assert!(Domain::from_intervals([(-3, -1), (6, 7)]).is_included_in(&wide));
     assert!(!Domain::new(0, 5).is_included_in(&wide), "spans a gap");
-    assert_eq!(Domain::all().intersection_with(&wide), wide);
-    assert_eq!(wide.union_with(&wide.complement()), Domain::all());
+    assert_eq!(Domain::all_values().intersection_with(&wide), wide);
+    assert_eq!(wide.union_with(&wide.complement()), Domain::all_values());
 }

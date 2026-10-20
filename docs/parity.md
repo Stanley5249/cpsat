@@ -415,8 +415,8 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - OR-Tools: reflection over `SatParameters`
   - Test: `diagnostics.rs::reads_parameter_defaults_from_or_tools`
 - `Domain(lb, ub)`, `all_values`, `greater_or_equal`, `lower_or_equal`
-  - Rust: `Domain::new`, `all`, `From<RangeFrom>`, `From<RangeToInclusive>`;
-    `Domain::default()` is empty
+  - Rust: `Domain::new`, `all_values`, `From<RangeFrom>`,
+    `From<RangeToInclusive>`; `Domain::default()` is empty
   - OR-Tools: none
   - Test: `domain.rs::complements_at_the_i64_limits`, `normalizes_intervals`,
     `builds_half_lines_from_ranges`
