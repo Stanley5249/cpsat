@@ -113,7 +113,8 @@ Every change follows these rules.
 - **Vocabulary.** Each concept has one spelling in identifiers. A type name sets
   the spelling for every name derived from it: `IntVar` gives `var` and
   `LinearExpr` gives `expr`, as in `new_var`, `var_mut`, `to_bool_var`, and
-  `exprs`. Prose, doc comments, and panic messages spell the full word.
+  `exprs`. Prose, doc comments, panic messages, and test names, which read as
+  sentences, spell the full word.
 - **Abbreviations.** Identifiers use only these short forms: `var` and `expr`
   from the type names, `proto` for a Protobuf message, `stats` from OR-Tools,
   and the `std` forms `min`, `max`, `len`, `rhs`, `eq`, `ne`, `lt`, `le`, `gt`,
