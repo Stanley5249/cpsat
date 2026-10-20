@@ -80,8 +80,10 @@ impl CpModel {
         reason = "the schema stores the offset as a double, like Python"
     )]
     fn set_objective(&mut self, expr: LinearExpr, scaling: i8) {
-        self.clear_objective();
+        // Lower first, because the lowering can panic and must keep the old
+        // objective.
         let (vars, coeffs, offset) = expr.into_terms();
+        self.clear_objective();
         self.0.objective = MessageField::some(CpObjectiveProto {
             vars,
             coeffs,
@@ -92,8 +94,10 @@ impl CpModel {
     }
 
     fn set_float_objective(&mut self, expr: FloatExpr, maximize: bool) {
-        self.clear_objective();
+        // Lower first, because the lowering can panic and must keep the old
+        // objective.
         let (vars, coeffs, offset) = expr.into_terms();
+        self.clear_objective();
         self.0.floating_point_objective = MessageField::some(FloatObjectiveProto {
             vars,
             coeffs,

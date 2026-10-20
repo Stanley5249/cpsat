@@ -97,6 +97,22 @@ fn replaces_and_clears_the_objective() {
 }
 
 #[test]
+fn a_panicking_objective_keeps_the_previous_one() {
+    let mut model = CpModel::new();
+    let x = model.new_var(0..=5);
+    model.minimize(2 * x + 1);
+    let overflowing = x * i64::MAX + x;
+    let failed = std::panic::catch_unwind(AssertUnwindSafe(|| model.minimize(overflowing)));
+    assert!(failed.is_err());
+    assert!(model.has_objective());
+    let objective = model.proto().objective.as_option().unwrap();
+    assert_eq!(
+        (objective.coeffs.as_slice(), objective.offset),
+        (&[2][..], 1.0)
+    );
+}
+
+#[test]
 fn constants_and_true_literals_solve_to_their_values() {
     let mut model = CpModel::new();
     let seven = model.new_var(7..=7);
