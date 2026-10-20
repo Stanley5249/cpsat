@@ -98,7 +98,7 @@ jobs:
       - name: The fixture pin matches the pinned OR-Tools tag
         run: |
           tag=$(sed -n 's|.*/archive/refs/tags/v\([0-9.]*\)\.tar\.gz.*|\1|p' crates/cpsat-sys/build/artifacts.rs)
-          grep -q "ortools==$tag\." justfile
+          grep -q -- "--with ortools==$tag\." justfile
       - run: just check-fixtures
 
   test:

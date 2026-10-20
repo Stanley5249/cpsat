@@ -1,6 +1,7 @@
 //! Rust versions of the official OR-Tools v9.15 CP-SAT samples in
 //! `ortools/sat/samples`. Each test asserts what the Python sample prints,
-//! checked by running the samples with `ortools==9.15.6755`.
+//! checked by running the samples with the `ortools` that `just gen-fixtures`
+//! pins.
 
 use std::ops::ControlFlow;
 

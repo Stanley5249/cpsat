@@ -19,9 +19,9 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies
 only the behavior that test asserts; an available equivalent with no direct test
 is marked as such. `equivalence.rs` compares committed Python-generated model
 fixtures, while solve tests check results. Neither implies exhaustive argument
-or error-path parity. The fixture generator pins `ortools==9.15.6755` through
-`just gen-fixtures`, and `samples.rs` ports selected official samples. Rust
-naming follows the Methods and Names rules in `docs/design.md`.
+or error-path parity. `just gen-fixtures` pins the Python `ortools` package, and
+`samples.rs` ports selected official samples. Rust naming follows the Methods
+and Names rules in `docs/design.md`.
 
 ## Solver
 

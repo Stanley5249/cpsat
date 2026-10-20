@@ -17,9 +17,9 @@ cpsat = { git = "https://github.com/Stanley5249/cpsat" }
 ```
 
 Supported targets are `x86_64-pc-windows-msvc` and `x86_64-unknown-linux-gnu` on
-glibc 2.28 or newer, which CI tests on AlmaLinux 8 and Ubuntu 26.04. Building
-needs Rust at the `rust-version` in `Cargo.toml` or newer, a C++ compiler (MSVC
-2022 or GCC 11 or newer), `curl`, and `tar`, plus CMake for the
+glibc 2.28 or newer, which CI tests on Windows, AlmaLinux 8, and Ubuntu 26.04.
+Building needs Rust at the `rust-version` in `Cargo.toml` or newer, a C++
+compiler (MSVC 2022 or GCC 11 or newer), `curl`, and `tar`, plus CMake for the
 `build-libortools` feature.
 
 ## Usage

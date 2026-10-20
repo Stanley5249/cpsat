@@ -1,7 +1,7 @@
 # Maintenance
 
-Checklists for the recurring upgrades. CI checks the steps marked "CI", so a
-missed one fails the build.
+Checklists for the recurring upgrades. A step that names a CI check fails the
+build when it is missed.
 
 ## Bump OR-Tools
 
@@ -10,8 +10,9 @@ missed one fails the build.
 2. Copy `cp_model.proto` and `sat_parameters.proto` from the new tag into
    `crates/cpsat/proto/ortools/sat`, then run `just gen-proto`. CI compares the
    files with the tag.
-3. Set the `ortools==` pin in the `gen-fixtures` recipe to the same version,
-   then run `just gen-fixtures`. CI compares the pin with the tag.
+3. Set the `ortools==` pin in the `gen-fixtures` recipe to the full version in
+   the archive names, such as `9.15.6755`, then run `just gen-fixtures`. CI
+   compares the pin with the tag.
 4. Compare `OPTIONS` in `crates/cpsat-sys/build/source.rs` with the new root
    `CMakeLists.txt` defaults.
 5. Recheck the facts section of `docs/design.md` and the reference links in

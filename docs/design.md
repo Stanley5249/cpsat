@@ -18,7 +18,7 @@ and the C convention `prefix_object_verb`.
 
 - **OR-Tools**: the upstream C++ library and its files.
 - **bridge**: our C++ code and its C ABI in `crates/cpsat-sys/bridge/`, with
-  functions named `cpsat_<object>_<operation>`, such as `cpsat_model_stats`.
+  functions named `cpsat_<object>_<verb>`, such as `cpsat_model_stats`.
 - **Buffa**: the Rust Protobuf library that generates the `proto` types the API
   exposes.
 - **view**: a borrowed, zero-copy reading of an encoded message, such as
