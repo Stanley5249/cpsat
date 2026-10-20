@@ -95,7 +95,8 @@ impl From<f64> for FloatExpr {
 impl From<LinearExpr> for FloatExpr {
     /// Converts each coefficient and the offset to `f64`, which rounds a
     /// magnitude above `2^53`. The terms merge later in `f64`, when the
-    /// expression enters the objective.
+    /// expression enters the objective, so rounded terms can cancel to zero
+    /// and drop out, as in Python.
     #[expect(
         clippy::cast_precision_loss,
         reason = "the schema stores float objectives as doubles, like Python"
