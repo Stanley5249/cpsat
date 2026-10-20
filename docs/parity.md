@@ -38,21 +38,23 @@ and Names rules in `docs/design.md`.
   - OR-Tools: none
   - Test: `solve.rs::honors_time_limit`
 - `CpSolverSolutionCallback.on_solution_callback`
-  - Rust: `Event::Solution`
-  - OR-Tools: `SolutionCallback`
+  - Rust: `CpSolver::add_solution_callback`, which passes a
+    `CpSolverResponseRef`; callbacks run in the order added
+  - OR-Tools: `AddSolutionCallback`
   - Test: `samples.rs::solve_and_print_intermediate_solutions`
 - `CpSolverSolutionCallback.value`, `boolean_value`, `float_value`
-  - Rust: `CpSolverResponseView::solution`, then `Solution::value`, which reads
-    a literal as `bool` and a `FloatExpr` as `f64`
+  - Rust: `CpSolverResponseRef::solution`, then `Solution::value`, which reads a
+    literal as `bool` and a `FloatExpr` as `f64`; `Solution::values` gives the
+    raw `&[i64]`
   - OR-Tools: none
-  - Test: `events.rs::solution_view_reads_values_and_converts_to_owned`,
-    `solution_view_accessors_match_the_owned_response`
+  - Test: `events.rs::solution_ref_reads_values_and_converts_to_owned`,
+    `solution_ref_accessors_match_the_owned_response`
 - `CpSolver.best_bound_callback`
-  - Rust: `Event::BestBound`
+  - Rust: `CpSolver::add_best_bound_callback`
   - OR-Tools: `AddBestBoundCallback`
   - Test: `events.rs::reports_best_bounds`
 - `CpSolver.log_callback`
-  - Rust: `Event::Log`
+  - Rust: `CpSolver::add_log_callback`
   - OR-Tools: `AddLogCallback`
   - Test: `events.rs::forwards_logs_and_parameters`
 - `CpSolverSolutionCallback.stop_search`
@@ -68,7 +70,7 @@ and Names rules in `docs/design.md`.
   - OR-Tools: none
   - Test: `events.rs::callback_panic_stops_and_resumes_after_solve`
 - `enumerate_all_solutions`
-  - Rust: `SatParameters` field with `EventSet::SOLUTION`
+  - Rust: `SatParameters` field with `CpSolver::add_solution_callback`
   - OR-Tools: none
   - Test: `samples.rs::search_for_all_solutions`
 - `fill_additional_solutions_in_response`
@@ -127,22 +129,23 @@ and Names rules in `docs/design.md`.
   - OR-Tools: none
   - Test: `solve.rs::evaluates_collections_in_order`
 - `CpSolverSolutionCallback.has_response`, `response_proto`
-  - Rust: `Event::Solution` always carries a response view;
-    `MessageView::to_owned_message` retains it after the callback
+  - Rust: `CpSolverResponseRef` is always present in a solution callback;
+    `CpSolverResponseRef::to_owned_message` retains the response after the
+    callback
   - OR-Tools: none
-  - Test: `events.rs::solution_view_reads_values_and_converts_to_owned`
+  - Test: `events.rs::solution_ref_reads_values_and_converts_to_owned`
 - Callback `objective_value`, `best_objective_bound`, `num_booleans`,
   `num_conflicts`, `num_branches`, `num_integer_propagations`,
   `num_binary_propagations`, `deterministic_time`, `wall_time`, `user_time`
-  - Rust: Same-named solution-view fields
+  - Rust: Same-named `CpSolverResponseRef` methods
   - OR-Tools: none
   - Test: `samples.rs::solve_and_print_intermediate_solutions` reads objective
     value; the other fields have no direct parity assertions,
-    `events.rs::solution_view_carries_search_statistics`
+    `events.rs::solution_ref_carries_search_statistics`
 - `SearchForAllSolutions`
-  - Rust: Set `enumerate_all_solutions` and subscribe to solution events;
-    Python's deprecated wrapper also rejects objectives and restores the
-    previous parameter
+  - Rust: Set `enumerate_all_solutions` and add a solution callback; Python's
+    deprecated wrapper also rejects objectives and restores the previous
+    parameter
   - OR-Tools: none
   - Test: `samples.rs::search_for_all_solutions` covers enumeration, not wrapper
     validation or restoration
@@ -476,17 +479,18 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
 These items have no Python counterpart. Most replace Python's runtime dispatch
 or mutable solver state with types.
 
-- `CpSolver<'a, F>`: Borrows parameters, holds one event callback and a stop
-  handle, and returns each response
-- `Event`, `EventSet`, `NoEvents`: One tagged callback with a subscription set
-  replaces Python's three callback kinds
+- `CpSolver<'a, C>`: Borrows parameters, holds its callbacks in a nested tuple
+  and a stop handle, and returns each response
+- `SolutionCallback`, `BestBoundCallback`, `LogCallback`: One wrapper per
+  callback kind, so `CpSolver` stays generic over each closure
 - `StopHandle`: A shareable, sticky cancellation token
 - `Evaluate`, `Objective`, `Hint`: Sealed traits that pick the value type at
   compile time, such as `bool` for a literal
 - `Constraint` and `ConstraintIndex`: A constraint value before insertion, and
   the index `CpModel::add` returns
 - `Error`, `Result`: Typed failures where Python raises or returns a string
-- `CpSolverResponseView`: Buffa's zero-copy view of a solution inside an event
+- `CpSolverResponseRef`: A borrowed reading of the live C++ response inside a
+  solution callback
 - `Index` on `CpModel`: `model[x]`, `model[interval]`, and `model[constraint]`
   read the stored message
 - `CpModel::proto`, `proto_mut`, `into_proto`, `From`, `AsRef`: Move between
@@ -524,9 +528,10 @@ or mutable solver state with types.
   arithmetic can wrap. `Domain::size` and empty-bound behavior differ as noted
   in the Domain entries. Compare supported values and explicit edge cases
   instead of assuming all error paths match.
-- Rust registers solution callbacks with `CpSolver::on_event` before solving and
-  borrows the view only during the event. Python passes a reusable callback
-  object to `solve` and exposes response-presence checks on that object.
+- Rust registers callbacks with `CpSolver::add_solution_callback` and its
+  siblings before solving and borrows the response only during the callback.
+  Python passes a reusable callback object to `solve` and exposes
+  response-presence checks on that object.
 - An unset `SatParameters` field reads as `None` instead of its proto2 default.
   `docs/buffa-proto2-defaults.md` explains why and how to read the defaults.
 - An OR-Tools `CHECK` failure aborts the process, as in Python.

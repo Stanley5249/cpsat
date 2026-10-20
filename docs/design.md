@@ -21,11 +21,13 @@ and the C convention `prefix_object_verb`.
   functions named `cpsat_<object>_<verb>`, such as `cpsat_model_stats`.
 - **Buffa**: the Rust Protobuf library that generates the `proto` types the API
   exposes.
-- **view**: a borrowed, zero-copy reading of an encoded message, such as
-  `CpSolverResponseView`.
+- **view**: a borrowed, zero-copy reading of an encoded message, that Buffa
+  generates under the `views` feature.
+- **ref**: a borrowed reading of a live C++ message, such as
+  `CpSolverResponseRef`, which is valid only while its C++ owner lives.
 - **FFI**: the Rust side of the C ABI, in `cpsat-sys` and `cpsat`'s private
   `ffi` module.
-- **session**: the bridge object that serves one solve.
+- **session**: the bridge object that serves one solve and holds its callbacks.
 - **mode**: how the build acquires OR-Tools, the `download-libortools` or
   `build-libortools` feature, or `ORTOOLS_ROOT`.
 - **wrapper**: a hand-written type that owns a Protobuf message, such as
@@ -41,7 +43,7 @@ user code
 crates/cpsat          CpModel, Buffa types, CpSolver, StopHandle, diagnostics
    |  (safe Rust, owns the model)
 crates/cpsat-sys      build.rs, raw extern "C" declarations, links = "ortools"
-   |  (serialized bytes, fn pointer + context, opaque session)
+   |  (serialized bytes, one fn pointer + context per callback, opaque session)
 cpsat-sys/bridge      extern "C" over SolveWrapper and CpSatHelper
    |
 ortools.dll / libortools.so  (SolveCpModel)
@@ -91,8 +93,9 @@ Every change follows these rules.
 - **Wrappers.** A hand-written type is a cheap wrapper over data that OR-Tools
   or Buffa already lays out. It holds or borrows that data and adds no copy,
   cache, or translation, as `CpModel` holds only its `CpModelProto` and
-  `Solution` borrows one `repeated int64` row. A type that regroups OR-Tools
-  entry points needs a reason under Decisions.
+  `Solution` borrows one `repeated int64` row, and `CpSolverResponseRef` borrows
+  the live C++ response. A type that regroups OR-Tools entry points needs a
+  reason under Decisions.
 - **Layers.** Each OR-Tools entry point maps to one bridge function and one Rust
   method, and its name adapts per layer, as `SolveWrapper::AddLogCallback`
   becomes `cpsat_session_add_log_callback` and `CpSolver::add_log_callback`.
@@ -192,8 +195,8 @@ Every change follows these rules.
 - **Docs and tests.** `docs/conventions.md` sets the rules for doc comments,
   examples, and tests.
 - **Visibility.** `pub` or private, except `pub(crate)` on handle indices,
-  expression terms and evaluation, and `EventSet::bits`, which sibling modules
-  share.
+  expression terms and evaluation, the callback wrappers' `new`, and
+  `CpSolverResponseRef::new`, which sibling modules share.
 
 ## Decisions
 
@@ -222,20 +225,24 @@ rules above instead of taking it as given.
   resolves relative links against each crate's directory. The license links stay
   relative, because each crate holds its own copies. A published crate's docs
   may then describe unreleased behavior.
-- **Solver.** `CpModel::solve` for the plain case, and a `CpSolver` for events
-  and stops. `CpSolver` is generic over one
-  `FnMut(Event) -> ControlFlow<()> + Send` callback, because a boxed one keeps
-  the closure's borrows alive until the solver drops.
+- **Solver.** `CpModel::solve` for the plain case, and a `CpSolver` for
+  callbacks and stops. `CpSolver<'a, C>` keeps its callbacks in a nested tuple
+  of `SolutionCallback<F>`, `BestBoundCallback<F>`, and `LogCallback<F>`,
+  because a boxed closure keeps its borrows alive until the solver drops. The
+  cost is that the solver's type names every closure.
 - **Stop.** `StopHandle` stops every solve attached to it, and a stop is sticky,
   like a cancellation token, so a caller replaces a stopped handle instead of
   resetting it.
 - **Model transfer.** Each solve, `validate`, and `stats` call encodes its
   message once in Rust and parses it once in C++. Skipping the copy needs a C++
   model that lives across calls.
-- **Solution payload.** A zero-copy `CpSolverResponseView`, and
-  `to_owned_message` keeps it.
-- **Formats.** Buffa's `text` and `json` features. `views` is required, because
-  Buffa gates views with the formats.
+- **Solution payload.** `CpSolverResponseRef` borrows the C++ response, so a
+  solution costs a pointer read, not a serialized copy. The cost is that it is
+  valid only during the callback, and a field without a method needs
+  `to_owned_message`, which serializes and decodes the whole response.
+- **Formats.** Buffa's `text` and `json` features. `views` is optional, because
+  nothing in the solver needs Buffa views. The cost is that the feature stays in
+  the default set, because Buffa gates views with the formats.
 - **Defaults.** `default_parameters` fills `SatParameters` through C++
   reflection, because Buffa generates no proto2 default getters. Each call costs
   one reflection walk, one encode, and one decode.
@@ -271,7 +278,7 @@ model.add(constraint) ---- move into model ----> ConstraintIndex(i32)
   `add_map_domain` and `weighted_sum`, stay compositions, and `docs/parity.md`
   gives each encoding.
 - **Responses.** `solution` returns a `Solution` when the status has one, on
-  both the owned response and the view, and `Solution::value` takes any
-  `Evaluate` input and returns an `i64`, `bool`, or `f64` to match it. A
+  both the owned response and `CpSolverResponseRef`, and `Solution::value` takes
+  any `Evaluate` input and returns an `i64`, `bool`, or `f64` to match it. A
   `Solution` borrows one `repeated int64` row, so `additional_solutions` reads
   the same way.
