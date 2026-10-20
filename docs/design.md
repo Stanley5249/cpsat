@@ -97,8 +97,9 @@ Every change follows these rules.
   method, and its name adapts per layer, as `SolveWrapper::AddLogCallback`
   becomes `cpsat_session_add_log_callback` and `CpSolver::add_log_callback`.
 - **Boundary.** Data crosses the C ABI by borrowed pointer while its C++ owner
-  lives. It crosses as serialized bytes only when ownership crosses: the model
-  and parameters in, and the final response out.
+  lives. It crosses as serialized bytes only where one side needs its own
+  message: a model, parameters, or a response in, and a response, defaults, or
+  text out.
 - **Literals.** The schema refers to a row of `CpModelProto::variables` by its
   `i32` index. A field named `literal` reads that index as a Boolean on a 0-1
   variable, and the negative value `-i - 1` is the negation of row `i`, so a
@@ -200,35 +201,44 @@ Each decision names the cost it accepts, so a review can weigh it against the
 rules above instead of taking it as given.
 
 - **Crates.** `cpsat-sys` and `cpsat`, because `links` allows one native link
-  per graph.
+  per graph. The two crates release together.
 - **Codegen.** `just gen-proto` runs `buf generate` with the remote Buffa
   plugin, and the output is committed, so normal builds need no `protoc`.
+  `just check-proto` catches committed code that drifts from the protos.
 - **Bridge build.** The `cc` crate with definitions read from
-  `ortoolsTargets.cmake`, so the download mode needs no CMake.
+  `ortoolsTargets.cmake`, so the download mode needs no CMake. A new OR-Tools
+  version can change that file's format.
 - **Download.** The system `curl` and `tar`, which bring the system proxy and CA
-  store. `build/fetch.rs` says when to switch to `ureq`.
+  store, and fail on a host without them. `build/fetch.rs` says when to switch
+  to `ureq`.
 - **Cache.** Archives, extractions, and source builds live in `CPSAT_CACHE_DIR`,
   each filled once under a `File::lock`, which sets the MSRV.
 - **Runtime libraries.** Hard-linked or copied into `OUT_DIR/runtime` with their
-  license notices. The `cpsat-sys` build script explains why.
-- **Errors.** A `thiserror` enum in `cpsat`, `anyhow` in the build script.
+  license notices. A copy across volumes costs about 90 MB per `OUT_DIR`. The
+  `cpsat-sys` build script explains why.
+- **Errors.** A `thiserror` enum in `cpsat`, so callers can match on it, and
+  `anyhow` in the build script, whose errors only a person reads.
 - **README links.** Absolute URLs on `main` for `docs/`, because crates.io
   resolves relative links against each crate's directory. The license links stay
-  relative, because each crate holds its own copies.
+  relative, because each crate holds its own copies. A published crate's docs
+  may then describe unreleased behavior.
 - **Solver.** `CpModel::solve` for the plain case, and a `CpSolver` for events
   and stops. `CpSolver` is generic over one
   `FnMut(Event) -> ControlFlow<()> + Send` callback, because a boxed one keeps
   the closure's borrows alive until the solver drops.
 - **Stop.** `StopHandle` stops every solve attached to it, and a stop is sticky,
-  like a cancellation token.
-- **Model transfer.** Each solve encodes the model once in Rust and parses it
-  once in C++. Skipping the copy needs a C++ model that lives across solves.
+  like a cancellation token, so a caller replaces a stopped handle instead of
+  resetting it.
+- **Model transfer.** Each solve, `validate`, and `stats` call encodes its
+  message once in Rust and parses it once in C++. Skipping the copy needs a C++
+  model that lives across calls.
 - **Solution payload.** A zero-copy `CpSolverResponseView`, and
   `to_owned_message` keeps it.
 - **Formats.** Buffa's `text` and `json` features. `views` is required, because
   Buffa gates views with the formats.
 - **Defaults.** `default_parameters` fills `SatParameters` through C++
-  reflection, because Buffa generates no proto2 default getters.
+  reflection, because Buffa generates no proto2 default getters. Each call costs
+  one reflection walk, one encode, and one decode.
 
 ## Modeling API
 
