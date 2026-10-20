@@ -239,7 +239,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
     identity; compile-error behavior has no dedicated test
 - Variable, literal, interval, and constraint `index`
   - Rust: `IntVar::index`, `BoolVar::index`, `IntervalVar::index`,
-    `ConstraintRef::index`
+    `ConstraintIndex::index`
   - Test: `model.rs::literals_negate_and_name_their_variable`,
     `looks_up_handles_by_index`
 - `CpModel.negated(index)`
@@ -369,7 +369,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
     `clone_and_serialize_round_trip`
 - `Constraint.proto`, `index`, construction from an existing index
   - Rust: Before insertion, `Constraint::proto` or `into_proto`; after
-    insertion, `model[ConstraintRef]`; an existing constraint is accessible
+    insertion, `model[ConstraintIndex]`; an existing constraint is accessible
     through `proto().constraints[index]`
   - Test: `model.rs::constraint_builder_sets_enforcement_and_name`,
     `looks_up_handles_by_index`
@@ -480,8 +480,8 @@ or mutable solver state with types.
 - `StopHandle`: A shareable, sticky cancellation token
 - `Evaluate`, `Objective`, `Hint`: Sealed traits that pick the value type at
   compile time, such as `bool` for a literal
-- `Constraint` and `ConstraintRef`: A constraint value before insertion, and the
-  index `Model::add` returns
+- `Constraint` and `ConstraintIndex`: A constraint value before insertion, and
+  the index `Model::add` returns
 - `Error`, `Result`: Typed failures where Python raises or returns a string
 - `CpSolverResponseView`: Buffa's zero-copy view of a solution inside an event
 - `Index` on `Model`, `IndexMut` for constraints: `model[x]`, `model[interval]`,
@@ -510,7 +510,7 @@ or mutable solver state with types.
 - Python constructors accept names, and constraint methods mutate an already
   inserted constraint. Rust names variables and intervals with `with_name`
   before `new_var`, configures a `Constraint` before insertion, and uses
-  `model[ConstraintRef]` for later changes.
+  `model[ConstraintIndex]` for later changes.
 - Python accepts dynamic literal inputs and sequence/varargs overloads. Rust
   takes typed `BoolVar` literals and iterator inputs. Use `bool_constant` for a
   Boolean constant and `to_literal` for a 0-1 integer variable.

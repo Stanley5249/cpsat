@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 
 use buffa::MessageField;
 
-use crate::constraint::{Constraint, ConstraintRef};
+use crate::constraint::{Constraint, ConstraintIndex};
 use crate::error::Result;
 use crate::expr::{BoolVar, Domain, IntVar, LinearExpr};
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
@@ -242,10 +242,10 @@ impl Model {
     /// # Panics
     ///
     /// Panics if the model already holds `i32::MAX` constraints.
-    pub fn add(&mut self, constraint: impl Into<Constraint>) -> ConstraintRef {
+    pub fn add(&mut self, constraint: impl Into<Constraint>) -> ConstraintIndex {
         let index = next_index(self.0.constraints.len(), "constraints");
         self.0.constraints.push(constraint.into().into_proto());
-        ConstraintRef(index)
+        ConstraintIndex(index)
     }
 
     /// Hints that `var` has `value`, like Python's `add_hint`: an `i64` for

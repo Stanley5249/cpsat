@@ -90,9 +90,9 @@ impl From<Constraint> for ConstraintProto {
 
 /// A constraint in a model, an index into `CpModelProto::constraints`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ConstraintRef(pub(crate) i32);
+pub struct ConstraintIndex(pub(crate) i32);
 
-impl ConstraintRef {
+impl ConstraintIndex {
     /// The index into `CpModelProto::constraints`.
     #[must_use]
     pub const fn index(self) -> i32 {

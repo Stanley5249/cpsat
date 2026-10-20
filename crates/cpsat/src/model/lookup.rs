@@ -4,7 +4,7 @@
 use std::ops::{Index, IndexMut};
 
 use super::{Model, slot};
-use crate::constraint::ConstraintRef;
+use crate::constraint::ConstraintIndex;
 use crate::expr::{BoolVar, IntVar, IntervalVar, LinearExpr};
 use crate::proto::constraint_proto::Constraint as Kind;
 use crate::proto::{
@@ -129,16 +129,16 @@ impl Index<IntervalVar> for Model {
     }
 }
 
-impl Index<ConstraintRef> for Model {
+impl Index<ConstraintIndex> for Model {
     type Output = ConstraintProto;
 
-    fn index(&self, constraint: ConstraintRef) -> &ConstraintProto {
+    fn index(&self, constraint: ConstraintIndex) -> &ConstraintProto {
         &self.0.constraints[slot(constraint.0)]
     }
 }
 
-impl IndexMut<ConstraintRef> for Model {
-    fn index_mut(&mut self, constraint: ConstraintRef) -> &mut ConstraintProto {
+impl IndexMut<ConstraintIndex> for Model {
+    fn index_mut(&mut self, constraint: ConstraintIndex) -> &mut ConstraintProto {
         &mut self.0.constraints[slot(constraint.0)]
     }
 }
