@@ -85,7 +85,7 @@ fn resolves_after_model_change() {
     assert_eq!(model.solve(&single_worker()).unwrap().solution, [3, 1]);
 
     // Tighten x <= 1 through its domain.
-    model.proto_mut().variables[usize::try_from(x.index()).unwrap()].domain = vec![0, 1];
+    model.set_domain(x, 0..=1);
     assert_eq!(model.solve(&single_worker()).unwrap().solution, [0, 2]);
 
     // Replace the objective, then remove the second constraint, so y is

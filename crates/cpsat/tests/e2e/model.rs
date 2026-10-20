@@ -432,7 +432,7 @@ fn constants_survive_round_trips_and_edits() {
     model.proto_mut().variables.clear();
     let seven = model.constant(7);
     assert_eq!(seven.index(), 0);
-    model.proto_mut().variables[0].domain = vec![0, 9];
+    model.set_domain(seven, 0..=9);
     assert_ne!(model.constant(7), seven);
 }
 

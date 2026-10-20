@@ -15,7 +15,7 @@ use buffa::MessageField;
 
 use crate::constraint::{Constraint, ConstraintRef};
 use crate::error::Result;
-use crate::expr::{BoolVar, IntVar, LinearExpr};
+use crate::expr::{BoolVar, Domain, IntVar, LinearExpr};
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use crate::proto::{
     CpModelProto, CpSolverResponse, DecisionStrategyProto, IntegerVariableProto, SatParameters,
@@ -187,6 +187,18 @@ impl Model {
             ..Default::default()
         });
         index
+    }
+
+    /// Replaces the domain of `var`, like Python's `IntVar.with_domain`, for
+    /// example to tighten it before solving again. A literal of `var` stays
+    /// valid only while the domain stays within `[0, 1]`, which
+    /// [`validate`](Self::validate) checks.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the model lacks `var`, like indexing with it.
+    pub fn set_domain(&mut self, var: IntVar, domain: impl Into<Domain>) {
+        self.0.variables[slot(var.0)].domain = domain.into().flattened_intervals();
     }
 
     /// A variable fixed to `value`, like Python's `new_constant`. Calls with
