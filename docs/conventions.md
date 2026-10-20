@@ -45,7 +45,8 @@ CP-SAT APIs at the OR-Tools version that `docs/parity.md` pins.
   differs, and a change to a mirrored item updates its `docs/parity.md` entry in
   the same commit.
 - **Presence.** The `missing_docs` lint requires a doc comment on every public
-  item.
+  item. `cpsat-sys` and the generated `proto` module expect the lint, because
+  `bridge/bridge.h` and the `.proto` files document their items.
 
 ## Examples
 
@@ -59,8 +60,8 @@ CP-SAT APIs at the OR-Tools version that `docs/parity.md` pins.
 - **Content.** Each example adapts the matching official sample and names it in
   a comment. Without a sample, use the example in the `cp_model.proto` comment,
   and otherwise the smallest construction.
-- **`examples/`** holds only `solve.rs`, which CI runs as the deployment check.
-  Ported samples live in `tests/e2e/samples.rs`.
+- **`crates/cpsat/examples/`** holds only `solve.rs`, which CI runs as the
+  deployment check. Ported samples live in `tests/e2e/samples.rs`.
 
 ## Internal items
 
@@ -76,8 +77,8 @@ The tests check the binding. OR-Tools tests the solver, so search strategies,
 optimal values beyond what a sample prints, and statistics beyond range checks
 are out of scope.
 
-- **Unit tests** in `src` cover pure Rust logic, such as `LinearExpr` merging
-  and overflow and `Domain` operations, without solving.
+- **`model.rs` and `domain.rs`** cover pure Rust logic, such as `LinearExpr`
+  merging and overflow and `Domain` operations.
 - **`equivalence.rs`** checks that each constraint family writes the same
   `CpModelProto` as Python, from fixtures that `just gen-fixtures` regenerates.
   A new family gets a fixture.
