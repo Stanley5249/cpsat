@@ -14,7 +14,7 @@ pub fn hard_model() -> CpModelProto {
         i64::try_from(state >> 33).expect("33-bit shift fits in i64") % range + 1
     };
     let mut model = Model::new();
-    let vars: Vec<IntVar> = (0..120).map(|_| model.int_var(0..=20)).collect();
+    let vars: Vec<IntVar> = (0..120).map(|_| model.new_var(0..=20)).collect();
     for _ in 0..40 {
         let load: LinearExpr = vars.iter().map(|&var| var * next(50)).sum();
         model.add(load.in_domain(0..=5_000));

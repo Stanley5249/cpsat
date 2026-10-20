@@ -63,8 +63,8 @@ impl Constraint {
     /// use cpsat::prelude::*;
     ///
     /// let mut model = Model::new();
-    /// let x = model.int_var(0..=5);
-    /// let y = model.int_var(0..=5);
+    /// let x = model.new_var(0..=5);
+    /// let y = model.new_var(0..=5);
     /// model.add(Constraint::allowed_assignments([x, y], [[1, 2], [3, 4]]));
     /// ```
     #[must_use]
@@ -101,7 +101,7 @@ impl Constraint {
     /// use cpsat::prelude::*;
     ///
     /// let mut model = Model::new();
-    /// let labels = [(); 3].map(|()| model.int_var(0..=1));
+    /// let labels = [(); 3].map(|()| model.new_var(0..=1));
     /// // Accepts words without two consecutive 1s.
     /// let transitions = [(0, 0, 0), (0, 1, 1), (1, 0, 0)];
     /// model.add(Constraint::automaton(labels, 0, [0, 1], transitions));

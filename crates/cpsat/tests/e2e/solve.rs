@@ -9,8 +9,8 @@ use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
 /// The optimum is x = 3, y = 1 with objective 9.
 fn small_model() -> (Model, IntVar, IntVar) {
     let mut model = Model::new();
-    let x = model.int_var(0..=10);
-    let y = model.int_var(0..=10);
+    let x = model.new_var(0..=10);
+    let y = model.new_var(0..=10);
     model.add((x + y).le(4));
     model.add((x + 3 * y).le(6));
     model.maximize(2 * x + 3 * y);
@@ -38,7 +38,7 @@ fn solves_to_optimality() {
 fn reads_negated_literals_and_expressions() {
     let mut model = Model::new();
     let x = model.constant(4);
-    let b = model.bool_var();
+    let b = model.new_var(Bool);
     model.add(b.eq(1));
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.value(-x), Some(-4));
@@ -50,7 +50,7 @@ fn reads_negated_literals_and_expressions() {
 
     // A handle from a larger model is out of range here.
     let mut larger = Model::new();
-    let far = [(); 3].map(|()| larger.int_var(0..=1))[2];
+    let far = [(); 3].map(|()| larger.new_var(0..=1))[2];
     assert_eq!(response.value(far), None);
 }
 
@@ -64,7 +64,7 @@ fn displays_status_like_python() {
 #[test]
 fn reports_infeasible() {
     let mut model = Model::new();
-    let x = model.int_var(0..=3);
+    let x = model.new_var(0..=3);
     model.add(x.in_domain(5..=10));
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::INFEASIBLE);
@@ -74,7 +74,7 @@ fn reports_infeasible() {
 #[test]
 fn reports_model_invalid_as_status() {
     let mut model = Model::new();
-    model.int_var(Domain::new(5, 1));
+    model.new_var(Domain::new(5, 1));
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::MODEL_INVALID);
 }
@@ -110,8 +110,8 @@ fn first_solution_follows_the_hint() {
     // x + y == 10 has eleven solutions; without the hint the first one found
     // is not (7, 3).
     let mut model = Model::new();
-    let x = model.int_var(0..=10);
-    let y = model.int_var(0..=10);
+    let x = model.new_var(0..=10);
+    let y = model.new_var(0..=10);
     model.add((x + y).eq(10));
     // Presolve solves this model outright and skips the hint, in Python too,
     // so it is off here.
@@ -143,7 +143,7 @@ fn honors_time_limit() {
 #[test]
 fn fills_additional_solutions_when_asked() {
     let mut model = Model::new();
-    model.int_var(0..=2);
+    model.new_var(0..=2);
     let parameters = single_worker()
         .with_enumerate_all_solutions(true)
         .with_fill_additional_solutions_in_response(true)
@@ -162,8 +162,8 @@ fn fills_additional_solutions_when_asked() {
 #[test]
 fn solves_a_float_objective_like_python() {
     let mut model = Model::new();
-    let x = model.int_var(0..=10);
-    let y = model.int_var(0..=10);
+    let x = model.new_var(0..=10);
+    let y = model.new_var(0..=10);
     model.add((x + y).le(7));
     let objective = 0.5 * x - 1.25 * y;
     model.minimize(&objective);
@@ -207,14 +207,14 @@ fn reports_search_statistics_and_log() {
 #[test]
 fn evaluates_collections_in_order() {
     let mut model = Model::new();
-    let vars = [3, 1, 2].map(|value| model.int_var(value..=value));
-    let literals = [model.bool_var(), model.bool_var()];
+    let vars = [3, 1, 2].map(|value| model.new_var(value..=value));
+    let literals = [model.new_var(Bool), model.new_var(Bool)];
     model.add(literals[0].eq(1));
     model.add(literals[1].eq(0));
     let response = model.solve(&SatParameters::default()).unwrap();
 
     let mut larger = Model::new();
-    let far = [(); 6].map(|()| larger.int_var(0..=1))[5];
+    let far = [(); 6].map(|()| larger.new_var(0..=1))[5];
     let values: Vec<_> = vars
         .iter()
         .chain([&far])

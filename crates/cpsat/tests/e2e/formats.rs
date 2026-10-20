@@ -24,8 +24,8 @@ objective {
 
 fn expected() -> CpModelProto {
     let mut model = Model::new();
-    let x = model.int_var(0..=10);
-    let y = model.int_var(0..=10);
+    let x = model.new_var(0..=10);
+    let y = model.new_var(0..=10);
     model[x].name = "x".into();
     model[y].name = "y".into();
     model.add((x + y).le(4));

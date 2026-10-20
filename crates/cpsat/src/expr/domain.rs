@@ -240,7 +240,7 @@ impl FromIterator<i64> for Domain {
 }
 
 impl From<RangeInclusive<i64>> for Domain {
-    /// The interval `[start, end]`, so `model.int_var(0..=10)` reads like
+    /// The interval `[start, end]`, so `model.new_var(0..=10)` reads like
     /// Rust.
     fn from(range: RangeInclusive<i64>) -> Self {
         Self::new(*range.start(), *range.end())
@@ -248,7 +248,7 @@ impl From<RangeInclusive<i64>> for Domain {
 }
 
 impl From<Range<i64>> for Domain {
-    /// The interval `[start, end - 1]`, so `model.int_var(0..n)` reads like
+    /// The interval `[start, end - 1]`, so `model.new_var(0..n)` reads like
     /// Rust.
     fn from(range: Range<i64>) -> Self {
         range

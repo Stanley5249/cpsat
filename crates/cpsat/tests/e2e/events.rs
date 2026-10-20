@@ -20,7 +20,7 @@ const STOPPED_WITHIN: Duration = Duration::from_secs(30);
 /// `x` in `[0, 3]` maximized, with `x` at index 0.
 fn tiny_model() -> CpModelProto {
     let mut model = Model::new();
-    let x = model.int_var(0..=3);
+    let x = model.new_var(0..=3);
     model.maximize(x);
     model.into_proto()
 }
@@ -259,16 +259,16 @@ fn solver_solves_again() {
 #[test]
 fn solution_view_accessors_match_the_owned_response() {
     let mut model = Model::new();
-    let x = model.int_var(0..=3);
-    let b = model.bool_var();
-    let c = model.bool_var();
+    let x = model.new_var(0..=3);
+    let b = model.new_var(Bool);
+    let c = model.new_var(Bool);
     model.add(b.eq(1));
     model.add(c.eq(0));
     model.maximize(x);
     // Handles from a larger model are out of range here.
     let mut larger = Model::new();
-    let far = [(); 4].map(|()| larger.int_var(0..=1))[3];
-    let far_literal = larger.bool_var();
+    let far = [(); 4].map(|()| larger.new_var(0..=1))[3];
+    let far_literal = larger.new_var(Bool);
 
     let read = |value: &dyn Fn(LinearExpr) -> Option<i64>,
                 boolean: &dyn Fn(BoolVar) -> Option<bool>,

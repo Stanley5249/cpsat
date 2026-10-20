@@ -7,14 +7,14 @@ use cpsat::proto::{CpSolverStatus, SatParameters};
 #[test]
 fn validates_a_valid_model() {
     let mut model = Model::new();
-    model.bool_var();
+    model.new_var(Bool);
     model.validate().unwrap();
 }
 
 #[test]
 fn reports_why_a_model_is_invalid() {
     let mut model = Model::new();
-    model.int_var(Domain::new(5, 1));
+    model.new_var(Domain::new(5, 1));
     let Err(Error::InvalidModel(message)) = model.validate() else {
         panic!("an empty domain must be invalid");
     };
@@ -25,8 +25,8 @@ fn reports_why_a_model_is_invalid() {
 #[test]
 fn describes_model_and_response() {
     let mut model = Model::new();
-    let x = model.int_var(0..=10);
-    let y = model.int_var(0..=10);
+    let x = model.new_var(0..=10);
+    let y = model.new_var(0..=10);
     model.maximize(x + y);
     let stats = model.stats().unwrap();
     assert!(stats.contains("#Variables: 2"), "{stats}");
@@ -46,7 +46,7 @@ fn reads_parameter_defaults_from_or_tools() {
     assert_eq!(parameters.max_time_in_seconds, Some(f64::INFINITY));
     // Solving with every default spelled out matches solving with none.
     let mut model = Model::new();
-    let x = model.int_var(0..=3);
+    let x = model.new_var(0..=3);
     model.maximize(x);
     let response = model.solve(&parameters).unwrap();
     assert_eq!(response.value(x), Some(3));
@@ -57,14 +57,14 @@ fn reads_parameter_defaults_from_or_tools() {
 #[test]
 fn rejects_what_python_rejects_only_at_solve_time() {
     let mut zero_divisor = Model::new();
-    let x = zero_divisor.int_var(0..=10);
+    let x = zero_divisor.new_var(0..=10);
     zero_divisor.add(Constraint::division_equality(x, x, 0));
 
     // A handle from a larger model names a variable this model lacks.
     let mut larger = Model::new();
-    let far = [(); 3].map(|()| larger.int_var(0..=1))[2];
+    let far = [(); 3].map(|()| larger.new_var(0..=1))[2];
     let mut unknown_variable = Model::new();
-    unknown_variable.int_var(0..=1);
+    unknown_variable.new_var(0..=1);
     unknown_variable.add(far.le(1));
 
     for model in [zero_divisor, unknown_variable] {

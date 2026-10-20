@@ -3,8 +3,11 @@
 mod interval;
 mod lookup;
 mod objective;
+mod var;
 
+pub use interval::Interval;
 pub use objective::Objective;
+pub use var::{Bool, Named, NewVar, WithName};
 
 use std::collections::BTreeMap;
 
@@ -12,7 +15,7 @@ use buffa::MessageField;
 
 use crate::constraint::{Constraint, ConstraintRef};
 use crate::error::Result;
-use crate::expr::{BoolVar, Domain, IntVar, LinearExpr};
+use crate::expr::{BoolVar, IntVar, LinearExpr};
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use crate::proto::{
     CpModelProto, CpSolverResponse, DecisionStrategyProto, IntegerVariableProto, SatParameters,
@@ -54,17 +57,16 @@ impl Hint for BoolVar {
 ///
 /// The model only appends variables and constraints, so a handle stays valid
 /// unless the caller removes entries through [`proto_mut`](Self::proto_mut).
-/// Indexing with a handle returns its Protobuf message, for example to set a
-/// name, and panics like a slice when the model lacks the handle.
+/// Indexing with a handle returns its Protobuf message and panics like a
+/// slice when the model lacks the handle.
 ///
 /// ```
 /// use cpsat::prelude::*;
 /// use cpsat::proto::{CpSolverStatus, SatParameters};
 ///
 /// let mut model = Model::new();
-/// let x = model.int_var(0..=10);
-/// let y = model.int_var(0..=10);
-/// model[x].name = "x".into();
+/// let x = model.new_var((0..=10).with_name("x"));
+/// let y = model.new_var(0..=10);
 /// model.add((x + 2 * y).le(14));
 /// model.add(Constraint::all_different([x, y]));
 /// model.maximize(x + y);
@@ -152,24 +154,39 @@ impl Model {
         self.0.stats()
     }
 
-    /// An integer variable in `domain`, like Python's `new_int_var` and
-    /// `new_int_var_from_domain`.
+    /// A variable or an interval, like Python's `new_int_var`,
+    /// `new_int_var_from_domain`, `new_bool_var`, and `new_*interval_var`:
+    /// an [`IntVar`] for a domain or a bounded range, a [`BoolVar`] for
+    /// [`Bool`], and an [`IntervalVar`](crate::prelude::IntervalVar) for an
+    /// [`Interval`]. [`WithName::with_name`] names a variable.
+    ///
+    /// ```
+    /// use cpsat::prelude::*;
+    ///
+    /// let mut model = Model::new();
+    /// let x = model.new_var(0..=10);
+    /// let y = model.new_var(Domain::from_values([1, 3, 5]).with_name("y"));
+    /// let b = model.new_var(Bool);
+    /// let task = model.new_var(Interval::new(x, y, x + y).only_enforce_if(b));
+    /// ```
     ///
     /// # Panics
     ///
-    /// Panics if the model already holds `i32::MAX` variables.
-    pub fn int_var(&mut self, domain: impl Into<Domain>) -> IntVar {
-        let index = next_index(self.0.variables.len(), "variables");
-        self.0.variables.push(IntegerVariableProto {
-            domain: domain.into().flattened_intervals(),
-            ..Default::default()
-        });
-        IntVar(index)
+    /// Panics if the model already holds `i32::MAX` variables or
+    /// constraints.
+    pub fn new_var<V: NewVar>(&mut self, var: V) -> V::Output {
+        var.insert(self)
     }
 
-    /// A 0-1 variable, like Python's `new_bool_var`.
-    pub fn bool_var(&mut self) -> BoolVar {
-        BoolVar(self.int_var(0..=1).0)
+    /// Appends a variable and returns its index.
+    fn push_variable(&mut self, domain: Vec<i64>, name: String) -> i32 {
+        let index = next_index(self.0.variables.len(), "variables");
+        self.0.variables.push(IntegerVariableProto {
+            name,
+            domain,
+            ..Default::default()
+        });
+        index
     }
 
     /// A variable fixed to `value`, like Python's `new_constant`. Calls with
@@ -192,9 +209,9 @@ impl Model {
         {
             return IntVar(index);
         }
-        let var = self.int_var(value..=value);
-        self.1.insert(value, var.0);
-        var
+        let index = self.push_variable(vec![value, value], String::new());
+        self.1.insert(value, index);
+        IntVar(index)
     }
 
     /// A literal fixed to `value`, which Python writes as `True` or `False`.

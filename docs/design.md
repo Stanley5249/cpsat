@@ -91,10 +91,12 @@ Every change follows these rules.
   private.
 - **Names.** Use Python's name wherever a Rust convention allows it, such as
   `constant` and `parameters`. Constructors drop `new_`, constraint constructors
-  drop `add_`, and integer is the unmarked kind.
+  drop `add_`, and integer is the unmarked kind. `Model::new_var` keeps the
+  prefix, because a bare `var` reads like a getter.
 - **Entry points.** One method per meaning. Several input types share one method
-  over a sealed trait, such as `value` over `Evaluate` and `add_hint` over
-  `Hint`. Take `impl IntoIterator` instead of a single-item twin.
+  over a sealed trait, such as `value` over `Evaluate`, `new_var` over `NewVar`,
+  and `add_hint` over `Hint`. Take `impl IntoIterator` instead of a single-item
+  twin.
 - **Methods.** Operations on a model or response are methods on `Model`,
   `CpModelProto`, and `CpSolverResponse`, and `Model` forwards `solve`,
   `validate`, and `stats` to its message. Only `default_parameters` is a free
@@ -107,15 +109,17 @@ Every change follows these rules.
 - **Failure.** A caller's programming error, such as `i64` overflow or a ragged
   table row, panics with a `# Panics` section. A failure the caller can cause in
   OR-Tools returns `Error`. `validate` returns `Error::InvalidModel`, while
-  `solve` reports the `MODEL_INVALID` status. Check eagerly only what the
-  validator cannot see.
+  `solve` reports the `MODEL_INVALID` status. Types rule out structural
+  mistakes, such as a negated literal where the schema wants a variable or an
+  unbounded variable domain. The validator checks what depends on the model's
+  current state, such as a variable's domain or an earlier hint.
 - **Lookup.** A raw schema index returns `Option`. Indexing with a handle panics
   when the model lacks it, like a slice.
 - **Builders.** A value configured before insertion takes `self` and returns
   `Self` with `#[must_use]`, such as `Constraint::only_enforce_if`. Change it
   after insertion through `model[handle]`.
 - **`#[must_use]`.** Every public method without side effects carries it.
-  Appending model methods such as `int_var` do not.
+  Appending model methods such as `new_var` do not.
 - **Python mapping.** An item that mirrors Python says "like Python's `name`",
   and a change to it updates its `docs/parity.md` row in the same commit.
 - **Encoding tests.** A new constraint family gets a Python fixture in
@@ -160,12 +164,13 @@ Every change follows these rules.
 `Model::proto_mut` reaches every field the API does not cover.
 
 ```text
-model.int_var(0..=10) -----------------------> IntVar(i32)
-model.bool_var() ----------------------------> BoolVar(i32), !b = -i - 1
-x + 2 * y - 3 -------------------------------> LinearExpr { terms, offset }
-(x + 2 * y).le(10).only_enforce_if(b) ---------------> Constraint(ConstraintProto)
-Constraint::circuit([(0, 1, a)]) ------------> Constraint
-model.add(constraint) --- move into model ---> ConstraintRef(i32)
+model.new_var(0..=10) -------------------------> IntVar(i32)
+model.new_var(Bool) ---------------------------> BoolVar(i32), !b = -i - 1
+model.new_var(Interval::fixed_size(x, 3)) -----> IntervalVar(i32)
+x + 2 * y - 3 ---------------------------------> LinearExpr { terms, offset }
+(x + 2 * y).le(10).only_enforce_if(b) ---------> Constraint(ConstraintProto)
+Constraint::circuit([(0, 1, a)]) --------------> Constraint
+model.add(constraint) ---- move into model ----> ConstraintRef(i32)
 ```
 
 - **Handles** are typed `i32` indices without a model identity, like `petgraph`
@@ -175,8 +180,10 @@ model.add(constraint) --- move into model ---> ConstraintRef(i32)
 - **Comparisons** are inherent `eq`, `le`, `in_domain`, and so on, because
   Rust's comparison traits return `bool`. Handles still derive `Ord` by index.
 - **Constraints.** Every family is a constructor on `Constraint`, and
-  `Model::add` is the only insertion path. Intervals come from `Model` methods,
-  because other constraints reference them by index.
+  `Model::add` is their only insertion path. Variables and intervals come from
+  `Model::new_var`. The schema stores an interval as a constraint, but `new_var`
+  returns an `IntervalVar`, because other constraints reference it by index like
+  a variable.
 - **Compositions.** Python helpers that compose other calls, such as
   `add_map_domain` and `weighted_sum`, stay compositions, and `docs/parity.md`
   gives each encoding.

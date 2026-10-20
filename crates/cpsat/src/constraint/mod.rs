@@ -32,8 +32,8 @@ use crate::proto::{ConstraintProto, LinearExpressionProto};
 /// use cpsat::prelude::*;
 ///
 /// let mut model = Model::new();
-/// let x = model.int_var(0..=10);
-/// let enabled = model.bool_var();
+/// let x = model.new_var(0..=10);
+/// let enabled = model.new_var(Bool);
 /// model.add(x.ge(5).only_enforce_if(enabled).with_name("x is large"));
 /// ```
 #[derive(Clone, Debug, PartialEq)]

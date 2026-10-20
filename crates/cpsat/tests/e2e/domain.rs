@@ -45,7 +45,7 @@ fn flat_form_round_trips() {
 #[test]
 fn builds_a_variable_with_holes() {
     let mut model = Model::new();
-    let x = model.int_var(Domain::from_values([1, 3, 5]));
+    let x = model.new_var(Domain::from_values([1, 3, 5]));
     model.maximize(x);
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
@@ -132,9 +132,11 @@ fn converts_rust_ranges() {
     let below_min = 0..i64::MIN;
     assert_eq!(Domain::from(below_min), Domain::default());
 
-    // A variable domain must stay inside (i64::MIN, i64::MAX).
+    // A variable domain must stay inside (i64::MIN, i64::MAX). `new_var`
+    // rejects `0..` at compile time, so the unbounded domain comes in as a
+    // `Domain`.
     let mut model = Model::new();
-    model.int_var(0..);
+    model.new_var(Domain::from(0..));
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::MODEL_INVALID);
 }

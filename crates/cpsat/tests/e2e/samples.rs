@@ -13,7 +13,7 @@ use crate::common::solve_optimal;
 
 /// The three variables in `[0, 2]` that most samples share.
 fn three_vars(model: &mut Model) -> [IntVar; 3] {
-    [(); 3].map(|()| model.int_var(0..=2))
+    [(); 3].map(|()| model.new_var(0..=2))
 }
 
 /// Every solution of `model`, as the values of `exprs`, in the order found.
@@ -53,7 +53,7 @@ fn simple_sat_program() {
 #[test]
 fn cp_sat_example() {
     let mut model = Model::new();
-    let [x, y, z] = [(); 3].map(|()| model.int_var(0..=50));
+    let [x, y, z] = [(); 3].map(|()| model.new_var(0..=50));
     model.add((2 * x + 7 * y + 3 * z).le(50));
     model.add((3 * x - 5 * y + 7 * z).le(45));
     model.add((5 * x + 2 * y - 6 * z).le(37));
@@ -145,8 +145,8 @@ fn stop_after_n_solutions() {
 )]
 fn assumptions() {
     let mut model = Model::new();
-    let [x, y, z] = [(); 3].map(|()| model.int_var(0..=10));
-    let [a, b, c] = [(); 3].map(|()| model.bool_var());
+    let [x, y, z] = [(); 3].map(|()| model.new_var(0..=10));
+    let [a, b, c] = [(); 3].map(|()| model.new_var(Bool));
     model.add(x.gt(y).only_enforce_if(a));
     model.add(y.gt(z).only_enforce_if(b));
     model.add(z.gt(x).only_enforce_if(c));
@@ -179,8 +179,8 @@ fn solution_hinting() {
 #[test]
 fn rabbits_and_pheasants() {
     let mut model = Model::new();
-    let rabbits = model.int_var(0..=100);
-    let pheasants = model.int_var(0..=100);
+    let rabbits = model.new_var(0..=100);
+    let pheasants = model.new_var(0..=100);
     model.add((rabbits + pheasants).eq(20));
     model.add((4 * rabbits + 2 * pheasants).eq(56));
 
@@ -193,7 +193,7 @@ fn rabbits_and_pheasants() {
 #[test]
 fn boolean_product() {
     let mut model = Model::new();
-    let [x, y, p] = [(); 3].map(|()| model.bool_var());
+    let [x, y, p] = [(); 3].map(|()| model.new_var(Bool));
     model.add(Constraint::bool_or([!x, !y, p]));
     model.add(Constraint::implication(p, x));
     model.add(Constraint::implication(p, y));
@@ -207,9 +207,9 @@ fn boolean_product() {
 #[test]
 fn channeling() {
     let mut model = Model::new();
-    let x = model.int_var(0..=10);
-    let y = model.int_var(0..=10);
-    let b = model.bool_var();
+    let x = model.new_var(0..=10);
+    let y = model.new_var(0..=10);
+    let b = model.new_var(Bool);
     model.add(x.ge(5).only_enforce_if(b));
     model.add(x.lt(5).only_enforce_if(!b));
     model.add(y.eq(10 - x).only_enforce_if(b));
@@ -232,21 +232,21 @@ fn channeling() {
 #[test]
 fn step_function() {
     let mut model = Model::new();
-    let x = model.int_var(0..=20);
-    let expr = model.int_var(0..=3);
-    let b0 = model.bool_var();
+    let x = model.new_var(0..=20);
+    let expr = model.new_var(0..=3);
+    let b0 = model.new_var(Bool);
     model.add(
         x.in_domain(Domain::from_intervals([(5, 6), (8, 10)]))
             .only_enforce_if(b0),
     );
     model.add(expr.eq(0).only_enforce_if(b0));
-    let b2 = model.bool_var();
+    let b2 = model.new_var(Bool);
     model.add(
         x.in_domain(Domain::from_intervals([(0, 1), (3, 4), (11, 20)]))
             .only_enforce_if(b2),
     );
     model.add(expr.eq(2).only_enforce_if(b2));
-    let b3 = model.bool_var();
+    let b3 = model.new_var(Bool);
     model.add(x.eq(7).only_enforce_if(b3));
     model.add(expr.eq(3).only_enforce_if(b3));
     model.add(Constraint::bool_or([b0, b2, b3]));
@@ -272,10 +272,10 @@ fn step_function() {
 fn non_linear() {
     let perimeter = 20;
     let mut model = Model::new();
-    let x = model.int_var(0..=perimeter);
-    let y = model.int_var(0..=perimeter);
+    let x = model.new_var(0..=perimeter);
+    let y = model.new_var(0..=perimeter);
     model.add((2 * (x + y)).eq(perimeter));
-    let area = model.int_var(0..=perimeter * perimeter);
+    let area = model.new_var(0..=perimeter * perimeter);
     model.add(Constraint::multiplication_equality(area, [x, y]));
     model.maximize(area);
 
@@ -291,7 +291,7 @@ fn non_linear() {
 fn nqueens() {
     let size = 8;
     let mut model = Model::new();
-    let queens: Vec<IntVar> = (0..size).map(|_| model.int_var(0..=size - 1)).collect();
+    let queens: Vec<IntVar> = (0..size).map(|_| model.new_var(0..=size - 1)).collect();
     model.add(Constraint::all_different(queens.iter().copied()));
     model.add(Constraint::all_different(
         (0..).zip(&queens).map(|(i, &q)| q + i),
@@ -320,7 +320,7 @@ fn nqueens() {
 fn cp_is_fun() {
     let base = 10;
     let mut model = Model::new();
-    let mut digit = |lower| model.int_var(lower..=base - 1);
+    let mut digit = |lower| model.new_var(lower..=base - 1);
     let [c, p, i, s, f, u, n, t, r, e] = [1, 0, 1, 0, 1, 0, 0, 1, 0, 0].map(&mut digit);
     model.add(Constraint::all_different([c, p, i, s, f, u, n, t, r, e]));
     model.add(
@@ -343,12 +343,12 @@ fn cp_is_fun() {
 #[test]
 fn all_different_except_zero() {
     let mut model = Model::new();
-    let x: Vec<IntVar> = (0..5).map(|_| model.int_var(0..=10)).collect();
+    let x: Vec<IntVar> = (0..5).map(|_| model.new_var(0..=10)).collect();
     let mut literals_per_value = vec![Vec::new(); 11];
     for &var in &x {
         let mut encoding = Vec::new();
         for (value, literals) in (0..).zip(&mut literals_per_value) {
-            let literal = model.bool_var();
+            let literal = model.new_var(Bool);
             model.add(var.eq(value).only_enforce_if(literal));
             literals.push(literal);
             encoding.push(literal);
@@ -373,14 +373,14 @@ fn no_overlap() {
     let mut tasks = Vec::new();
     let mut ends = Vec::new();
     for duration in [2, 4, 3] {
-        let start = model.int_var(0..=horizon);
-        let end = model.int_var(0..=horizon);
-        tasks.push(model.interval_var(start, duration, end));
+        let start = model.new_var(0..=horizon);
+        let end = model.new_var(0..=horizon);
+        tasks.push(model.new_var(Interval::new(start, duration, end)));
         ends.push(end);
     }
-    let weekends = [5, 12, 19].map(|start| model.interval_var(start, 2, start + 2));
+    let weekends = [5, 12, 19].map(|start| model.new_var(Interval::new(start, 2, start + 2)));
     model.add(Constraint::no_overlap(tasks.into_iter().chain(weekends)));
-    let makespan = model.int_var(0..=horizon);
+    let makespan = model.new_var(0..=horizon);
     model.add(Constraint::max_equality(makespan, ends));
     model.minimize(makespan);
 
@@ -406,9 +406,9 @@ fn minimal_jobshop() {
     for job in jobs {
         let mut previous_end: Option<IntVar> = None;
         for &(machine, duration) in job {
-            let start = model.int_var(0..=horizon);
-            let end = model.int_var(0..=horizon);
-            machines[machine].push(model.interval_var(start, duration, end));
+            let start = model.new_var(0..=horizon);
+            let end = model.new_var(0..=horizon);
+            machines[machine].push(model.new_var(Interval::new(start, duration, end)));
             if let Some(previous_end) = previous_end {
                 model.add(start.ge(previous_end));
             }
@@ -419,7 +419,7 @@ fn minimal_jobshop() {
     for intervals in machines {
         model.add(Constraint::no_overlap(intervals));
     }
-    let makespan = model.int_var(0..=horizon);
+    let makespan = model.new_var(0..=horizon);
     model.add(Constraint::max_equality(makespan, last_ends));
     model.minimize(makespan);
 
@@ -438,31 +438,32 @@ fn ranking_circuit() {
     let mut ranks = Vec::new();
     let mut intervals = Vec::new();
     for (task, duration) in durations.into_iter().enumerate() {
-        let start = model.int_var(0..=horizon);
-        let presence = model.bool_var();
-        intervals.push(model.optional_fixed_size_interval_var(start, duration, presence));
+        let start = model.new_var(0..=horizon);
+        let presence = model.new_var(Bool);
+        intervals
+            .push(model.new_var(Interval::fixed_size(start, duration).only_enforce_if(presence)));
         if task < 2 {
             model.add(presence.eq(1));
         }
         starts.push(start);
         presences.push(presence);
-        ranks.push(model.int_var(-1..=3));
+        ranks.push(model.new_var(-1..=3));
     }
     model.add(Constraint::no_overlap(intervals));
 
     let mut arcs = Vec::new();
     for (i, node) in (1..=4).enumerate() {
-        let first = model.bool_var();
+        let first = model.new_var(Bool);
         arcs.push((0, node, first));
         model.add(ranks[i].eq(0).only_enforce_if(first));
         model.add(starts[i].eq(0).only_enforce_if(first));
-        arcs.push((node, 0, model.bool_var()));
+        arcs.push((node, 0, model.new_var(Bool)));
         for (j, next) in (1..=4).enumerate() {
             if i == j {
                 arcs.push((node, node, !presences[i]));
                 model.add(ranks[i].eq(-1).only_enforce_if(!presences[i]));
             } else {
-                let literal = model.bool_var();
+                let literal = model.new_var(Bool);
                 arcs.push((node, next, literal));
                 model.add(ranks[j].eq(ranks[i] + 1).only_enforce_if(literal));
                 model.add(
@@ -473,7 +474,7 @@ fn ranking_circuit() {
             }
         }
     }
-    let empty = model.bool_var();
+    let empty = model.new_var(Bool);
     arcs.push((0, 0, empty));
     for &presence in &presences {
         model.add(Constraint::implication(empty, !presence));
@@ -481,7 +482,7 @@ fn ranking_circuit() {
     model.add(Constraint::circuit(arcs));
     model.add(ranks[0].lt(ranks[1]));
 
-    let makespan = model.int_var(0..=horizon);
+    let makespan = model.new_var(0..=horizon);
     for ((&start, duration), &presence) in starts.iter().zip(durations).zip(&presences) {
         model.add((start + duration).le(makespan).only_enforce_if(presence));
     }

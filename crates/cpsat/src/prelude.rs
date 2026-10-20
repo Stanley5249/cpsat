@@ -4,7 +4,7 @@
 
 pub use crate::constraint::{Constraint, ConstraintRef};
 pub use crate::expr::{BoolVar, Domain, FloatExpr, IntVar, IntervalVar, LinearExpr};
-pub use crate::model::{Hint, Model, Objective};
+pub use crate::model::{Bool, Hint, Interval, Model, Named, NewVar, Objective, WithName};
 pub use crate::solver::{
     Evaluate, Event, EventSet, NoEvents, Solver, StopHandle, default_parameters,
 };

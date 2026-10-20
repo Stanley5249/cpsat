@@ -30,9 +30,9 @@ use cpsat::prelude::*;
 use cpsat::proto::SatParameters;
 
 let mut model = Model::new();
-let x = model.int_var(0..=10);
-let y = model.int_var(0..=10);
-let enabled = model.bool_var();
+let x = model.new_var(0..=10);
+let y = model.new_var(0..=10);
+let enabled = model.new_var(Bool);
 model.add((x + 2 * y).le(14));
 model.add(x.ne(y).only_enforce_if(enabled));
 model.add(Constraint::all_different([x, y]));

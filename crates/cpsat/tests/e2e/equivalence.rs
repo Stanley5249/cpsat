@@ -34,9 +34,9 @@ fn assert_matches_python(model: &Model, name: &str) {
 }
 
 fn variables(model: &mut Model) -> (IntVar, IntVar, BoolVar, BoolVar) {
-    let x = model.int_var(0..=10);
-    let y = model.int_var(0..=10);
-    (x, y, model.bool_var(), model.bool_var())
+    let x = model.new_var(0..=10);
+    let y = model.new_var(0..=10);
+    (x, y, model.new_var(Bool), model.new_var(Bool))
 }
 
 #[test]
@@ -137,10 +137,10 @@ fn arithmetic() {
 fn scheduling() {
     let mut model = Model::new();
     let (x, y, b, c) = variables(&mut model);
-    let i = model.interval_var(x, 2, y);
-    let j = model.fixed_size_interval_var(x + 1, 3);
-    let k = model.optional_interval_var(x, y, x + 5, b);
-    let l = model.optional_fixed_size_interval_var(y, 4, !c);
+    let i = model.new_var(Interval::new(x, 2, y));
+    let j = model.new_var(Interval::fixed_size(x + 1, 3));
+    let k = model.new_var(Interval::new(x, y, x + 5).only_enforce_if(b));
+    let l = model.new_var(Interval::fixed_size(y, 4).only_enforce_if(!c));
     model.add(Constraint::no_overlap([i, j]));
     model.add(Constraint::no_overlap_2d([(i, k), (j, l)]));
     model.add(Constraint::cumulative(

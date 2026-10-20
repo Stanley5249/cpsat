@@ -22,8 +22,8 @@ use crate::proto::LinearExpressionProto;
 /// use cpsat::prelude::*;
 ///
 /// let mut model = Model::new();
-/// let x = model.int_var(0..=10);
-/// let y = model.int_var(0..=10);
+/// let x = model.new_var(0..=10);
+/// let y = model.new_var(0..=10);
 /// let total: LinearExpr = [x, y].into_iter().sum();
 /// model.add((total + 2 * y).le(10));
 /// ```

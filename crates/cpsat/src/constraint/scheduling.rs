@@ -44,8 +44,8 @@ impl Constraint {
     /// use cpsat::prelude::*;
     ///
     /// let mut model = Model::new();
-    /// let start = model.int_var(0..=10);
-    /// let task = model.fixed_size_interval_var(start, 3);
+    /// let start = model.new_var(0..=10);
+    /// let task = model.new_var(Interval::fixed_size(start, 3));
     /// model.add(Constraint::cumulative(2, [(task, 1)]));
     /// ```
     #[must_use]
@@ -74,8 +74,8 @@ impl Constraint {
     /// use cpsat::prelude::*;
     ///
     /// let mut model = Model::new();
-    /// let fill = model.int_var(0..=10);
-    /// let drain = model.int_var(0..=10);
+    /// let fill = model.new_var(0..=10);
+    /// let drain = model.new_var(0..=10);
     /// model.add(Constraint::reservoir(0, 5, [(fill, 3), (drain, -3)]));
     /// ```
     #[must_use]

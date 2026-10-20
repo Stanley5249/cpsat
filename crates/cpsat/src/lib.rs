@@ -17,8 +17,8 @@
 //! use cpsat::proto::SatParameters;
 //!
 //! let mut model = Model::new();
-//! let x = model.int_var(0..=10);
-//! let y = model.int_var(0..=10);
+//! let x = model.new_var(0..=10);
+//! let y = model.new_var(0..=10);
 //! model.add((x + y).le(4));
 //! model.maximize(2 * x + 3 * y);
 //!

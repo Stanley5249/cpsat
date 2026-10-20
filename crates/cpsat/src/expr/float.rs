@@ -18,8 +18,8 @@ use crate::expr::{BoolVar, IntVar, LinearExpr};
 /// use cpsat::prelude::*;
 ///
 /// let mut model = Model::new();
-/// let x = model.int_var(0..=10);
-/// let y = model.int_var(0..=10);
+/// let x = model.new_var(0..=10);
+/// let y = model.new_var(0..=10);
 /// model.add((x + y).le(7));
 /// model.maximize(0.5 * x + 1.25 * y + 0.1);
 /// ```

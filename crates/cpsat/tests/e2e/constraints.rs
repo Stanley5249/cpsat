@@ -15,7 +15,7 @@ fn values(response: &CpSolverResponse, vars: impl IntoIterator<Item = IntVar>) -
 #[test]
 fn element_picks_the_index_of_the_target() {
     let mut model = Model::new();
-    let index = model.int_var(0..=5);
+    let index = model.new_var(0..=5);
     model.add(Constraint::element(index, [10, 20, 30], 30));
     model.minimize(index);
     let response = solve_optimal(&model);
@@ -25,8 +25,8 @@ fn element_picks_the_index_of_the_target() {
 #[test]
 fn inverse_inverts_the_permutation() {
     let mut model = Model::new();
-    let direct = [(); 3].map(|()| model.int_var(0..=2));
-    let inverse = [(); 3].map(|()| model.int_var(0..=2));
+    let direct = [(); 3].map(|()| model.new_var(0..=2));
+    let inverse = [(); 3].map(|()| model.new_var(0..=2));
     model.add(Constraint::inverse(direct, inverse));
     for (var, value) in direct.into_iter().zip([2, 0, 1]) {
         model.add(var.eq(value));
@@ -39,7 +39,7 @@ fn inverse_inverts_the_permutation() {
 #[test]
 fn automaton_rejects_consecutive_ones() {
     let mut model = Model::new();
-    let labels = [(); 3].map(|()| model.int_var(0..=1));
+    let labels = [(); 3].map(|()| model.new_var(0..=1));
     // State 5 follows a 0 and state 7 follows a 1, so no label equals a state.
     let transitions = [(5, 0, 5), (5, 1, 7), (7, 0, 5)];
     model.add(Constraint::automaton(labels, 5, [5, 7], transitions));
@@ -51,8 +51,8 @@ fn automaton_rejects_consecutive_ones() {
 #[test]
 fn allowed_assignments_pick_a_row() {
     let mut model = Model::new();
-    let x = model.int_var(0..=5);
-    let y = model.int_var(0..=5);
+    let x = model.new_var(0..=5);
+    let y = model.new_var(0..=5);
     model.add(Constraint::allowed_assignments([x, y], [[1, 2], [3, 4]]));
     model.maximize(x + y);
     let response = solve_optimal(&model);
@@ -62,8 +62,8 @@ fn allowed_assignments_pick_a_row() {
 #[test]
 fn forbidden_assignments_avoid_every_row() {
     let mut model = Model::new();
-    let x = model.int_var(0..=1);
-    let y = model.int_var(0..=1);
+    let x = model.new_var(0..=1);
+    let y = model.new_var(0..=1);
     model.add(Constraint::forbidden_assignments(
         [x, y],
         [[0, 0], [0, 1], [1, 0]],
@@ -76,8 +76,8 @@ fn forbidden_assignments_avoid_every_row() {
 #[test]
 fn reservoir_drains_only_after_filling() {
     let mut model = Model::new();
-    let fill = model.int_var(0..=10);
-    let drain = model.int_var(0..=10);
+    let fill = model.new_var(0..=10);
+    let drain = model.new_var(0..=10);
     model.add(Constraint::reservoir(0, 5, [(fill, 3), (drain, -3)]));
     model.add(fill.eq(4));
     model.minimize(drain);
@@ -88,9 +88,9 @@ fn reservoir_drains_only_after_filling() {
 #[test]
 fn reservoir_fills_again_only_after_draining() {
     let mut model = Model::new();
-    let first = model.int_var(0..=10);
-    let drain = model.int_var(0..=10);
-    let second = model.int_var(0..=10);
+    let first = model.new_var(0..=10);
+    let drain = model.new_var(0..=10);
+    let second = model.new_var(0..=10);
     model.add(Constraint::reservoir(
         0,
         5,
@@ -109,11 +109,11 @@ fn no_overlap_2d_stacks_the_squares() {
     let mut rectangles = Vec::new();
     let mut y_starts = Vec::new();
     for _ in 0..2 {
-        let x_start = model.int_var(0..=0);
-        let y_start = model.int_var(0..=2);
+        let x_start = model.new_var(0..=0);
+        let y_start = model.new_var(0..=2);
         rectangles.push((
-            model.fixed_size_interval_var(x_start, 2),
-            model.fixed_size_interval_var(y_start, 2),
+            model.new_var(Interval::fixed_size(x_start, 2)),
+            model.new_var(Interval::fixed_size(y_start, 2)),
         ));
         y_starts.push(y_start);
     }
@@ -137,7 +137,7 @@ fn multiple_circuit_takes_two_routes_through_the_depot() {
         (1, 2, 10),
         (2, 1, 10),
     ];
-    let arcs = costs.map(|(tail, head, _)| (tail, head, model.bool_var()));
+    let arcs = costs.map(|(tail, head, _)| (tail, head, model.new_var(Bool)));
     model.add(Constraint::multiple_circuit(arcs));
     model.minimize(
         arcs.iter()
@@ -153,10 +153,10 @@ fn multiple_circuit_takes_two_routes_through_the_depot() {
 #[test]
 fn cumulative_runs_two_tasks_at_a_time() {
     let mut model = Model::new();
-    let starts = [(); 3].map(|()| model.int_var(0..=10));
+    let starts = [(); 3].map(|()| model.new_var(0..=10));
     let tasks: Vec<(IntervalVar, i64)> = starts
         .iter()
-        .map(|&start| (model.fixed_size_interval_var(start, 2), 1))
+        .map(|&start| (model.new_var(Interval::fixed_size(start, 2)), 1))
         .collect();
     model.add(Constraint::cumulative(2, tasks));
     model.minimize(starts.into_iter().sum::<LinearExpr>());
@@ -170,8 +170,8 @@ fn cumulative_runs_two_tasks_at_a_time() {
 fn map_domain_sets_only_the_literal_of_the_value() {
     for (fixed, expected) in [(3, [true, false]), (4, [false, true]), (7, [false, false])] {
         let mut model = Model::new();
-        let x = model.int_var(0..=10);
-        let literals = [model.bool_var(), model.bool_var()];
+        let x = model.new_var(0..=10);
+        let literals = [model.new_var(Bool), model.new_var(Bool)];
         map_domain(&mut model, x, literals);
         model.add(x.eq(fixed));
         let response = solve_optimal(&model);
@@ -186,8 +186,8 @@ fn map_domain_sets_only_the_literal_of_the_value() {
 #[test]
 fn map_domain_fixes_the_value_of_a_true_literal() {
     let mut model = Model::new();
-    let x = model.int_var(0..=10);
-    let literals = [model.bool_var(), model.bool_var()];
+    let x = model.new_var(0..=10);
+    let literals = [model.new_var(Bool), model.new_var(Bool)];
     map_domain(&mut model, x, literals);
     model.add(literals[1].eq(1));
     model.maximize(x);
@@ -210,7 +210,7 @@ fn empty_bool_and_holds_and_empty_bool_or_fails() {
 #[test]
 fn enforced_empty_bool_or_forces_its_literal_false() {
     let mut model = Model::new();
-    let b = model.bool_var();
+    let b = model.new_var(Bool);
     model.add(Constraint::bool_or([]).only_enforce_if(b));
     model.maximize(b);
     assert_eq!(solve_optimal(&model).value(b), Some(false));
@@ -220,8 +220,8 @@ fn enforced_empty_bool_or_forces_its_literal_false() {
 #[should_panic(expected = "a table row has one value per expression")]
 fn table_rejects_a_ragged_row() {
     let mut model = Model::new();
-    let x = model.int_var(0..=5);
-    let y = model.int_var(0..=5);
+    let x = model.new_var(0..=5);
+    let y = model.new_var(0..=5);
     // Flattened, these rows would read as [1, 2] and [3, 4].
     model.add(Constraint::allowed_assignments(
         [x, y],
@@ -232,9 +232,9 @@ fn table_rejects_a_ragged_row() {
 #[test]
 fn min_equality_takes_the_smallest() {
     let mut model = Model::new();
-    let x = model.int_var(0..=10);
-    let y = model.int_var(0..=10);
-    let target = model.int_var(-10..=10);
+    let x = model.new_var(0..=10);
+    let y = model.new_var(0..=10);
+    let target = model.new_var(-10..=10);
     model.add(x.eq(7));
     model.add(y.eq(4));
     model.add(Constraint::min_equality(target, [x + 1, y - 2]));
@@ -244,8 +244,8 @@ fn min_equality_takes_the_smallest() {
 #[test]
 fn abs_equality_drops_the_sign() {
     let mut model = Model::new();
-    let x = model.int_var(-10..=10);
-    let target = model.int_var(0..=10);
+    let x = model.new_var(-10..=10);
+    let target = model.new_var(0..=10);
     model.add(x.eq(-6));
     model.add(Constraint::abs_equality(target, x));
     assert_eq!(solve_optimal(&model).value(target), Some(6));
@@ -254,8 +254,8 @@ fn abs_equality_drops_the_sign() {
 #[test]
 fn modulo_equality_keeps_the_sign_of_the_dividend() {
     let mut model = Model::new();
-    let x = model.int_var(-10..=10);
-    let target = model.int_var(-10..=10);
+    let x = model.new_var(-10..=10);
+    let target = model.new_var(-10..=10);
     model.add(x.eq(-7));
     model.add(Constraint::modulo_equality(target, x, 3));
     assert_eq!(solve_optimal(&model).value(target), Some(-1));
@@ -264,7 +264,7 @@ fn modulo_equality_keeps_the_sign_of_the_dividend() {
 #[test]
 fn bool_xor_needs_an_odd_count() {
     let mut model = Model::new();
-    let literals = [(); 3].map(|()| model.bool_var());
+    let literals = [(); 3].map(|()| model.new_var(Bool));
     model.add(Constraint::bool_xor(literals));
     model.add(literals[0].eq(1));
     model.add(literals[1].eq(1));
