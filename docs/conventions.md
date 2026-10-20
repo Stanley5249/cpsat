@@ -65,7 +65,9 @@ CP-SAT APIs at the OR-Tools version that `docs/parity.md` pins.
   `let [x, y, z]` where possible, and a number that depends on data with
   `(0..n).map(...).collect()`.
 - **`crates/cpsat/examples/`** holds only `solve.rs`, which CI runs as the
-  deployment check. Ported samples live in `tests/e2e/samples.rs`.
+  deployment check, and `crates/cpsat/benches/` measures the costs that
+  `docs/design.md` decisions cite. Ported samples live in
+  `tests/e2e/samples.rs`.
 
 ## Internal items
 
@@ -94,5 +96,5 @@ are out of scope.
   samples that exist in both C++ and Python. Families without one rely on
   `equivalence.rs` and `constraints.rs`.
 - **The other files** cover the binding's own mechanics: encoding, the FFI,
-  events, callback panics, stops across threads, and response reading. These get
-  full coverage, because nothing upstream tests them.
+  callbacks, callback panics, stops across threads, and response reading. These
+  get full coverage, because nothing upstream tests them.

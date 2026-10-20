@@ -19,7 +19,7 @@
 //! Run it with:
 //!
 //! ```text
-//! cargo run --release --example bench_events -p cpsat
+//! cargo bench -p cpsat --bench callbacks
 //! ```
 
 use std::ops::ControlFlow;

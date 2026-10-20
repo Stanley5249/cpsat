@@ -10,6 +10,10 @@ license.workspace = true
 keywords = ["constraint", "cp-sat", "optimization", "or-tools", "solver"]
 categories = ["algorithms", "api-bindings", "mathematics", "science"]
 
+[[bench]]
+harness = false
+name = "callbacks"
+
 [dependencies]
 buffa.workspace = true
 cpsat-sys.workspace = true
