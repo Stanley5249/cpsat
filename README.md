@@ -62,10 +62,10 @@ cover.
 
 The build script reads these environment variables:
 
-| Variable          | Effect                                                                                                        |
-| ----------------- | ------------------------------------------------------------------------------------------------------------- |
-| `CPSAT_ORTOOLS`   | `prebuilt` (default), `source` to build OR-Tools with CMake, or `dir:<path>`                                  |
-| `CPSAT_CACHE_DIR` | Download and build cache, by default `%LOCALAPPDATA%\cpsat`, or `$XDG_CACHE_HOME/cpsat` then `~/.cache/cpsat` |
+- `CPSAT_ORTOOLS`: `prebuilt` (default), `source` to build OR-Tools with CMake,
+  or `dir:<path>`
+- `CPSAT_CACHE_DIR`: Download and build cache, by default
+  `%LOCALAPPDATA%\cpsat`, or `$XDG_CACHE_HOME/cpsat` then `~/.cache/cpsat`
 
 For an offline build, extract the official OR-Tools archive for the target and
 set `CPSAT_ORTOOLS=dir:<path>` to the extracted directory that holds `include`
