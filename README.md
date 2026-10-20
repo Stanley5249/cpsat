@@ -74,7 +74,7 @@ These features choose where OR-Tools comes from, and
 These features choose the message formats:
 
 - `text` (default): Protobuf text format through `buffa::text`
-- `views` (default): required, because the solver passes solutions as views
+- `views` (default): zero-copy views of encoded messages through `buffa::view`
 - `json`: Proto3 JSON through serde
 
 The build script reads these environment variables:

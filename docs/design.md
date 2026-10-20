@@ -240,9 +240,9 @@ rules above instead of taking it as given.
   solution costs a pointer read, not a serialized copy. The cost is that it is
   valid only during the callback, and a field without a method needs
   `to_owned_message`, which serializes and decodes the whole response.
-- **Formats.** Buffa's `text` and `json` features. `views` is optional, because
-  nothing in the solver needs Buffa views. The cost is that the feature stays in
-  the default set, because Buffa gates views with the formats.
+- **Formats.** Buffa's `text`, `json`, and `views` features, each optional,
+  because the solver needs none of them. `text` and `views` are on by default,
+  which costs compile time for callers who use neither.
 - **Defaults.** `default_parameters` fills `SatParameters` through C++
   reflection, because Buffa generates no proto2 default getters. Each call costs
   one reflection walk, one encode, and one decode.
