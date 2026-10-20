@@ -11,15 +11,14 @@ use cpsat::proto::{CpSolverResponse, CpSolverStatus, LinearExpressionProto, SatP
 fn literals_negate_and_name_their_variable() {
     let mut model = Model::new();
     model.new_var(0..=5);
-    let b = model.new_var(Bool);
+    let b = model.new_var(Bool.with_name("b"));
     assert_eq!((b.index(), (!b).index()), (1, -2));
     assert_eq!(!!b, b);
     assert!((!b).is_negated());
     assert_eq!((!b).variable(), b.variable());
     assert_eq!(b.variable().index(), 1);
 
-    model[(!b).variable()].name = "b".into();
-    assert_eq!(model[b.variable()].name, "b");
+    assert_eq!(model[(!b).variable()].name, "b");
 }
 
 #[test]
@@ -54,8 +53,9 @@ fn looks_up_handles_by_index() {
 #[test]
 fn constraint_builder_sets_enforcement_and_name() {
     let mut model = Model::new();
-    let x = model.new_var(0..=5);
+    let x = model.new_var((0..=5).with_name("x"));
     let [a, b] = [(); 2].map(|()| model.new_var(Bool));
+    let interval = model.new_var(Interval::fixed_size(x, 2).with_name("task"));
     let constraint = model.add(
         x.ge(1)
             .only_enforce_if(a)
@@ -67,8 +67,11 @@ fn constraint_builder_sets_enforcement_and_name() {
         [a.index(), (!b).index()]
     );
     assert_eq!(model[constraint].name, "positive");
+    assert_eq!(
+        (model[x].name.as_str(), model[interval].name.as_str()),
+        ("x", "task")
+    );
 
-    model[x].name = "x".into();
     model.proto_mut().name = "model".into();
     model.remove_all_names();
     assert_eq!(model.proto().name, "");
@@ -333,7 +336,8 @@ fn interval_parts_panic_on_a_replaced_interval() {
     let mut model = Model::new();
     let x = model.new_var(0..=9);
     let interval = model.new_var(Interval::fixed_size(x, 3));
-    model[interval] = x.le(5).into_proto();
+    model.proto_mut().constraints[usize::try_from(interval.index()).unwrap()] =
+        x.le(5).into_proto();
     let _ = model.interval_start(interval);
 }
 
@@ -344,7 +348,8 @@ fn interval_parts_panic_on_a_ragged_expression() {
     let x = model.new_var(0..=9);
     let y = model.new_var(0..=9);
     let interval = model.new_var(Interval::fixed_size(x, 3));
-    let Some(Kind::Interval(proto)) = &mut model[interval].constraint else {
+    let constraint = &mut model.proto_mut().constraints[usize::try_from(interval.index()).unwrap()];
+    let Some(Kind::Interval(proto)) = &mut constraint.constraint else {
         unreachable!("Interval::fixed_size writes an interval");
     };
     proto.start.get_or_insert_default().vars.push(y.index());
@@ -427,7 +432,7 @@ fn constants_survive_round_trips_and_edits() {
     model.proto_mut().variables.clear();
     let seven = model.constant(7);
     assert_eq!(seven.index(), 0);
-    model[seven].domain = vec![0, 9];
+    model.proto_mut().variables[0].domain = vec![0, 9];
     assert_ne!(model.constant(7), seven);
 }
 

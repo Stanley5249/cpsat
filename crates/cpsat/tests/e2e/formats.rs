@@ -24,10 +24,8 @@ objective {
 
 fn expected() -> CpModelProto {
     let mut model = Model::new();
-    let x = model.new_var(0..=10);
-    let y = model.new_var(0..=10);
-    model[x].name = "x".into();
-    model[y].name = "y".into();
+    let x = model.new_var((0..=10).with_name("x"));
+    let y = model.new_var((0..=10).with_name("y"));
     model.add((x + y).le(4));
     model.maximize(2 * x + 3 * y);
     model.into_proto()

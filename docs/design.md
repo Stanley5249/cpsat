@@ -116,8 +116,10 @@ Every change follows these rules.
 - **Lookup.** A raw schema index returns `Option`. Indexing with a handle panics
   when the model lacks it, like a slice.
 - **Builders.** A value configured before insertion takes `self` and returns
-  `Self` with `#[must_use]`, such as `Constraint::only_enforce_if`. Change it
-  after insertion through `model[handle]`.
+  `Self` with `#[must_use]`, such as `Constraint::only_enforce_if`. Change a
+  constraint after insertion through `model[constraint]`. Variables and
+  intervals change only through `proto_mut`, because a changed domain or
+  interval body can break the handles that rely on it.
 - **`#[must_use]`.** Every public method without side effects carries it.
   Appending model methods such as `new_var` do not.
 - **Python mapping.** An item that mirrors Python says "like Python's `name`",

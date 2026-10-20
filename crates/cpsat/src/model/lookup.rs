@@ -121,23 +121,11 @@ impl Index<IntVar> for Model {
     }
 }
 
-impl IndexMut<IntVar> for Model {
-    fn index_mut(&mut self, var: IntVar) -> &mut IntegerVariableProto {
-        &mut self.0.variables[slot(var.0)]
-    }
-}
-
 impl Index<IntervalVar> for Model {
     type Output = ConstraintProto;
 
     fn index(&self, interval: IntervalVar) -> &ConstraintProto {
         &self.0.constraints[slot(interval.0)]
-    }
-}
-
-impl IndexMut<IntervalVar> for Model {
-    fn index_mut(&mut self, interval: IntervalVar) -> &mut ConstraintProto {
-        &mut self.0.constraints[slot(interval.0)]
     }
 }
 
