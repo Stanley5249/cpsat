@@ -59,14 +59,34 @@ impl Domain {
         intervals.sort_unstable();
         // Merges in place: `dedup_by` hands each interval with the last kept
         // one, which absorbs it when they overlap or touch.
-        intervals.dedup_by(|&mut [lower, upper], last| {
-            let touches = last[1].checked_add(1).is_none_or(|next| lower <= next);
-            if touches {
-                last[1] = last[1].max(upper);
-            }
-            touches
-        });
+        intervals.dedup_by(|&mut next, last| absorb(last, next));
         Self(intervals)
+    }
+
+    /// The domain of `value - offset` for each value, reusing the buffer.
+    ///
+    /// The bounds `i64::MIN` and `i64::MAX` stand for infinity, so they stay,
+    /// and finite bounds saturate into them like Python's `Domain` arithmetic.
+    /// A saturated bound admits no extra value, because OR-Tools rejects a
+    /// variable whose domain reaches near either limit.
+    pub(crate) fn into_shifted_down(mut self, offset: i64) -> Self {
+        if offset == 0 {
+            return self;
+        }
+        let shift = |bound: i64| match bound {
+            i64::MIN | i64::MAX => bound,
+            _ => i64::try_from(
+                (i128::from(bound) - i128::from(offset)).clamp(i64::MIN.into(), i64::MAX.into()),
+            )
+            .expect("the bound is clamped into i64"),
+        };
+        for [lower, upper] in &mut self.0 {
+            *lower = shift(*lower);
+            *upper = shift(*upper);
+        }
+        // The shift keeps the order, but saturation can make intervals touch.
+        self.0.dedup_by(|&mut next, last| absorb(last, next));
+        self
     }
 
     /// Reads a schema `domain` field, or `None` if it has an odd length.
@@ -304,13 +324,20 @@ impl From<RangeToInclusive<i64>> for Domain {
 
 /// Appends `interval`, which starts no earlier than the last one, merging it
 /// into the last one when they overlap or touch.
-fn push_merged(merged: &mut Vec<[i64; 2]>, [lower, upper]: [i64; 2]) {
-    match merged.last_mut() {
-        Some(last) if last[1].checked_add(1).is_none_or(|next| lower <= next) => {
-            last[1] = last[1].max(upper);
-        }
-        _ => merged.push([lower, upper]),
+fn push_merged(merged: &mut Vec<[i64; 2]>, interval: [i64; 2]) {
+    if !merged.last_mut().is_some_and(|last| absorb(last, interval)) {
+        merged.push(interval);
     }
+}
+
+/// Extends `last` over `next`, which starts no earlier, and returns whether
+/// they overlap or touch.
+fn absorb(last: &mut [i64; 2], [lower, upper]: [i64; 2]) -> bool {
+    let touches = last[1].checked_add(1).is_none_or(|next| lower <= next);
+    if touches {
+        last[1] = last[1].max(upper);
+    }
+    touches
 }
 
 /// The nonempty intersections of two normalized interval lists, in order.

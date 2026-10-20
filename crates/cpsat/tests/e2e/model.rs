@@ -244,6 +244,9 @@ fn comparisons_at_the_i64_limits_match_python() {
     for (constraint, expected) in cases {
         assert_eq!(linear_domain(constraint), expected);
     }
+    // Intervals that saturate into touching merge.
+    let gap = Domain::from_intervals([(MIN, MAX - 4), (MAX - 2, MAX - 1)]);
+    assert_eq!(linear_domain((x - 5).in_domain(gap)), [MIN, MAX]);
 }
 
 #[test]
