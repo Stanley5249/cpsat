@@ -1,4 +1,4 @@
 # Lets a Linux executable find the OR-Tools libraries copied beside it. CI
-# tests this, and the README's Deployment section asks users to do the same.
+# tests this, and docs/build.md asks users to do the same.
 [target.x86_64-unknown-linux-gnu]
 rustflags = ["-C", "link-arg=-Wl,-rpath,$ORIGIN"]

@@ -141,8 +141,8 @@ jobs:
         with:
           key: ${{ matrix.name }}
       - run: cargo test --locked --workspace --features cpsat/json
-      # Copies the runtime directory beside the executable, as the README's
-      # Deployment section describes, and runs it without Cargo's library path.
+      # Copies the runtime directory beside the executable, as docs/build.md
+      # describes, and runs it without Cargo's library path.
       - name: Run from a directory with only the runtime beside it
         shell: bash
         run: |

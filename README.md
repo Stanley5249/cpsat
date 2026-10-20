@@ -71,40 +71,8 @@ The build script reads these environment variables:
 - `CPSAT_CACHE_DIR`: Download and build cache, by default
   `%LOCALAPPDATA%\cpsat`, or `$XDG_CACHE_HOME/cpsat` then `~/.cache/cpsat`
 
-For an offline build, extract the official OR-Tools archive for the target and
-set `ORTOOLS_ROOT` to the extracted directory that holds `include` and `lib`.
-`crates/cpsat-sys/build/artifacts.rs` lists each archive's URL and SHA-256.
-
-Deleting `CPSAT_CACHE_DIR` makes the next build download and extract again.
-`ORTOOLS_ROOT` and `CPSAT_CACHE_DIR` must be absolute. `cargo run` and
-`cargo test` find the OR-Tools shared libraries while Cargo's `build.build-dir`
-stays inside the target directory, which is the default. The `cpsat-sys` build
-script explains why.
-
-## Deployment
-
-The OR-Tools libraries are shared, so a shipped executable needs them beside it.
-Copy the contents of the OR-Tools runtime directory next to the executable. The
-directory also holds `licenses`, the notices that OR-Tools and its bundled
-libraries require you to ship with them.
-
-The runtime directory is the `runtime` folder in the `cpsat-sys` build output.
-To find it from your own build script, add `cpsat-sys` as a direct dependency
-and read `DEP_ORTOOLS_RUNTIME`, because Cargo passes it only to packages that
-depend on `cpsat-sys` directly.
-
-Windows finds DLLs in the executable's directory. Linux needs an `$ORIGIN`
-rpath, which a library cannot set for your binary, so add it to
-`.cargo/config.toml`:
-
-```toml
-[target.x86_64-unknown-linux-gnu]
-rustflags = ["-C", "link-arg=-Wl,-rpath,$ORIGIN"]
-```
-
-This repository's `.cargo/config.toml` does the same, and the CI `test` job runs
-`crates/cpsat/examples/solve.rs` from a directory that holds only the copied
-runtime. A `RUSTFLAGS` environment variable replaces these `rustflags`.
+`docs/build.md` covers the mode order, offline builds, linking, and deployment,
+which copies the OR-Tools runtime libraries beside the executable.
 
 ## Requirements
 
@@ -127,6 +95,7 @@ Run `just` to list the recipes. `just check` is the fast local gate, and
 ## Documents
 
 - [Design](docs/design.md)
+- [Build and deployment](docs/build.md)
 - [Conventions](docs/conventions.md)
 - [Roadmap](docs/roadmap.md)
 - [Python parity](docs/parity.md)

@@ -8,9 +8,9 @@
 - **Benchmarks.** Measure Buffa encode and decode, model transfer, solve
   overhead, callback latency, and view decoding against C++ and Python on the
   same models. Add zero-copy paths only for a measured bottleneck.
-- **Optional C++ work.** Static linking of a reduced source build, a CP-SAT-only
-  target, and borrowed solution buffers. Measure the benefit before maintaining
-  any of them.
+- **Optional C++ work.** Static linking through a `static` feature, as
+  `docs/build.md` plans, a CP-SAT-only target, and borrowed solution buffers.
+  Measure the benefit before maintaining any of them.
 - **Use in a real project** before the first release.
 
 ## Open questions before publishing
