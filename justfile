@@ -49,6 +49,17 @@ gen-proto *args:
 check-proto: gen-proto
     git diff --exit-code -- crates/cpsat/src/proto
 
+# Regenerate the raw FFI declarations from the bridge header
+[group("bindings")]
+gen-bindings *args:
+    bindgen crates/cpsat-sys/bridge/bridge.h --output crates/cpsat-sys/src/bindings.rs --disable-header-comment --rust-edition 2024 --rust-target 1.89 --use-core --no-doc-comments --default-macro-constant-type signed --allowlist-function "cpsat_.*" --allowlist-type "Cpsat.*" --allowlist-var "CPSAT_.*" {{ args }}
+    cargo fmt -p cpsat-sys
+
+# Fail when the committed bindings differ from a fresh generation
+[group("bindings")]
+check-bindings: gen-bindings
+    git diff --exit-code -- crates/cpsat-sys/src/bindings.rs
+
 # Regenerate the Python models that tests/e2e/equivalence.rs compares against
 [group("fixtures")]
 gen-fixtures:

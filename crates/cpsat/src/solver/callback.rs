@@ -150,7 +150,7 @@ where
     unsafe fn register(&mut self, session: &Session) -> Result<()> {
         // SAFETY: the trampoline matches the context type, and the caller
         // keeps the context in place.
-        unsafe { session.add_solution_callback(solution::<F>, (&raw mut self.0).cast()) }
+        unsafe { session.add_solution_callback(Some(solution::<F>), (&raw mut self.0).cast()) }
     }
 
     fn take_panic(&mut self) -> Option<Panic> {
@@ -164,7 +164,7 @@ where
 {
     unsafe fn register(&mut self, session: &Session) -> Result<()> {
         // SAFETY: as for the solution callback.
-        unsafe { session.add_best_bound_callback(best_bound::<F>, (&raw mut self.0).cast()) }
+        unsafe { session.add_best_bound_callback(Some(best_bound::<F>), (&raw mut self.0).cast()) }
     }
 
     fn take_panic(&mut self) -> Option<Panic> {
@@ -178,7 +178,7 @@ where
 {
     unsafe fn register(&mut self, session: &Session) -> Result<()> {
         // SAFETY: as for the solution callback.
-        unsafe { session.add_log_callback(log::<F>, (&raw mut self.0).cast()) }
+        unsafe { session.add_log_callback(Some(log::<F>), (&raw mut self.0).cast()) }
     }
 
     fn take_panic(&mut self) -> Option<Panic> {
