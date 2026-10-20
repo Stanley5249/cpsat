@@ -37,7 +37,7 @@ fn looks_up_handles_by_index() {
     let literal = |index| {
         model
             .int_var_from_index(index)
-            .and_then(|var| model.to_literal(var))
+            .and_then(|var| model.to_bool_var(var))
     };
     assert_eq!(literal(b.index()), Some(b));
     assert_eq!(literal(one.index()).map(BoolVar::index), Some(2));
@@ -396,9 +396,9 @@ fn a_zero_one_variable_serves_as_a_literal() {
     let mut model = CpModel::new();
     let flag = model.new_var(0..=1);
     let wide = model.new_var(0..=2);
-    let literal = model.to_literal(flag).unwrap();
+    let literal = model.to_bool_var(flag).unwrap();
     assert_eq!(literal.variable(), flag);
-    assert_eq!(model.to_literal(wide), None);
+    assert_eq!(model.to_bool_var(wide), None);
     model.add(Constraint::bool_or([literal]));
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.value(flag), Some(1));
@@ -409,10 +409,19 @@ fn only_domains_within_zero_and_one_are_literals() {
     let mut model = CpModel::new();
     for domain in [Domain::new(0, 0), Domain::new(1, 1)] {
         let fixed = model.new_var(domain);
-        assert!(model.to_literal(fixed).is_some());
+        assert!(model.to_bool_var(fixed).is_some());
     }
     let empty = model.new_var(Domain::default());
-    assert_eq!(model.to_literal(empty), None);
+    assert_eq!(model.to_bool_var(empty), None);
+}
+
+#[test]
+#[should_panic(expected = "index out of bounds")]
+fn to_bool_var_panics_without_the_variable() {
+    let mut larger = CpModel::new();
+    let _ = larger.new_var(Bool);
+    let x = larger.new_var(Bool).variable();
+    let _ = CpModel::new().to_bool_var(x);
 }
 
 #[test]

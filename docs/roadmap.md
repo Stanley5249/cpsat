@@ -26,6 +26,6 @@ These decisions are expensive to reverse after a crates.io release.
 - **Platforms.** Two x86_64 targets for now. OR-Tools also publishes macOS and
   aarch64 archives.
 - **Allocation rule.** The rule covers every read, which made
-  `CpModel::to_literal` and `Domain::union_with` more complex than their simpler
-  forms, though neither is on a hot path. The benchmarks decide whether to
-  narrow it to hot paths.
+  `CpModel::to_bool_var` and `Domain::union_with` more complex than their
+  simpler forms, though neither is on a hot path. The benchmarks decide whether
+  to narrow it to hot paths.

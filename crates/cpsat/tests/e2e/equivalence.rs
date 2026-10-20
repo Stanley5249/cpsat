@@ -208,7 +208,7 @@ fn constants() {
     model.add(x.eq(five));
     let one = model.new_var(1..=1);
     model.add(x.le(five + one));
-    let yes = model.to_literal(one).expect("1 is a 0-1 value");
+    let yes = model.to_bool_var(one).expect("1 is a 0-1 value");
     model.add(Constraint::bool_or([yes, b]));
     let no = model.new_var(false);
     model.add(Constraint::bool_and([no]).only_enforce_if(b));

@@ -250,7 +250,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: `model.rs::literals_negate_and_name_their_variable` tests typed
     negation
 - `IntVar.is_boolean`, literal `negated`, `NotBooleanVariable`
-  - Rust: `CpModel::to_literal(var).is_some()`, `!literal`,
+  - Rust: `CpModel::to_bool_var(var).is_some()`, `!literal`,
     `BoolVar::is_negated`, `variable`; one Rust literal type represents both
     signs
   - Test: `model.rs::a_zero_one_variable_serves_as_a_literal`,
@@ -263,7 +263,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: `solve.rs::resolves_after_model_change`,
     `model.rs::literals_negate_and_name_their_variable`
 - A 0-1 `IntVar` where a literal goes
-  - Rust: `CpModel::to_literal`
+  - Rust: `CpModel::to_bool_var`
   - Test: `model.rs::a_zero_one_variable_serves_as_a_literal`
 - `add(x == y)` and the other comparisons
   - Rust: `eq`, `ne`, `le`, `lt`, `ge`, `gt`
@@ -347,8 +347,8 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: `samples.rs::assumptions`, `model.rs::adds_and_clears_assumptions`
 - `get_int_var_from_proto_index`, `get_bool_var_from_proto_index`,
   `get_interval_var_from_proto_index`
-  - Rust: `CpModel::int_var_from_index`, `interval_var_from_index`; `to_literal`
-    on the variable for a literal
+  - Rust: `CpModel::int_var_from_index`, `interval_var_from_index`;
+    `to_bool_var` on the variable for a literal
   - Test: `model.rs::looks_up_handles_by_index`
 - `IntVar.name`, `IntervalVar.name`, `Constraint.name`, `CpModel.name`
   - Rust: `with_name` before insertion, `model[handle].name` to read,
@@ -385,7 +385,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   `get_or_make_boolean_index`, `rebuild_constant_map` inherited from
   `CpBaseModel`
   - Rust: `new_var(value..=value).index()`, typed handle indices,
-    `new_var(bool)` / `to_literal`; no constant cache to rebuild
+    `new_var(bool)` / `to_bool_var`; no constant cache to rebuild
   - Test: `model.rs::a_bool_creates_a_fixed_literal`,
     `equivalence.rs::constants`
 - `CpModel.is_boolean_value`, `object_is_a_true_literal`,
@@ -514,7 +514,7 @@ or mutable solver state with types.
   later through `proto_mut`.
 - Python accepts dynamic literal inputs and sequence/varargs overloads. Rust
   takes typed `BoolVar` literals and iterator inputs. Use `new_var(true)` for a
-  fixed literal and `to_literal` for a 0-1 integer variable. Where Python mixes
+  fixed literal and `to_bool_var` for a 0-1 integer variable. Where Python mixes
   `True` into a list of presence literals, an `Option<BoolVar>` says the same
   without a variable.
 - Integer expression overflow panics in Rust, while Python's native expression

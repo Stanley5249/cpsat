@@ -23,12 +23,16 @@ impl CpModel {
     /// where Python accepts a 0-1 integer variable as a literal. With
     /// [`int_var_from_index`](Self::int_var_from_index), it replaces Python's
     /// `get_bool_var_from_proto_index`.
-    #[doc(alias("get_bool_var_from_proto_index"))]
+    ///
+    /// # Panics
+    ///
+    /// Panics if the model lacks `var`, like indexing with it.
+    #[doc(alias("get_bool_var_from_proto_index", "ToBoolVar"))]
     #[must_use]
-    pub fn to_literal(&self, var: IntVar) -> Option<BoolVar> {
+    pub fn to_bool_var(&self, var: IntVar) -> Option<BoolVar> {
         // Reads the flat field in place: a nonempty list of pairs with every
         // nonempty pair inside [0, 1].
-        let (pairs, rest) = self.variable(var.0)?.domain.as_chunks::<2>();
+        let (pairs, rest) = self[var].domain.as_chunks::<2>();
         let within = pairs
             .iter()
             .all(|&[lower, upper]| lower > upper || (lower >= 0 && upper <= 1));
