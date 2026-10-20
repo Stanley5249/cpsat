@@ -88,6 +88,17 @@ Every change follows these rules.
   indices, `-i - 1` literals, flat interval lists, and `oneof` constraints. Use
   typed records such as `SatParameters` and `CpSolverResponse` as generated, and
   add methods to them.
+- **Wrappers.** A hand-written type is a cheap wrapper over data that OR-Tools
+  or Buffa already lays out. It holds or borrows that data and adds no copy,
+  cache, or translation, as `CpModel` holds only its `CpModelProto` and
+  `Solution` borrows one `repeated int64` row. A type that regroups OR-Tools
+  entry points needs a reason under Decisions.
+- **Layers.** Each OR-Tools entry point maps to one bridge function and one Rust
+  method, and its name adapts per layer, as `SolveWrapper::AddLogCallback`
+  becomes `cpsat_session_add_log_callback` and `CpSolver::add_log_callback`.
+- **Boundary.** Data crosses the C ABI by borrowed pointer while its C++ owner
+  lives. It crosses as serialized bytes only when ownership crosses: the model
+  and parameters in, and the final response out.
 - **Literals.** The schema refers to a row of `CpModelProto::variables` by its
   `i32` index. A field named `literal` reads that index as a Boolean on a 0-1
   variable, and the negative value `-i - 1` is the negation of row `i`, so a
@@ -184,6 +195,9 @@ Every change follows these rules.
   share.
 
 ## Decisions
+
+Each decision names the cost it accepts, so a review can weigh it against the
+rules above instead of taking it as given.
 
 - **Crates.** `cpsat-sys` and `cpsat`, because `links` allows one native link
   per graph.
