@@ -9,7 +9,7 @@ use cpsat::proto::{CpSolverResponse, CpSolverStatus, LinearExpressionProto, SatP
 
 #[test]
 fn literals_negate_and_name_their_variable() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     model.new_var(0..=5);
     let b = model.new_var(Bool.with_name("b"));
     assert_eq!((b.index(), (!b).index()), (1, -2));
@@ -23,10 +23,10 @@ fn literals_negate_and_name_their_variable() {
 
 #[test]
 fn looks_up_handles_by_index() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=5);
     let b = model.new_var(Bool);
-    let one = model.constant(1);
+    let one = model.new_constant(1);
     let start = model.new_var(0..=10);
     let interval = model.new_var(Interval::fixed_size(start, 2));
     let constraint = model.add(x.le(3));
@@ -52,7 +52,7 @@ fn looks_up_handles_by_index() {
 
 #[test]
 fn constraint_builder_sets_enforcement_and_name() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var((0..=5).with_name("x"));
     let [a, b] = std::array::from_fn(|_| model.new_var(Bool));
     let interval = model.new_var(Interval::fixed_size(x, 2).with_name("task"));
@@ -81,7 +81,7 @@ fn constraint_builder_sets_enforcement_and_name() {
 
 #[test]
 fn replaces_and_clears_the_objective() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=5);
     assert!(!model.has_objective());
     model.maximize(x);
@@ -98,10 +98,10 @@ fn replaces_and_clears_the_objective() {
 
 #[test]
 fn constants_and_true_literals_solve_to_their_values() {
-    let mut model = Model::new();
-    let seven = model.constant(7);
-    let yes = model.bool_constant(true);
-    let no = model.bool_constant(false);
+    let mut model = CpModel::new();
+    let seven = model.new_constant(7);
+    let yes = model.new_constant(true);
+    let no = model.new_constant(false);
     let x = model.new_var(0..=10);
     model.add(x.eq(seven + 1));
     model.add(Constraint::reservoir_with_active(
@@ -118,7 +118,7 @@ fn constants_and_true_literals_solve_to_their_values() {
 
 #[test]
 fn expressions_merge_terms_like_python() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=5);
     let y = model.new_var(0..=5);
     let mut expr = LinearExpr::from(y);
@@ -140,7 +140,7 @@ fn expressions_merge_terms_like_python() {
 
 #[test]
 fn circuit_takes_arcs_from_an_iterator() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let arcs: Vec<(i32, i32, BoolVar)> = (0..3)
         .map(|i| (i, (i + 1) % 3, model.new_var(Bool)))
         .collect();
@@ -152,7 +152,7 @@ fn circuit_takes_arcs_from_an_iterator() {
 #[test]
 #[should_panic(expected = "linear expression overflows i64")]
 fn coefficient_overflow_panics() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=1);
     let _ = x * i64::MAX * 2;
 }
@@ -160,7 +160,7 @@ fn coefficient_overflow_panics() {
 #[test]
 #[should_panic(expected = "linear expression overflows i64")]
 fn negating_the_minimum_coefficient_panics() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=1);
     let _ = -(x * i64::MIN);
 }
@@ -176,7 +176,7 @@ fn linear_domain(constraint: Constraint) -> Vec<i64> {
 fn comparisons_at_the_i64_limits_match_python() {
     const MIN: i64 = i64::MIN;
     const MAX: i64 = i64::MAX;
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(-10..=10);
     let y = model.new_var(0..=5);
     // The domains that Python's OR-Tools 9.15 writes for the same comparisons.
@@ -206,7 +206,7 @@ fn comparisons_at_the_i64_limits_match_python() {
 
 #[test]
 fn constants_that_mean_infinity_panic_like_python() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=1);
     let comparisons: [fn(IntVar) -> Constraint; 6] = [
         |x| x.gt(i64::MAX),
@@ -225,7 +225,7 @@ fn constants_that_mean_infinity_panic_like_python() {
 
 #[test]
 fn values_without_a_solution() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=1);
     let response = CpSolverResponse::default();
     assert_eq!(response.value(x), None);
@@ -235,7 +235,7 @@ fn values_without_a_solution() {
 #[test]
 #[should_panic(expected = "linear expression overflows i64")]
 fn evaluation_overflow_panics() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=1);
     let response = CpSolverResponse {
         solution: vec![i64::MAX / 2],
@@ -246,7 +246,7 @@ fn evaluation_overflow_panics() {
 
 #[test]
 fn evaluation_cancels_terms_before_overflow() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=3_000_000_000_000_000_000);
     let response = CpSolverResponse {
         solution: vec![3_000_000_000_000_000_000],
@@ -260,7 +260,7 @@ fn evaluation_cancels_terms_before_overflow() {
 
 #[test]
 fn merging_cancels_coefficients_before_overflow() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=1);
     let big = 1 << 62;
     let proto = LinearExpressionProto::from(x * big + x * big - x * big);
@@ -269,7 +269,7 @@ fn merging_cancels_coefficients_before_overflow() {
 
 #[test]
 fn overflowing_arithmetic_leaves_the_expression_intact() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let [x, y, z, w] = std::array::from_fn(|_| model.new_var(0..=1));
     let mut expr = LinearExpr::from(x);
     let failed = std::panic::catch_unwind(AssertUnwindSafe(|| expr -= w + y * i64::MIN));
@@ -291,7 +291,7 @@ fn overflowing_arithmetic_leaves_the_expression_intact() {
 
 #[test]
 fn adds_and_clears_assumptions() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let a = model.new_var(Bool);
     let b = model.new_var(Bool);
     model.add_assumptions([a]);
@@ -303,7 +303,7 @@ fn adds_and_clears_assumptions() {
 
 #[test]
 fn reads_interval_parts_like_python() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=9);
     let present = model.new_var(Bool);
     let fixed = model.new_var(Interval::fixed_size(x, 3));
@@ -333,7 +333,7 @@ fn reads_interval_parts_like_python() {
 #[test]
 #[should_panic(expected = "is not an interval of this model")]
 fn interval_parts_panic_on_a_replaced_interval() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=9);
     let interval = model.new_var(Interval::fixed_size(x, 3));
     model.proto_mut().constraints[usize::try_from(interval.index()).unwrap()] =
@@ -344,7 +344,7 @@ fn interval_parts_panic_on_a_replaced_interval() {
 #[test]
 #[should_panic(expected = "vars and coeffs of unequal lengths")]
 fn interval_parts_panic_on_a_ragged_expression() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=9);
     let y = model.new_var(0..=9);
     let interval = model.new_var(Interval::fixed_size(x, 3));
@@ -359,7 +359,7 @@ fn interval_parts_panic_on_a_ragged_expression() {
 
 #[test]
 fn integer_and_float_objectives_replace_each_other() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=5);
     model.maximize(x);
     model.minimize(0.5 * x + 1.0 - x * 2.0);
@@ -378,7 +378,7 @@ fn integer_and_float_objectives_replace_each_other() {
 
 #[test]
 fn float_operators_mix_constants_and_expressions() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=5);
     let mut expr = 0.5 - x + (x + 0.25);
     expr += 2 * x;
@@ -393,7 +393,7 @@ fn float_operators_mix_constants_and_expressions() {
 
 #[test]
 fn a_zero_one_variable_serves_as_a_literal() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let flag = model.new_var(0..=1);
     let wide = model.new_var(0..=2);
     let literal = model.to_literal(flag).unwrap();
@@ -406,7 +406,7 @@ fn a_zero_one_variable_serves_as_a_literal() {
 
 #[test]
 fn only_domains_within_zero_and_one_are_literals() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     for domain in [Domain::new(0, 0), Domain::new(1, 1)] {
         let fixed = model.new_var(domain);
         assert!(model.to_literal(fixed).is_some());
@@ -417,30 +417,30 @@ fn only_domains_within_zero_and_one_are_literals() {
 
 #[test]
 fn constants_survive_round_trips_and_edits() {
-    let mut model = Model::new();
-    let five = model.constant(5);
-    assert_eq!(model.constant(5), five);
+    let mut model = CpModel::new();
+    let five = model.new_constant(5);
+    assert_eq!(model.new_constant(5), five);
 
     // Like Python's clone, a rebuilt model reuses any fixed variable.
     let mut proto = model.into_proto();
     proto.variables[0].domain = vec![7, 7];
-    let mut model = Model::from(proto);
-    assert_eq!(model.constant(7), five);
-    assert_eq!(model.clone().constant(7), five);
+    let mut model = CpModel::from(proto);
+    assert_eq!(model.new_constant(7), five);
+    assert_eq!(model.clone().new_constant(7), five);
 
     // An edited or removed variable no longer serves its old value.
     model.proto_mut().variables.clear();
-    let seven = model.constant(7);
+    let seven = model.new_constant(7);
     assert_eq!(seven.index(), 0);
     model.set_domain(seven, 0..=9);
-    assert_ne!(model.constant(7), seven);
+    assert_ne!(model.new_constant(7), seven);
 }
 
 /// Handles order by index, so they key sorted collections, while the
 /// comparison methods still build constraints.
 #[test]
 fn handles_order_by_index_and_compare_into_constraints() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=5);
     let y = model.new_var(0..=5);
     let mut vars = [y, x];

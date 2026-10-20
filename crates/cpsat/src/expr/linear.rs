@@ -23,7 +23,7 @@ use crate::proto::LinearExpressionProto;
 /// use cpsat::prelude::*;
 ///
 /// // From `cp_sat_example.py`.
-/// let mut model = Model::new();
+/// let mut model = CpModel::new();
 /// let [x, y, z] = std::array::from_fn(|_| model.new_var(0..=50));
 /// model.add((2 * x + 7 * y + 3 * z).le(50));
 /// model.add((3 * x - 5 * y + 7 * z).le(45));

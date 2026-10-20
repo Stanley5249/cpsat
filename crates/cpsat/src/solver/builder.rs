@@ -12,12 +12,12 @@ use crate::solver::event::{Event, EventSet};
 use crate::solver::ffi::{Buffer, Session};
 use crate::solver::stop::StopHandle;
 
-/// The callback type of a [`Solver`] without events.
+/// The callback type of a [`CpSolver`] without events.
 pub type NoEvents = fn(Event<'_>) -> ControlFlow<()>;
 
 impl CpModelProto {
     /// Solves the model and returns the final response without a callback.
-    /// [`Solver`] adds events and stops.
+    /// [`CpSolver`] adds events and stops.
     ///
     /// # Errors
     ///
@@ -40,13 +40,13 @@ impl CpModelProto {
 /// use cpsat::proto::SatParameters;
 ///
 /// // From `solve_and_print_intermediate_solutions_sample_sat.py`.
-/// let mut model = Model::new();
+/// let mut model = CpModel::new();
 /// let [x, y, z] = std::array::from_fn(|_| model.new_var(0..=2));
 /// model.add(x.ne(y));
 /// model.maximize(x + 2 * y + 3 * z);
 ///
 /// let parameters = SatParameters::default().with_num_workers(8);
-/// let response = Solver::new(&parameters)
+/// let response = CpSolver::new(&parameters)
 ///     .on_event(EventSet::SOLUTION, |event| {
 ///         if let Event::Solution(view) = event {
 ///             println!("objective {}", view.objective_value);
@@ -56,16 +56,15 @@ impl CpModelProto {
 ///     .solve(model.proto())?;
 /// # Ok::<(), cpsat::Error>(())
 /// ```
-#[doc(alias("CpSolver"))]
 #[derive(Debug)]
-pub struct Solver<'a, F = NoEvents> {
+pub struct CpSolver<'a, F = NoEvents> {
     parameters: &'a SatParameters,
     events: EventSet,
     stop: Option<&'a StopHandle>,
     on_event: F,
 }
 
-impl<'a> Solver<'a> {
+impl<'a> CpSolver<'a> {
     /// A solver that borrows `parameters`, like [`CpModelProto::solve`] does. Build a new solver
     /// to solve with other parameters, and bind the parameters to a variable
     /// first to keep the solver for several solves.
@@ -80,14 +79,14 @@ impl<'a> Solver<'a> {
     }
 }
 
-impl Default for Solver<'_> {
+impl Default for CpSolver<'_> {
     fn default() -> Self {
         static DEFAULT: LazyLock<SatParameters> = LazyLock::new(SatParameters::default);
         Self::new(&DEFAULT)
     }
 }
 
-impl<'a, F> Solver<'a, F> {
+impl<'a, F> CpSolver<'a, F> {
     /// The parameters.
     #[must_use]
     pub fn parameters(&self) -> &'a SatParameters {
@@ -99,11 +98,11 @@ impl<'a, F> Solver<'a, F> {
     /// panic in `on_event` stops the search and resumes after the solve
     /// returns.
     #[must_use]
-    pub fn on_event<G>(self, events: EventSet, on_event: G) -> Solver<'a, G>
+    pub fn on_event<G>(self, events: EventSet, on_event: G) -> CpSolver<'a, G>
     where
         G: FnMut(Event<'_>) -> ControlFlow<()> + Send,
     {
-        Solver {
+        CpSolver {
             parameters: self.parameters,
             events,
             stop: self.stop,
@@ -122,7 +121,7 @@ impl<'a, F> Solver<'a, F> {
 
     /// Solves the model and returns the final response. The solver can solve
     /// again, for example after the model changes. Pass `&model` to keep a
-    /// [`Model`](crate::prelude::Model), because a `Model` by value moves into the call.
+    /// [`CpModel`](crate::prelude::CpModel), because a `CpModel` by value moves into the call.
     ///
     /// # Errors
     ///

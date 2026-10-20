@@ -25,7 +25,7 @@ impl Constraint {
     /// ```
     /// use cpsat::prelude::*;
     ///
-    /// let mut model = Model::new();
+    /// let mut model = CpModel::new();
     /// let [a, b, c] = std::array::from_fn(|_| model.new_var(Bool));
     /// model.add(Constraint::circuit([(0, 1, a), (1, 2, b), (2, 0, c)]));
     /// ```

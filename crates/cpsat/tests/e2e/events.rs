@@ -19,7 +19,7 @@ const STOPPED_WITHIN: Duration = Duration::from_secs(30);
 
 /// `x` in `[0, 3]` maximized, with `x` at index 0.
 fn tiny_model() -> CpModelProto {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=3);
     model.maximize(x);
     model.into_proto()
@@ -37,11 +37,11 @@ fn event_set_combines_kinds() {
 
 #[test]
 fn solution_view_reads_values_and_converts_to_owned() {
-    let model = Model::from(tiny_model());
+    let model = CpModel::from(tiny_model());
     let x = model.int_var_from_index(0).unwrap();
     let mut owned = None;
     let mut seen = None;
-    Solver::default()
+    CpSolver::default()
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 seen = view.value(x);
@@ -63,7 +63,7 @@ fn reports_best_bounds() {
     let parameters = SatParameters::default()
         .with_max_time_in_seconds(30.0)
         .with_num_workers(8);
-    Solver::new(&parameters)
+    CpSolver::new(&parameters)
         .on_event(EventSet::BEST_BOUND, |event| {
             if let Event::BestBound(bound) = event {
                 bounds.push(bound);
@@ -86,7 +86,7 @@ fn forwards_logs_and_parameters() {
         .with_log_to_stdout(false)
         .with_num_workers(3);
     let mut log = String::new();
-    let mut solver = Solver::new(&parameters).on_event(EventSet::LOG, |event| {
+    let mut solver = CpSolver::new(&parameters).on_event(EventSet::LOG, |event| {
         if let Event::Log(line) = event {
             log.push_str(line);
             log.push('\n');
@@ -103,7 +103,7 @@ fn forwards_logs_and_parameters() {
 #[test]
 fn callback_break_stops_search() {
     let start = Instant::now();
-    let response = Solver::new(&long_parameters())
+    let response = CpSolver::new(&long_parameters())
         .on_event(EventSet::SOLUTION, |_| ControlFlow::Break(()))
         .solve(hard_model())
         .unwrap();
@@ -114,7 +114,7 @@ fn callback_break_stops_search() {
 #[test]
 fn stop_handle_works_inside_callback() {
     let stop = StopHandle::new();
-    let response = Solver::new(&long_parameters())
+    let response = CpSolver::new(&long_parameters())
         .on_event(EventSet::SOLUTION, |_| {
             stop.stop();
             ControlFlow::Continue(())
@@ -138,7 +138,7 @@ fn stops_from_another_thread() {
             first_solutions.recv().unwrap();
             stop.stop();
         });
-        Solver::new(&long_parameters())
+        CpSolver::new(&long_parameters())
             .on_event(EventSet::SOLUTION, |_| {
                 // The receiver leaves after the first solution.
                 let _ = found.send(());
@@ -163,7 +163,7 @@ fn one_handle_stops_concurrent_solves() {
             .map(|_| {
                 let found = found.clone();
                 scope.spawn(move || {
-                    Solver::new(&long_parameters())
+                    CpSolver::new(&long_parameters())
                         .on_event(EventSet::SOLUTION, move |_| {
                             // The receiver leaves after both first solutions.
                             let _ = found.send(());
@@ -196,7 +196,7 @@ fn stopped_handle_stops_every_later_solve() {
     for _ in 0..2 {
         let mut solutions = 0;
         let start = Instant::now();
-        Solver::new(&long_parameters())
+        CpSolver::new(&long_parameters())
             .on_event(EventSet::SOLUTION, |_| {
                 solutions += 1;
                 ControlFlow::Continue(())
@@ -212,7 +212,7 @@ fn stopped_handle_stops_every_later_solve() {
 #[test]
 fn stop_after_solve_is_harmless() {
     let stop = StopHandle::new();
-    let mut solver = Solver::default().with_stop_handle(&stop);
+    let mut solver = CpSolver::default().with_stop_handle(&stop);
     solver.solve(tiny_model()).unwrap();
     stop.stop();
     assert!(stop.is_stopped());
@@ -223,7 +223,7 @@ fn callback_panic_stops_and_resumes_after_solve() {
     let start = Instant::now();
     let mut calls = 0;
     let panic = catch_unwind(AssertUnwindSafe(|| {
-        Solver::new(&long_parameters())
+        CpSolver::new(&long_parameters())
             .on_event(EventSet::SOLUTION, |_| {
                 calls += 1;
                 panic!("user callback failed");
@@ -239,7 +239,7 @@ fn callback_panic_stops_and_resumes_after_solve() {
 #[test]
 fn solver_solves_again() {
     let mut solutions = 0;
-    let mut solver = Solver::default().on_event(EventSet::ALL, |event| {
+    let mut solver = CpSolver::default().on_event(EventSet::ALL, |event| {
         if matches!(event, Event::Solution(_)) {
             solutions += 1;
         }
@@ -256,7 +256,7 @@ fn solver_solves_again() {
 /// Python's callback and `CpSolver` accessors agree.
 #[test]
 fn solution_view_accessors_match_the_owned_response() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=3);
     let b = model.new_var(Bool);
     let c = model.new_var(Bool);
@@ -264,7 +264,7 @@ fn solution_view_accessors_match_the_owned_response() {
     model.add(c.eq(0));
     model.maximize(x);
     // Handles from a larger model are out of range here.
-    let mut larger = Model::new();
+    let mut larger = CpModel::new();
     let [.., far]: [IntVar; 4] = std::array::from_fn(|_| larger.new_var(0..=1));
     let far_literal = larger.new_var(Bool);
 
@@ -284,7 +284,7 @@ fn solution_view_accessors_match_the_owned_response() {
         )
     };
     let mut seen = None;
-    let response = Solver::new(&SatParameters::default().with_num_workers(1))
+    let response = CpSolver::new(&SatParameters::default().with_num_workers(1))
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 seen = Some(read(
@@ -315,10 +315,10 @@ fn solution_view_accessors_match_the_owned_response() {
 
 #[test]
 fn solution_view_carries_search_statistics() {
-    let model = Model::from(tiny_model());
+    let model = CpModel::from(tiny_model());
     let x = model.int_var_from_index(0).unwrap();
     let mut checked = false;
-    Solver::new(&SatParameters::default().with_num_workers(1))
+    CpSolver::new(&SatParameters::default().with_num_workers(1))
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 // The objective is x, maximized.

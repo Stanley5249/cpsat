@@ -2,7 +2,7 @@
 
 Rust binding for the Google OR-Tools CP-SAT solver.
 
-`Model` builds a model with typed variables, linear expressions, and
+`CpModel` builds a model with typed variables, linear expressions, and
 constraints, like Python's `CpModel`. It stores the model as a
 [Buffa](https://github.com/anthropics/buffa)-generated `CpModelProto`, and
 parameters and responses are Buffa types too, so every schema field is
@@ -30,7 +30,7 @@ use cpsat::prelude::*;
 use cpsat::proto::SatParameters;
 
 // From `solve_and_print_intermediate_solutions_sample_sat.py`.
-let mut model = Model::new();
+let mut model = CpModel::new();
 let x = model.new_var((0..=2).with_name("x"));
 let y = model.new_var((0..=2).with_name("y"));
 let z = model.new_var((0..=2).with_name("z"));
@@ -41,7 +41,7 @@ let response = model.solve(&SatParameters::default())?;
 println!("{}: x = {:?}", response.status(), response.value(x));
 
 let stop = StopHandle::new();
-let response = Solver::new(&SatParameters::default().with_num_workers(8))
+let response = CpSolver::new(&SatParameters::default().with_num_workers(8))
     .on_event(EventSet::SOLUTION, |event| {
         if let Event::Solution(view) = event {
             println!("objective {}", view.objective_value);
@@ -54,7 +54,7 @@ let response = Solver::new(&SatParameters::default().with_num_workers(8))
 
 `crates/cpsat/tests/e2e/samples.rs` ports the official OR-Tools samples, and
 `docs/parity.md` maps each Python method to its Rust counterpart.
-`Model::proto_mut` reaches any schema field that the modeling API does not
+`CpModel::proto_mut` reaches any schema field that the modeling API does not
 cover.
 
 ## Configuration

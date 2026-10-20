@@ -6,7 +6,7 @@ use cpsat::prelude::*;
 use cpsat::proto::SatParameters;
 
 fn main() -> Result<()> {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=10);
     let y = model.new_var(0..=10);
     model.add((x + 2 * y).le(14));

@@ -3,7 +3,7 @@
 
 use buffa::MessageField;
 
-use super::Model;
+use super::CpModel;
 use crate::expr::{FloatExpr, LinearExpr};
 use crate::proto::{CpObjectiveProto, FloatObjectiveProto};
 
@@ -16,12 +16,12 @@ mod sealed {
 /// objective, where Python picks by the coefficients at run time.
 pub trait Objective: sealed::Sealed {
     #[doc(hidden)]
-    fn set(self, model: &mut Model, maximize: bool);
+    fn set(self, model: &mut CpModel, maximize: bool);
 }
 
 impl<T: Into<LinearExpr>> sealed::Sealed for T {}
 impl<T: Into<LinearExpr>> Objective for T {
-    fn set(self, model: &mut Model, maximize: bool) {
+    fn set(self, model: &mut CpModel, maximize: bool) {
         // Like Python, maximizing minimizes `-expr` with a scaling factor
         // of -1.
         let expr = self.into();
@@ -35,26 +35,26 @@ impl<T: Into<LinearExpr>> Objective for T {
 
 impl sealed::Sealed for FloatExpr {}
 impl Objective for FloatExpr {
-    fn set(self, model: &mut Model, maximize: bool) {
+    fn set(self, model: &mut CpModel, maximize: bool) {
         model.set_float_objective(self, maximize);
     }
 }
 
 impl sealed::Sealed for &FloatExpr {}
 impl Objective for &FloatExpr {
-    fn set(self, model: &mut Model, maximize: bool) {
+    fn set(self, model: &mut CpModel, maximize: bool) {
         model.set_float_objective(self.clone(), maximize);
     }
 }
 
 impl sealed::Sealed for f64 {}
 impl Objective for f64 {
-    fn set(self, model: &mut Model, maximize: bool) {
+    fn set(self, model: &mut CpModel, maximize: bool) {
         model.set_float_objective(self.into(), maximize);
     }
 }
 
-impl Model {
+impl CpModel {
     /// Minimizes `expr`, replacing any objective.
     pub fn minimize(&mut self, expr: impl Objective) {
         expr.set(self, false);

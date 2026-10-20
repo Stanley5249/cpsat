@@ -13,7 +13,7 @@ pub fn hard_model() -> CpModelProto {
             .wrapping_add(1_442_695_040_888_963_407);
         i64::try_from(state >> 33).expect("33-bit shift fits in i64") % range + 1
     };
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let vars: Vec<IntVar> = (0..120).map(|_| model.new_var(0..=20)).collect();
     for _ in 0..40 {
         let load: LinearExpr = vars.iter().map(|&var| var * next(50)).sum();
@@ -31,14 +31,14 @@ pub fn long_parameters() -> SatParameters {
 }
 
 /// Solves `model` with default parameters and asserts that it is optimal.
-pub fn solve_optimal(model: &Model) -> CpSolverResponse {
+pub fn solve_optimal(model: &CpModel) -> CpSolverResponse {
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
     response
 }
 
 /// The encoding of Python's `add_map_domain(x, literals, 3)`.
-pub fn map_domain(model: &mut Model, x: IntVar, literals: [BoolVar; 2]) {
+pub fn map_domain(model: &mut CpModel, x: IntVar, literals: [BoolVar; 2]) {
     for (value, literal) in (3..).zip(literals) {
         model.add(x.eq(value).only_enforce_if(literal));
         model.add(x.ne(value).only_enforce_if(!literal));

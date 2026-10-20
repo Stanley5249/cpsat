@@ -1,4 +1,4 @@
-//! Typed handles to the variables and intervals of a [`Model`](crate::prelude::Model).
+//! Typed handles to the variables and intervals of a [`CpModel`](crate::prelude::CpModel).
 //!
 //! A handle is an index into the model's Protobuf message, so it is `Copy` and
 //! does not borrow the model. The handle types keep integer variables,

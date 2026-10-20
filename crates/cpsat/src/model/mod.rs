@@ -54,6 +54,36 @@ impl Hint for BoolVar {
     }
 }
 
+/// What [`CpModel::new_constant`] accepts: an `i64` gives an [`IntVar`], and a
+/// `bool` gives a [`BoolVar`].
+pub trait NewConstant: sealed::Sealed {
+    /// The handle that [`CpModel::new_constant`] returns.
+    type Output;
+
+    /// Fixes the value in `model` and returns its handle.
+    #[doc(hidden)]
+    fn insert(self, model: &mut CpModel) -> Self::Output;
+}
+
+impl sealed::Sealed for i64 {}
+impl NewConstant for i64 {
+    type Output = IntVar;
+
+    fn insert(self, model: &mut CpModel) -> IntVar {
+        model.int_constant(self)
+    }
+}
+
+impl sealed::Sealed for bool {}
+impl NewConstant for bool {
+    type Output = BoolVar;
+
+    /// `true` and `false` share the variables of `1` and `0`.
+    fn insert(self, model: &mut CpModel) -> BoolVar {
+        BoolVar(model.int_constant(self.into()).0)
+    }
+}
+
 /// A CP-SAT model, which owns its `CpModelProto` and hands out typed handles.
 ///
 /// The model only appends variables and constraints, so a handle stays valid
@@ -65,21 +95,21 @@ impl Hint for BoolVar {
 /// use cpsat::prelude::*;
 ///
 /// // From `simple_sat_program.py`.
-/// let mut model = Model::new();
+/// let mut model = CpModel::new();
 /// let x = model.new_var((0..=2).with_name("x"));
 /// let y = model.new_var((0..=2).with_name("y"));
 /// let z = model.new_var((0..=2).with_name("z"));
 /// model.add(x.ne(y));
 /// ```
-#[doc(alias("CpModel", "CpModelBuilder"))]
+#[doc(alias("CpModelBuilder"))]
 #[derive(Clone, Debug, Default)]
-pub struct Model(CpModelProto, Constants);
+pub struct CpModel(CpModelProto, Constants);
 
-/// The variable of each value that [`Model::constant`] created, so a value
+/// The variable of each value that [`CpModel::new_constant`] created, so a value
 /// reuses one variable like Python's constant map.
 type Constants = BTreeMap<i64, i32>;
 
-impl PartialEq for Model {
+impl PartialEq for CpModel {
     /// Compares the messages, because the constant map only saves variables.
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
@@ -97,7 +127,7 @@ fn next_index(len: usize, what: &str) -> i32 {
     i32::try_from(len).unwrap_or_else(|_| panic!("the schema indexes {what} with i32"))
 }
 
-impl Model {
+impl CpModel {
     /// An empty model.
     #[must_use]
     pub fn new() -> Self {
@@ -164,7 +194,7 @@ impl Model {
     /// use cpsat::prelude::*;
     ///
     /// // From `interval_sample_sat.py`.
-    /// let mut model = Model::new();
+    /// let mut model = CpModel::new();
     /// let start = model.new_var((0..=100).with_name("start"));
     /// let end = model.new_var((0..=100).with_name("end"));
     /// let interval = model.new_var(Interval::new(start, 10, end + 2).with_name("interval"));
@@ -202,18 +232,26 @@ impl Model {
         self.0.variables[slot(var.0)].domain = domain.into().flattened_intervals();
     }
 
-    /// A variable fixed to `value`. Calls with one value share one variable
-    /// while its domain stays `[value, value]`.
+    /// A variable fixed to `value`: an [`IntVar`] for an `i64`, and a
+    /// [`BoolVar`] for a `bool`, which Python writes as `True` or `False`.
+    /// Calls with one value share one variable while its domain stays
+    /// `[value, value]`, and `true` shares the variable of `1`.
     ///
-    /// Use it where the schema needs a variable, such as in
-    /// [`Constraint::inverse`]. An expression takes a plain `i64` or
-    /// [`LinearExpr::constant`], which adds no variable.
+    /// Use it where the schema needs a variable or a literal, such as in
+    /// [`Constraint::inverse`] or [`Constraint::bool_or`]. An expression takes
+    /// a plain `i64` or [`LinearExpr::constant`], which adds no variable.
     ///
     /// # Panics
     ///
     /// Panics if the model already holds `i32::MAX` variables.
-    #[doc(alias("new_constant", "NewConstant"))]
-    pub fn constant(&mut self, value: i64) -> IntVar {
+    #[doc(alias("TrueVar", "FalseVar"))]
+    pub fn new_constant<C: NewConstant>(&mut self, value: C) -> C::Output {
+        value.insert(self)
+    }
+
+    /// The variable fixed to `value`, reused while its domain stays
+    /// `[value, value]`.
+    fn int_constant(&mut self, value: i64) -> IntVar {
         if let Some(&index) = self.1.get(&value)
             && self
                 .0
@@ -226,18 +264,6 @@ impl Model {
         let index = self.push_variable(vec![value, value], String::new());
         self.1.insert(value, index);
         IntVar(index)
-    }
-
-    /// A literal fixed to `value`, which Python writes as `True` or `False`.
-    /// Use it where the schema needs a literal, such as in
-    /// [`Constraint::only_enforce_if`] or [`Constraint::bool_or`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the model already holds `i32::MAX` variables.
-    #[doc(alias("TrueVar", "FalseVar"))]
-    pub fn bool_constant(&mut self, value: bool) -> BoolVar {
-        BoolVar(self.constant(value.into()).0)
     }
 
     /// Inserts a constraint.
@@ -312,7 +338,7 @@ impl Model {
     }
 }
 
-impl From<CpModelProto> for Model {
+impl From<CpModelProto> for CpModel {
     /// Wraps an existing model, like Python's `CpModel(model_proto)`. Like
     /// Python, the first variable fixed to each value becomes that value's
     /// constant.
@@ -331,22 +357,22 @@ impl From<CpModelProto> for Model {
     }
 }
 
-impl AsRef<CpModelProto> for Model {
+impl AsRef<CpModelProto> for CpModel {
     fn as_ref(&self) -> &CpModelProto {
         &self.0
     }
 }
 
 impl AsRef<Self> for CpModelProto {
-    /// Lets [`Solver::solve`](crate::prelude::Solver::solve) take a model or its
+    /// Lets [`CpSolver::solve`](crate::prelude::CpSolver::solve) take a model or its
     /// message.
     fn as_ref(&self) -> &Self {
         self
     }
 }
 
-impl From<Model> for CpModelProto {
-    fn from(model: Model) -> Self {
+impl From<CpModel> for CpModelProto {
+    fn from(model: CpModel) -> Self {
         model.0
     }
 }

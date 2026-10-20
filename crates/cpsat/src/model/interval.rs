@@ -2,12 +2,12 @@
 
 use buffa::MessageField;
 
-use super::{Model, NewVar, sealed};
+use super::{CpModel, NewVar, sealed};
 use crate::constraint::Constraint;
 use crate::expr::{BoolVar, IntervalVar, LinearExpr};
 use crate::proto::{ConstraintProto, IntervalConstraintProto};
 
-/// An interval before [`Model::new_var`] inserts it, which returns its
+/// An interval before [`CpModel::new_var`] inserts it, which returns its
 /// [`IntervalVar`].
 ///
 /// The schema stores an interval as a constraint row that scheduling
@@ -20,7 +20,7 @@ use crate::proto::{ConstraintProto, IntervalConstraintProto};
 /// use cpsat::prelude::*;
 ///
 /// // From `optional_interval_sample_sat.py`.
-/// let mut model = Model::new();
+/// let mut model = CpModel::new();
 /// let start = model.new_var((0..=100).with_name("start"));
 /// let end = model.new_var((0..=100).with_name("end"));
 /// let presence = model.new_var(Bool.with_name("presence"));
@@ -96,7 +96,7 @@ impl sealed::Sealed for Interval {}
 impl NewVar for Interval {
     type Output = IntervalVar;
 
-    fn insert(self, model: &mut Model) -> IntervalVar {
+    fn insert(self, model: &mut CpModel) -> IntervalVar {
         IntervalVar(model.add(self.0).index())
     }
 }

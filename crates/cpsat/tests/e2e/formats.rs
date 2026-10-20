@@ -23,7 +23,7 @@ objective {
 "#;
 
 fn expected() -> CpModelProto {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var((0..=10).with_name("x"));
     let y = model.new_var((0..=10).with_name("y"));
     model.add((x + y).le(4));

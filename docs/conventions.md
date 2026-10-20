@@ -50,10 +50,10 @@ CP-SAT APIs at the OR-Tools version that `docs/parity.md` pins.
 
 ## Examples
 
-- **Where.** The crate root, the entry types `Model`, `Solver`, `Constraint`,
-  `LinearExpr`, and `Domain`, and items whose argument shape is not obvious from
-  the signature, such as table rows, automaton transitions, circuit arcs,
-  intervals, and reservoir events.
+- **Where.** The crate root, the entry types `CpModel`, `CpSolver`,
+  `Constraint`, `LinearExpr`, and `Domain`, and items whose argument shape is
+  not obvious from the signature, such as table rows, automaton transitions,
+  circuit arcs, intervals, and reservoir events.
 - **What runs.** Doctests build a model and do not solve it, because solve
   results belong to the tests. The crate root and `README.md` show a `no_run`
   solve.

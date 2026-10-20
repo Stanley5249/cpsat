@@ -7,8 +7,8 @@ use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
 
 /// max 2x + 3y subject to x + y <= 4, x + 3y <= 6, x, y in [0, 10].
 /// The optimum is x = 3, y = 1 with objective 9.
-fn small_model() -> (Model, IntVar, IntVar) {
-    let mut model = Model::new();
+fn small_model() -> (CpModel, IntVar, IntVar) {
+    let mut model = CpModel::new();
     let x = model.new_var(0..=10);
     let y = model.new_var(0..=10);
     model.add((x + y).le(4));
@@ -36,8 +36,8 @@ fn solves_to_optimality() {
 
 #[test]
 fn reads_negated_literals_and_expressions() {
-    let mut model = Model::new();
-    let x = model.constant(4);
+    let mut model = CpModel::new();
+    let x = model.new_constant(4);
     let b = model.new_var(Bool);
     model.add(b.eq(1));
     let response = model.solve(&SatParameters::default()).unwrap();
@@ -49,7 +49,7 @@ fn reads_negated_literals_and_expressions() {
     assert_eq!(response.value(LinearExpr::from(!b)), Some(0));
 
     // A handle from a larger model is out of range here.
-    let mut larger = Model::new();
+    let mut larger = CpModel::new();
     let [.., far]: [IntVar; 3] = std::array::from_fn(|_| larger.new_var(0..=1));
     assert_eq!(response.value(far), None);
 }
@@ -63,7 +63,7 @@ fn displays_status_like_python() {
 
 #[test]
 fn reports_infeasible() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=3);
     model.add(x.in_domain(5..=10));
     let response = model.solve(&SatParameters::default()).unwrap();
@@ -73,7 +73,7 @@ fn reports_infeasible() {
 
 #[test]
 fn reports_model_invalid_as_status() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     model.new_var(Domain::new(5, 1));
     let response = model.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::MODEL_INVALID);
@@ -100,7 +100,7 @@ fn resolves_after_model_change() {
 fn clone_and_serialize_round_trip() {
     let (model, ..) = small_model();
     let decoded = CpModelProto::decode_from_slice(&model.proto().encode_to_vec()).unwrap();
-    assert_eq!(model.clone(), Model::from(decoded.clone()));
+    assert_eq!(model.clone(), CpModel::from(decoded.clone()));
     let response = decoded.solve(&SatParameters::default()).unwrap();
     assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
 }
@@ -108,7 +108,7 @@ fn clone_and_serialize_round_trip() {
 #[test]
 fn first_solution_follows_the_hint() {
     // x + y == 10 has eleven solutions, and the hint picks the first one.
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=10);
     let y = model.new_var(0..=10);
     model.add((x + y).eq(10));
@@ -139,7 +139,7 @@ fn honors_time_limit() {
 
 #[test]
 fn fills_additional_solutions_when_asked() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     model.new_var(0..=2);
     let parameters = single_worker()
         .with_enumerate_all_solutions(true)
@@ -158,7 +158,7 @@ fn fills_additional_solutions_when_asked() {
 
 #[test]
 fn solves_a_float_objective_like_python() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=10);
     let y = model.new_var(0..=10);
     model.add((x + y).le(7));
@@ -203,14 +203,14 @@ fn reports_search_statistics_and_log() {
 /// any collection and keeps its order, with `None` for a missing value.
 #[test]
 fn evaluates_collections_in_order() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let vars = [3, 1, 2].map(|value| model.new_var(value..=value));
     let literals = [model.new_var(Bool), model.new_var(Bool)];
     model.add(literals[0].eq(1));
     model.add(literals[1].eq(0));
     let response = model.solve(&SatParameters::default()).unwrap();
 
-    let mut larger = Model::new();
+    let mut larger = CpModel::new();
     let [.., far]: [IntVar; 6] = std::array::from_fn(|_| larger.new_var(0..=1));
     let values: Vec<_> = vars
         .iter()

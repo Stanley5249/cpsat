@@ -1,4 +1,4 @@
-//! Constraints, built before [`Model::add`](crate::prelude::Model::add) inserts them.
+//! Constraints, built before [`CpModel::add`](crate::prelude::CpModel::add) inserts them.
 //!
 //! Every constraint is a [`Constraint`], which owns its `ConstraintProto`, so
 //! inserting it moves the message into the model. Each family is a
@@ -32,7 +32,7 @@ use crate::proto::{ConstraintProto, LinearExpressionProto};
 /// use cpsat::prelude::*;
 ///
 /// // From `channeling_sample_sat.py`.
-/// let mut model = Model::new();
+/// let mut model = CpModel::new();
 /// let x = model.new_var(0..=10);
 /// let y = model.new_var(0..=10);
 /// let b = model.new_var(Bool);

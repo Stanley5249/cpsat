@@ -9,7 +9,7 @@ mod ffi;
 mod response;
 mod stop;
 
-pub use builder::{NoEvents, Solver};
+pub use builder::{CpSolver, NoEvents};
 pub use diagnostics::default_parameters;
 pub use event::{Event, EventSet};
 pub use response::Evaluate;

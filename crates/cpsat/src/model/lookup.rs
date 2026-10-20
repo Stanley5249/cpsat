@@ -3,7 +3,7 @@
 
 use std::ops::{Index, IndexMut};
 
-use super::{Model, slot};
+use super::{CpModel, slot};
 use crate::constraint::ConstraintIndex;
 use crate::expr::{BoolVar, IntVar, IntervalVar, LinearExpr};
 use crate::proto::constraint_proto::Constraint as Kind;
@@ -11,7 +11,7 @@ use crate::proto::{
     ConstraintProto, IntegerVariableProto, IntervalConstraintProto, LinearExpressionProto,
 };
 
-impl Model {
+impl CpModel {
     /// The variable at `index`.
     #[doc(alias("get_int_var_from_proto_index", "GetIntVarFromProtoIndex"))]
     #[must_use]
@@ -119,7 +119,7 @@ fn interval_part(interval: IntervalVar, expr: &LinearExpressionProto) -> LinearE
     })
 }
 
-impl Index<IntVar> for Model {
+impl Index<IntVar> for CpModel {
     type Output = IntegerVariableProto;
 
     fn index(&self, var: IntVar) -> &IntegerVariableProto {
@@ -127,7 +127,7 @@ impl Index<IntVar> for Model {
     }
 }
 
-impl Index<IntervalVar> for Model {
+impl Index<IntervalVar> for CpModel {
     type Output = ConstraintProto;
 
     fn index(&self, interval: IntervalVar) -> &ConstraintProto {
@@ -135,7 +135,7 @@ impl Index<IntervalVar> for Model {
     }
 }
 
-impl Index<ConstraintIndex> for Model {
+impl Index<ConstraintIndex> for CpModel {
     type Output = ConstraintProto;
 
     fn index(&self, constraint: ConstraintIndex) -> &ConstraintProto {
@@ -143,7 +143,7 @@ impl Index<ConstraintIndex> for Model {
     }
 }
 
-impl IndexMut<ConstraintIndex> for Model {
+impl IndexMut<ConstraintIndex> for CpModel {
     fn index_mut(&mut self, constraint: ConstraintIndex) -> &mut ConstraintProto {
         &mut self.0.constraints[slot(constraint.0)]
     }

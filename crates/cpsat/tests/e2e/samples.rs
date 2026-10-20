@@ -12,18 +12,18 @@ use cpsat::proto::{CpSolverStatus, SatParameters};
 use crate::common::solve_optimal;
 
 /// The three variables in `[0, 2]` that most samples share.
-fn three_vars(model: &mut Model) -> [IntVar; 3] {
+fn three_vars(model: &mut CpModel) -> [IntVar; 3] {
     std::array::from_fn(|_| model.new_var(0..=2))
 }
 
 /// Every solution of `model`, as the values of `exprs`, in the order found.
 fn all_solutions<const N: usize>(
-    model: &Model,
+    model: &CpModel,
     parameters: SatParameters,
     exprs: &[LinearExpr; N],
 ) -> Vec<[i64; N]> {
     let mut solutions = Vec::new();
-    let response = Solver::new(&parameters.with_enumerate_all_solutions(true))
+    let response = CpSolver::new(&parameters.with_enumerate_all_solutions(true))
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 solutions.push(exprs.each_ref().map(|expr| view.value(expr).unwrap()));
@@ -39,7 +39,7 @@ fn all_solutions<const N: usize>(
 /// `simple_sat_program.py`
 #[test]
 fn simple_sat_program() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let [x, y, z] = three_vars(&mut model);
     model.add(x.ne(y));
 
@@ -52,7 +52,7 @@ fn simple_sat_program() {
 /// `cp_sat_example.py`
 #[test]
 fn cp_sat_example() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let [x, y, z] = std::array::from_fn(|_| model.new_var(0..=50));
     model.add((2 * x + 7 * y + 3 * z).le(50));
     model.add((3 * x - 5 * y + 7 * z).le(45));
@@ -68,13 +68,13 @@ fn cp_sat_example() {
 /// `solve_and_print_intermediate_solutions_sample_sat.py`
 #[test]
 fn solve_and_print_intermediate_solutions() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let [x, y, z] = three_vars(&mut model);
     model.add(x.ne(y));
     model.maximize(x + 2 * y + 3 * z);
 
     let mut objectives = Vec::new();
-    let response = Solver::default()
+    let response = CpSolver::default()
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 objectives.push(view.objective_value);
@@ -91,13 +91,13 @@ fn solve_and_print_intermediate_solutions() {
 /// `search_for_all_solutions_sample_sat.py`
 #[test]
 fn search_for_all_solutions() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let [x, y, _] = three_vars(&mut model);
     model.add(x.ne(y));
     let parameters = SatParameters::default().with_enumerate_all_solutions(true);
 
     let mut solutions = Vec::new();
-    let response = Solver::new(&parameters)
+    let response = CpSolver::new(&parameters)
         .on_event(EventSet::SOLUTION, |event| {
             if let Event::Solution(view) = event {
                 solutions.push(view.solution.to_vec());
@@ -116,12 +116,12 @@ fn search_for_all_solutions() {
 /// `stop_after_n_solutions_sample_sat.py`
 #[test]
 fn stop_after_n_solutions() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     three_vars(&mut model);
     let parameters = SatParameters::default().with_enumerate_all_solutions(true);
 
     let mut count = 0;
-    let response = Solver::new(&parameters)
+    let response = CpSolver::new(&parameters)
         .on_event(EventSet::SOLUTION, |_| {
             count += 1;
             if count >= 5 {
@@ -143,7 +143,7 @@ fn stop_after_n_solutions() {
     reason = "mirrors the names in the official sample"
 )]
 fn assumptions() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let [x, y, z] = std::array::from_fn(|_| model.new_var(0..=10));
     let [a, b, c] = std::array::from_fn(|_| model.new_var(Bool));
     model.add(x.gt(y).only_enforce_if(a));
@@ -161,7 +161,7 @@ fn assumptions() {
 /// `solution_hinting_sample_sat.py`
 #[test]
 fn solution_hinting() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let [x, y, z] = three_vars(&mut model);
     model.add(x.ne(y));
     model.maximize(x + 2 * y + 3 * z);
@@ -177,7 +177,7 @@ fn solution_hinting() {
 /// `rabbits_and_pheasants_sat.py`
 #[test]
 fn rabbits_and_pheasants() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let rabbits = model.new_var(0..=100);
     let pheasants = model.new_var(0..=100);
     model.add((rabbits + pheasants).eq(20));
@@ -191,7 +191,7 @@ fn rabbits_and_pheasants() {
 /// `boolean_product_sample_sat.py`
 #[test]
 fn boolean_product() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let [x, y, p] = std::array::from_fn(|_| model.new_var(Bool));
     model.add(Constraint::bool_or([!x, !y, p]));
     model.add(Constraint::implication(p, x));
@@ -205,7 +205,7 @@ fn boolean_product() {
 /// `channeling_sample_sat.py`
 #[test]
 fn channeling() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=10);
     let y = model.new_var(0..=10);
     let b = model.new_var(Bool);
@@ -230,7 +230,7 @@ fn channeling() {
 /// `step_function_sample_sat.py`
 #[test]
 fn step_function() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=20);
     let expr = model.new_var(0..=3);
     let b0 = model.new_var(Bool);
@@ -270,7 +270,7 @@ fn step_function() {
 #[test]
 fn non_linear() {
     let perimeter = 20;
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x = model.new_var(0..=perimeter);
     let y = model.new_var(0..=perimeter);
     model.add((2 * (x + y)).eq(perimeter));
@@ -289,7 +289,7 @@ fn non_linear() {
 #[test]
 fn nqueens() {
     let size = 8;
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let queens: Vec<IntVar> = (0..size).map(|_| model.new_var(0..=size - 1)).collect();
     model.add(Constraint::all_different(queens.iter().copied()));
     model.add(Constraint::all_different(
@@ -300,7 +300,7 @@ fn nqueens() {
     ));
 
     let mut count = 0;
-    Solver::new(&SatParameters::default().with_enumerate_all_solutions(true))
+    CpSolver::new(&SatParameters::default().with_enumerate_all_solutions(true))
         .on_event(EventSet::SOLUTION, |_| {
             count += 1;
             ControlFlow::Continue(())
@@ -318,7 +318,7 @@ fn nqueens() {
 )]
 fn cp_is_fun() {
     let base = 10;
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let mut digit = |lower| model.new_var(lower..=base - 1);
     let [c, p, i, s, f, u, n, t, r, e] = [1, 0, 1, 0, 1, 0, 0, 1, 0, 0].map(&mut digit);
     model.add(Constraint::all_different([c, p, i, s, f, u, n, t, r, e]));
@@ -328,7 +328,7 @@ fn cp_is_fun() {
     );
 
     let mut count = 0;
-    Solver::new(&SatParameters::default().with_enumerate_all_solutions(true))
+    CpSolver::new(&SatParameters::default().with_enumerate_all_solutions(true))
         .on_event(EventSet::SOLUTION, |_| {
             count += 1;
             ControlFlow::Continue(())
@@ -341,7 +341,7 @@ fn cp_is_fun() {
 /// `all_different_except_zero_sample_sat.py`
 #[test]
 fn all_different_except_zero() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x: Vec<IntVar> = (0..5).map(|_| model.new_var(0..=10)).collect();
     let mut literals_per_value = vec![Vec::new(); 11];
     for &var in &x {
@@ -368,7 +368,7 @@ fn all_different_except_zero() {
 #[test]
 fn no_overlap() {
     let horizon = 21;
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let mut tasks = Vec::new();
     let mut ends = Vec::new();
     for duration in [2, 4, 3] {
@@ -399,7 +399,7 @@ fn minimal_jobshop() {
         .iter()
         .flat_map(|job| job.iter().map(|task| task.1))
         .sum();
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let mut machines = vec![Vec::new(); 3];
     let mut last_ends = Vec::new();
     for job in jobs {
@@ -431,7 +431,7 @@ fn minimal_jobshop() {
 fn ranking_circuit() {
     let horizon = 100;
     let durations = [1, 2, 3, 4];
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let mut starts = Vec::new();
     let mut presences = Vec::new();
     let mut ranks = Vec::new();
@@ -534,7 +534,7 @@ fn assignment_groups() {
         [1, 0, 0, 1],
     ];
 
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let x: Vec<Vec<BoolVar>> = costs
         .iter()
         .map(|row| row.iter().map(|_| model.new_var(Bool)).collect())
@@ -580,7 +580,7 @@ fn assignment_groups() {
 #[test]
 fn index_first_boolvar_true() {
     let count = 5;
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let bools: Vec<BoolVar> = (0..count).map(|_| model.new_var(Bool)).collect();
     let index = model.new_var(0..=count);
     model.add(Constraint::min_equality(
@@ -612,7 +612,7 @@ fn index_first_boolvar_true() {
 /// `solve_with_time_limit_sample_sat.py`
 #[test]
 fn solve_with_time_limit() {
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let [x, y, _] = three_vars(&mut model);
     model.add(x.ne(y));
     let parameters = SatParameters::default().with_max_time_in_seconds(10.0);
@@ -670,7 +670,7 @@ fn cumulative_variable_profile() {
     let horizon = 24 * minutes_per_hour;
     let max_load = max_loads.into_iter().max().unwrap();
 
-    let mut model = Model::new();
+    let mut model = CpModel::new();
     let starts: Vec<IntVar> = tasks
         .iter()
         .map(|&(duration, ..)| model.new_var(0..=horizon - duration))

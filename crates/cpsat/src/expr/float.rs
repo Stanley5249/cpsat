@@ -11,13 +11,13 @@ use crate::expr::{BoolVar, IntVar, LinearExpr};
 /// Multiplying a variable or a [`LinearExpr`] by an `f64` builds one, as
 /// `0.5 * x` does in Python. CP-SAT accepts floating-point coefficients only
 /// in the objective, so a `FloatExpr` serves
-/// [`Model::minimize`](crate::prelude::Model::minimize) and `value`
+/// [`CpModel::minimize`](crate::prelude::CpModel::minimize) and `value`
 /// and converts into no constraint.
 ///
 /// ```
 /// use cpsat::prelude::*;
 ///
-/// let mut model = Model::new();
+/// let mut model = CpModel::new();
 /// let x = model.new_var(0..=10);
 /// let y = model.new_var(0..=10);
 /// model.add((x + y).le(7));

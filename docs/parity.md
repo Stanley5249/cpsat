@@ -26,11 +26,11 @@ naming follows the Methods and Names rules in `docs/design.md`.
 ## Solver
 
 - `CpSolver.solve(model)`
-  - Rust: `Model::solve`, `CpModelProto::solve`, `Solver::solve`
+  - Rust: `CpModel::solve`, `CpModelProto::solve`, `CpSolver::solve`
   - OR-Tools: `SolveWrapper::Solve`
   - Test: `samples.rs::cp_sat_example`, `events.rs::solver_solves_again`
 - `CpSolver.parameters`
-  - Rust: `SatParameters` passed to `Solver::new`, `Solver::parameters`
+  - Rust: `SatParameters` passed to `CpSolver::new`, `CpSolver::parameters`
   - OR-Tools: `SolveWrapper::SetParameters`
   - Test: `events.rs::forwards_logs_and_parameters`
 - `max_time_in_seconds`
@@ -60,7 +60,7 @@ naming follows the Methods and Names rules in `docs/design.md`.
   - OR-Tools: `StopSearch`
   - Test: `samples.rs::stop_after_n_solutions`
 - `CpSolver.stop_search` from another thread
-  - Rust: `StopHandle::stop` with `Solver::with_stop_handle`
+  - Rust: `StopHandle::stop` with `CpSolver::with_stop_handle`
   - OR-Tools: `StopSearch`
   - Test: `events.rs::stops_from_another_thread`
 - Exception in a callback stops the search and is reraised
@@ -99,7 +99,7 @@ naming follows the Methods and Names rules in `docs/design.md`.
   - Test: `solve.rs::solves_to_optimality`
 - `CpSolver.response_proto`
   - Rust: The returned `CpSolverResponse`; Rust keeps each response
-    independently of `Solver`
+    independently of `CpSolver`
   - OR-Tools: none
   - Test: Used throughout the solve tests; independent response ownership has no
     direct test
@@ -160,25 +160,25 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
 `constraints.rs` solves each global and scheduling family.
 
 - `CpModel()`, `CpModel(model_proto)`
-  - Rust: `Model::new`, `Model::from(proto)`
+  - Rust: `CpModel::new`, `CpModel::from(proto)`
   - Test: `solve.rs::clone_and_serialize_round_trip`
 - `new_int_var`, `new_int_var_from_domain`
-  - Rust: `Model::new_var` with a bounded range or a `Domain`
+  - Rust: `CpModel::new_var` with a bounded range or a `Domain`
   - Test: `samples.rs`, `domain.rs`
 - `new_bool_var`
-  - Rust: `Model::new_var(Bool)`
+  - Rust: `CpModel::new_var(Bool)`
   - Test: `samples.rs::boolean_product`
 - `new_constant`, `True`, `False`
-  - Rust: `Model::constant`, `bool_constant`
+  - Rust: `CpModel::new_constant` with an `i64` or a `bool`
   - Test: `model.rs::constants_and_true_literals_solve_to_their_values`
 - `new_interval_var`, `new_fixed_size_interval_var`
-  - Rust: `Model::new_var` with `Interval::new` or `Interval::fixed_size`
+  - Rust: `CpModel::new_var` with `Interval::new` or `Interval::fixed_size`
   - Test: `samples.rs::no_overlap`, `equivalence.rs::scheduling`
 - `new_optional_interval_var`, `new_optional_fixed_size_interval_var`
   - Rust: `Interval::only_enforce_if` on either
   - Test: `samples.rs::ranking_circuit`, `equivalence.rs::scheduling`
 - `IntervalVar.start_expr`, `size_expr`, `end_expr`, `presence_literals`
-  - Rust: `Model::interval_start`, `interval_size`, `interval_end`,
+  - Rust: `CpModel::interval_start`, `interval_size`, `interval_end`,
     `interval_presence_literals`
   - Test: `model.rs::reads_interval_parts_like_python`
 - `new_int_var_series`, `new_bool_var_series`, `new_interval_var_series`,
@@ -248,19 +248,20 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: `model.rs::literals_negate_and_name_their_variable` tests typed
     negation
 - `IntVar.is_boolean`, literal `negated`, `NotBooleanVariable`
-  - Rust: `Model::to_literal(var).is_some()`, `!literal`, `BoolVar::is_negated`,
-    `variable`; one Rust literal type represents both signs
+  - Rust: `CpModel::to_literal(var).is_some()`, `!literal`,
+    `BoolVar::is_negated`, `variable`; one Rust literal type represents both
+    signs
   - Test: `model.rs::a_zero_one_variable_serves_as_a_literal`,
     `only_domains_within_zero_and_one_are_literals`,
     `literals_negate_and_name_their_variable`
 - `IntVar.domain`, `with_domain`, `with_name`, constructor names
   - Rust: Name with `with_name` before `new_var`, read `model[var].domain` and
-    `.name`, and change the domain with `Model::set_domain`; convert domains
+    `.name`, and change the domain with `CpModel::set_domain`; convert domains
     with `Domain::from_flat_intervals` and `flattened_intervals`
   - Test: `solve.rs::resolves_after_model_change`,
     `model.rs::literals_negate_and_name_their_variable`
 - A 0-1 `IntVar` where a literal goes
-  - Rust: `Model::to_literal`
+  - Rust: `CpModel::to_literal`
   - Test: `model.rs::a_zero_one_variable_serves_as_a_literal`
 - `add(x == y)` and the other comparisons
   - Rust: `eq`, `ne`, `le`, `lt`, `ge`, `gt`
@@ -325,26 +326,26 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: `equivalence.rs::map_domain`,
     `constraints.rs::map_domain_sets_only_the_literal_of_the_value`
 - `minimize`, `maximize`, `has_objective`, `clear_objective`
-  - Rust: `Model::minimize`, `maximize`, `has_objective`, `clear_objective`
+  - Rust: `CpModel::minimize`, `maximize`, `has_objective`, `clear_objective`
   - Test: `model.rs::replaces_and_clears_the_objective`
 - `minimize`, `maximize` with float coefficients
-  - Rust: `Model::minimize`, `maximize` with a `FloatExpr` or `f64`; the type
+  - Rust: `CpModel::minimize`, `maximize` with a `FloatExpr` or `f64`; the type
     picks the float objective where Python checks the coefficients
   - Test: `equivalence.rs::minimize_float`, `equivalence.rs::maximize_float`,
     `model.rs::integer_and_float_objectives_replace_each_other`
 - `add_decision_strategy`
-  - Rust: `Model::add_decision_strategy`
+  - Rust: `CpModel::add_decision_strategy`
   - Test: `samples.rs::channeling`
 - `add_hint`, `clear_hints`
-  - Rust: `Model::add_hint` with an `i64` or a `bool`, `clear_hints`
+  - Rust: `CpModel::add_hint` with an `i64` or a `bool`, `clear_hints`
   - Test: `samples.rs::solution_hinting`,
     `solve.rs::first_solution_follows_the_hint`, `equivalence.rs::search`
 - `add_assumption`, `add_assumptions`, `clear_assumptions`
-  - Rust: `Model::add_assumptions`, `clear_assumptions`; one literal is `[b]`
+  - Rust: `CpModel::add_assumptions`, `clear_assumptions`; one literal is `[b]`
   - Test: `samples.rs::assumptions`, `model.rs::adds_and_clears_assumptions`
 - `get_int_var_from_proto_index`, `get_bool_var_from_proto_index`,
   `get_interval_var_from_proto_index`
-  - Rust: `Model::int_var_from_index`, `interval_var_from_index`; `to_literal`
+  - Rust: `CpModel::int_var_from_index`, `interval_var_from_index`; `to_literal`
     on the variable for a literal
   - Test: `model.rs::looks_up_handles_by_index`
 - `IntVar.name`, `IntervalVar.name`, `Constraint.name`, `CpModel.name`
@@ -353,16 +354,16 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: `model.rs::literals_negate_and_name_their_variable`,
     `constraint_builder_sets_enforcement_and_name`
 - `remove_all_names`
-  - Rust: `Model::remove_all_names`
+  - Rust: `CpModel::remove_all_names`
   - Test: `model.rs::constraint_builder_sets_enforcement_and_name`
 - Change domains, objectives, constraints, then solve again
   - Rust: `model[constraint]`, `proto_mut`
   - Test: `solve.rs::resolves_after_model_change`
 - `clone`, `proto`, serialization
-  - Rust: `Clone`, `Model::proto`, `Message::encode_to_vec`
+  - Rust: `Clone`, `CpModel::proto`, `Message::encode_to_vec`
   - Test: `solve.rs::clone_and_serialize_round_trip`
 - Variable, interval, and constraint `model_proto`; `CpModel.model_proto`
-  - Rust: `Model::proto` or `proto_mut`; handles carry an index rather than a
+  - Rust: `CpModel::proto` or `proto_mut`; handles carry an index rather than a
     Python shared model reference
   - Test: `solve.rs::resolves_after_model_change`,
     `clone_and_serialize_round_trip`
@@ -374,15 +375,15 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
     `looks_up_handles_by_index`
 - `IntervalVar.proto`, construction from an existing index;
   `IntVar(model_proto, index)`
-  - Rust: `model[interval]` to read; `Model::interval_var_from_index` and
+  - Rust: `model[interval]` to read; `CpModel::interval_var_from_index` and
     `int_var_from_index` return checked handles
   - Test: `model.rs::looks_up_handles_by_index`
 - `get_or_make_index_from_constant`, `get_or_make_variable_index`,
   `get_or_make_boolean_index`, `rebuild_constant_map` inherited from
   `CpBaseModel`
-  - Rust: `Model::constant(value).index()`, typed handle indices,
-    `bool_constant` / `to_literal`; `Model::from(proto)` rebuilds the constant
-    cache
+  - Rust: `CpModel::new_constant(value).index()`, typed handle indices,
+    `new_constant(bool)` / `to_literal`; `CpModel::from(proto)` rebuilds the
+    constant cache
   - Test: `model.rs::constants_survive_round_trips_and_edits`,
     `equivalence.rs::constants`
 - `CpModel.is_boolean_value`, `object_is_a_true_literal`,
@@ -393,7 +394,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
   - Test: `model.rs::only_domains_within_zero_and_one_are_literals` covers
     conversion; fixed-literal predicates have no direct test
 - `validate`, `model_stats`
-  - Rust: `Model::validate`, `Model::stats`, also on `CpModelProto`
+  - Rust: `CpModel::validate`, `CpModel::stats`, also on `CpModelProto`
   - Test: `diagnostics.rs`
 
 ## Formats and parameters
@@ -472,7 +473,7 @@ Python, from the fixtures that `just gen-fixtures` regenerates, and
 These items have no Python counterpart. Most replace Python's runtime dispatch
 or mutable solver state with types.
 
-- `Solver<'a, F>`: Borrows parameters, holds one event callback and a stop
+- `CpSolver<'a, F>`: Borrows parameters, holds one event callback and a stop
   handle, and returns each response
 - `Event`, `EventSet`, `NoEvents`: One tagged callback with a subscription set
   replaces Python's three callback kinds
@@ -480,14 +481,14 @@ or mutable solver state with types.
 - `Evaluate`, `Objective`, `Hint`: Sealed traits that pick the value type at
   compile time, such as `bool` for a literal
 - `Constraint` and `ConstraintIndex`: A constraint value before insertion, and
-  the index `Model::add` returns
+  the index `CpModel::add` returns
 - `Error`, `Result`: Typed failures where Python raises or returns a string
 - `CpSolverResponseView`: Buffa's zero-copy view of a solution inside an event
-- `Index` on `Model`, `IndexMut` for constraints: `model[x]`, `model[interval]`,
-  and `model[constraint]` read the stored message, and only `model[constraint]`
-  changes it
-- `Model::proto`, `proto_mut`, `into_proto`, `From`, `AsRef`: Move between
-  `Model` and `CpModelProto`, and solve, validate, or describe a bare message
+- `Index` on `CpModel`, `IndexMut` for constraints: `model[x]`,
+  `model[interval]`, and `model[constraint]` read the stored message, and only
+  `model[constraint]` changes it
+- `CpModel::proto`, `proto_mut`, `into_proto`, `From`, `AsRef`: Move between
+  `CpModel` and `CpModelProto`, and solve, validate, or describe a bare message
 - `BoolVar::variable`, `is_negated`, and `index` on handles: Read a handle's
   encoding without a model
 - `+=`, `-=`, `*=`, and `Sum` on `LinearExpr` and `FloatExpr`: Build expressions
@@ -511,13 +512,13 @@ or mutable solver state with types.
   before `new_var`, configures a `Constraint` before insertion, and uses
   `model[ConstraintIndex]` for later changes.
 - Python accepts dynamic literal inputs and sequence/varargs overloads. Rust
-  takes typed `BoolVar` literals and iterator inputs. Use `bool_constant` for a
-  Boolean constant and `to_literal` for a 0-1 integer variable.
+  takes typed `BoolVar` literals and iterator inputs. Use `new_constant(true)`
+  for a Boolean constant and `to_literal` for a 0-1 integer variable.
 - Integer expression overflow panics in Rust, while Python's native expression
   arithmetic can wrap. `Domain::size` and empty-bound behavior differ as noted
   in the Domain entries. Compare supported values and explicit edge cases
   instead of assuming all error paths match.
-- Rust registers solution callbacks with `Solver::on_event` before solving and
+- Rust registers solution callbacks with `CpSolver::on_event` before solving and
   borrows the view only during the event. Python passes a reusable callback
   object to `solve` and exposes response-presence checks on that object.
 - An unset `SatParameters` field reads as `None` instead of its proto2 default.

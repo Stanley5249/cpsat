@@ -45,7 +45,7 @@ impl Constraint {
     ///
     /// // From `cumulative_variable_profile_sample_sat.py`, which also
     /// // varies the capacity.
-    /// let mut model = Model::new();
+    /// let mut model = CpModel::new();
     /// let start = model.new_var(0..=1380);
     /// let performed = model.new_var(Bool);
     /// let task = model.new_var(Interval::fixed_size(start, 60).only_enforce_if(performed));
@@ -77,7 +77,7 @@ impl Constraint {
     /// ```
     /// use cpsat::prelude::*;
     ///
-    /// let mut model = Model::new();
+    /// let mut model = CpModel::new();
     /// let fill = model.new_var(0..=10);
     /// let drain = model.new_var(0..=10);
     /// model.add(Constraint::reservoir(0, 5, [(fill, 3), (drain, -3)]));

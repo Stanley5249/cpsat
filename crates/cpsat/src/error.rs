@@ -3,7 +3,7 @@
 /// An error from OR-Tools, the bridge, or decoding the bridge's output.
 ///
 /// An invalid model is not an error of a solve, which reports it as the
-/// `MODEL_INVALID` status, but [`Model::validate`](crate::prelude::Model::validate)
+/// `MODEL_INVALID` status, but [`CpModel::validate`](crate::prelude::CpModel::validate)
 /// returns it as [`Error::InvalidModel`].
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]

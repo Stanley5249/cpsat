@@ -5,7 +5,7 @@
 //! import does not shadow `std`'s `Result`. [`proto`] holds the generated
 //! types, and [`buffa`] is their runtime.
 //!
-//! [`Model`](prelude::Model) builds a model with typed variables, linear expressions, and
+//! [`CpModel`](prelude::CpModel) builds a model with typed variables, linear expressions, and
 //! constraints, like Python's `CpModel`. It stores the model as the Buffa
 //! type `CpModelProto` from [`proto`], so every schema field stays available
 //! and a model stays plain, mutable data between solves. Parameters and
@@ -17,7 +17,7 @@
 //! use cpsat::proto::SatParameters;
 //!
 //! // From `simple_sat_program.py`.
-//! let mut model = Model::new();
+//! let mut model = CpModel::new();
 //! let [x, y, z] = std::array::from_fn(|_| model.new_var(0..=2));
 //! model.add(x.ne(y));
 //!
@@ -29,12 +29,12 @@
 //! # Ok::<(), cpsat::Error>(())
 //! ```
 //!
-//! [`Solver`](prelude::Solver) adds solution, best-bound, and log events, and a
+//! [`CpSolver`](prelude::CpSolver) adds solution, best-bound, and log events, and a
 //! [`StopHandle`](prelude::StopHandle)
 //! stops solves from any thread.
 //!
 //! OR-Tools aborts the process on an internal `CHECK` failure, which Rust
-//! cannot catch. [`Model::validate`](prelude::Model::validate) reports invalid
+//! cannot catch. [`CpModel::validate`](prelude::CpModel::validate) reports invalid
 //! models without solving. Solve an untrusted model in a subprocess, so that an
 //! abort cannot end the caller.
 
