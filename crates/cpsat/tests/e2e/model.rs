@@ -326,6 +326,46 @@ fn overflowing_arithmetic_leaves_the_expression_intact() {
         LinearExpr::into_proto(expr),
         LinearExpr::into_proto(x + y * i64::MAX + 1)
     );
+
+    let mut expr = LinearExpr::constant(i64::MAX);
+    let flag = model.new_var(Bool);
+    let failed = std::panic::catch_unwind(AssertUnwindSafe(|| expr += !flag));
+    assert!(failed.is_err());
+    assert_eq!(
+        expr.into_proto(),
+        LinearExpr::constant(i64::MAX).into_proto()
+    );
+}
+
+#[test]
+fn accumulating_in_place_keeps_the_value_of_each_operand() {
+    let mut model = CpModel::new();
+    let [x, y] = std::array::from_fn(|_| model.new_var(0..=1));
+    let b = model.new_var(Bool);
+    let other = 2 * x + y + 3;
+    let mut expr = LinearExpr::default();
+    expr += other.clone();
+    expr -= &other;
+    expr += &other;
+    expr -= !b;
+    expr += 4;
+    // other - (1 - b) + 4
+    let proto = expr.into_proto();
+    assert_eq!(
+        (proto.vars, proto.coeffs, proto.offset),
+        (vec![0, 1, 2], vec![2, 1, 1], 6)
+    );
+
+    let doubled: LinearExpr = [&other, &other].into_iter().sum();
+    assert_eq!(doubled.into_proto(), (2 * other.clone()).into_proto());
+
+    let mut float: FloatExpr = [x, y].into_iter().sum();
+    float -= !b;
+    float += &other;
+    assert_eq!(
+        float,
+        1.0 * x + 1.0 * y + 1.0 * b - 1.0 + 2.0 * x + 1.0 * y + 3.0
+    );
 }
 
 #[test]

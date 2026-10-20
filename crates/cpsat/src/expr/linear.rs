@@ -60,21 +60,46 @@ impl LinearExpr {
 
     /// Adds `factor * other` to this expression. It checks every product
     /// before the first change, so an overflow leaves the expression intact.
-    fn add_scaled(&mut self, other: Self, factor: i64) {
-        let offset = other
+    fn add_scaled(&mut self, mut other: Self, factor: i64) {
+        let offset = self.scaled_offset(&other, factor);
+        if self.terms.is_empty() && other.terms.capacity() > self.terms.capacity() {
+            // Takes the larger buffer of the other expression.
+            for (_, coeff) in &mut other.terms {
+                *coeff *= factor;
+            }
+            self.terms = other.terms;
+        } else {
+            self.extend_scaled(&other.terms, factor);
+        }
+        self.offset = offset;
+    }
+
+    /// Adds `factor * other` without cloning it, like `add_scaled`.
+    fn add_scaled_ref(&mut self, other: &Self, factor: i64) {
+        self.offset = self.scaled_offset(other, factor);
+        self.extend_scaled(&other.terms, factor);
+    }
+
+    /// The offset after adding `factor * other`, checking every product.
+    fn scaled_offset(&self, other: &Self, factor: i64) -> i64 {
+        other
             .offset
             .checked_mul(factor)
             .and_then(|scaled| self.offset.checked_add(scaled))
             // Multiplying by 1 cannot overflow, so adding skips the scan.
             .filter(|_| factor == 1 || scales(&other.terms, factor))
-            .expect(OVERFLOW);
-        self.terms.extend(
-            other
-                .terms
-                .into_iter()
-                .map(|(var, coeff)| (var, coeff * factor)),
-        );
-        self.offset = offset;
+            .expect(OVERFLOW)
+    }
+
+    fn extend_scaled(&mut self, terms: &[(i32, i64)], factor: i64) {
+        self.terms
+            .extend(terms.iter().map(|&(var, coeff)| (var, coeff * factor)));
+    }
+
+    /// Adds `coeff * var + offset`, checking the offset before the change.
+    fn push_term(&mut self, var: i32, coeff: i64, offset: i64) {
+        self.offset = self.offset.checked_add(offset).expect(OVERFLOW);
+        self.terms.push((var, coeff));
     }
 
     /// The terms, sorted by variable, merged, and without zero coefficients,
@@ -102,6 +127,11 @@ impl LinearExpr {
     /// The terms in insertion order, unsorted and unmerged, and the offset.
     pub(crate) fn into_raw_parts(self) -> (Vec<(i32, i64)>, i64) {
         (self.terms, self.offset)
+    }
+
+    /// The terms in insertion order and the offset, borrowed.
+    pub(crate) fn raw_parts(&self) -> (&[(i32, i64)], i64) {
+        (&self.terms, self.offset)
     }
 
     /// The value if the expression has no variables.
@@ -203,15 +233,108 @@ impl From<BoolVar> for LinearExpr {
     }
 }
 
-impl<R: Into<Self>> AddAssign<R> for LinearExpr {
-    fn add_assign(&mut self, rhs: R) {
-        self.add_scaled(rhs.into(), 1);
+/// An operand that adds its terms to an expression in place, so `+=` and
+/// `Sum` build no one-term expression per variable and clone no borrowed one.
+trait Operand {
+    /// How many terms each operand adds, to reserve before a sum.
+    const TERMS: usize;
+
+    /// Adds `sign * self` to `expr`, leaving `expr` intact on overflow.
+    fn add_to(self, expr: &mut LinearExpr, sign: i64);
+}
+
+impl Operand for i64 {
+    const TERMS: usize = 0;
+
+    fn add_to(self, expr: &mut LinearExpr, sign: i64) {
+        expr.offset = self
+            .checked_mul(sign)
+            .and_then(|value| expr.offset.checked_add(value))
+            .expect(OVERFLOW);
     }
 }
 
-impl<R: Into<Self>> SubAssign<R> for LinearExpr {
-    fn sub_assign(&mut self, rhs: R) {
-        self.add_scaled(rhs.into(), -1);
+impl Operand for IntVar {
+    const TERMS: usize = 1;
+
+    fn add_to(self, expr: &mut LinearExpr, sign: i64) {
+        expr.push_term(self.0, sign, 0);
+    }
+}
+
+impl Operand for BoolVar {
+    const TERMS: usize = 1;
+
+    fn add_to(self, expr: &mut LinearExpr, sign: i64) {
+        if self.is_negated() {
+            expr.push_term(self.to_int_var().0, -sign, sign);
+        } else {
+            expr.push_term(self.0, sign, 0);
+        }
+    }
+}
+
+impl Operand for LinearExpr {
+    const TERMS: usize = 0;
+
+    fn add_to(self, expr: &mut LinearExpr, sign: i64) {
+        expr.add_scaled(self, sign);
+    }
+}
+
+impl Operand for &LinearExpr {
+    const TERMS: usize = 0;
+
+    fn add_to(self, expr: &mut LinearExpr, sign: i64) {
+        expr.add_scaled_ref(self, sign);
+    }
+}
+
+/// The sum of `operands`, reserving their terms up front.
+fn sum<T: Operand>(operands: impl Iterator<Item = T>) -> LinearExpr {
+    let mut sum = LinearExpr::default();
+    sum.terms.reserve(operands.size_hint().0 * T::TERMS);
+    for operand in operands {
+        operand.add_to(&mut sum, 1);
+    }
+    sum
+}
+
+/// `+=` and `-=` for each [`Operand`].
+macro_rules! accumulate {
+    ($($ty:ty),*) => {$(
+        impl AddAssign<$ty> for LinearExpr {
+            fn add_assign(&mut self, rhs: $ty) {
+                rhs.add_to(self, 1);
+            }
+        }
+
+        impl SubAssign<$ty> for LinearExpr {
+            fn sub_assign(&mut self, rhs: $ty) {
+                rhs.add_to(self, -1);
+            }
+        }
+    )*};
+}
+
+accumulate!(i64, IntVar, BoolVar, LinearExpr, &LinearExpr);
+
+/// `Sum` for each owned [`Operand`].
+macro_rules! sum {
+    ($($ty:ty),*) => {$(
+        impl Sum<$ty> for LinearExpr {
+            fn sum<I: Iterator<Item = $ty>>(iter: I) -> Self {
+                sum(iter)
+            }
+        }
+    )*};
+}
+
+sum!(i64, IntVar, BoolVar, LinearExpr);
+
+impl<'a> Sum<&'a Self> for LinearExpr {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        sum(iter)
     }
 }
 
@@ -229,35 +352,36 @@ impl MulAssign<i64> for LinearExpr {
     }
 }
 
-impl<T: Into<Self>> Sum<T> for LinearExpr {
-    fn sum<I: Iterator<Item = T>>(iter: I) -> Self {
-        iter.fold(Self::default(), |sum, item| sum + item)
-    }
-}
-
-/// The operators and comparisons of the types that convert into
-/// [`LinearExpr`].
-macro_rules! linear {
-    ($($ty:ty),*) => {$(
-        impl<R: Into<LinearExpr>> Add<R> for $ty {
+/// `lhs + rhs` and `lhs - rhs` for each [`Operand`] `rhs`.
+macro_rules! add_sub {
+    ($lhs:ty; $($rhs:ty),*) => {$(
+        impl Add<$rhs> for $lhs {
             type Output = LinearExpr;
 
-            fn add(self, rhs: R) -> LinearExpr {
+            fn add(self, rhs: $rhs) -> LinearExpr {
                 let mut expr = LinearExpr::from(self);
                 expr += rhs;
                 expr
             }
         }
 
-        impl<R: Into<LinearExpr>> Sub<R> for $ty {
+        impl Sub<$rhs> for $lhs {
             type Output = LinearExpr;
 
-            fn sub(self, rhs: R) -> LinearExpr {
+            fn sub(self, rhs: $rhs) -> LinearExpr {
                 let mut expr = LinearExpr::from(self);
                 expr -= rhs;
                 expr
             }
         }
+    )*};
+}
+
+/// The operators and comparisons of the types that convert into
+/// [`LinearExpr`].
+macro_rules! linear {
+    ($($ty:ty),*) => {$(
+        add_sub!($ty; i64, IntVar, BoolVar, LinearExpr, &LinearExpr);
 
         impl Mul<i64> for $ty {
             type Output = LinearExpr;

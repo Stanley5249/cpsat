@@ -49,14 +49,44 @@ impl FloatExpr {
     }
 
     /// Adds `factor * other` to this expression.
-    fn add_scaled(&mut self, other: Self, factor: f64) {
+    fn add_scaled(&mut self, mut other: Self, factor: f64) {
+        if self.terms.is_empty() && other.terms.capacity() > self.terms.capacity() {
+            // Takes the larger buffer of the other expression.
+            for (_, coeff) in &mut other.terms {
+                *coeff *= factor;
+            }
+            self.terms = other.terms;
+            self.offset += other.offset * factor;
+        } else {
+            self.add_scaled_ref(&other, factor);
+        }
+    }
+
+    /// Adds `factor * other` without cloning it.
+    fn add_scaled_ref(&mut self, other: &Self, factor: f64) {
         self.terms.extend(
             other
                 .terms
-                .into_iter()
-                .map(|(var, coeff)| (var, coeff * factor)),
+                .iter()
+                .map(|&(var, coeff)| (var, coeff * factor)),
         );
         self.offset += other.offset * factor;
+    }
+
+    /// Adds `factor * expr`, converting each coefficient and the offset to
+    /// `f64` like `From<LinearExpr>`.
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "the schema stores float objectives as doubles, like Python"
+    )]
+    fn add_linear(&mut self, expr: &LinearExpr, factor: f64) {
+        let (terms, offset) = expr.raw_parts();
+        self.terms.extend(
+            terms
+                .iter()
+                .map(|&(var, coeff)| (var, coeff as f64 * factor)),
+        );
+        self.offset += offset as f64 * factor;
     }
 
     /// The terms, sorted by variable, merged, and without zero coefficients,
@@ -160,15 +190,167 @@ impl From<BoolVar> for FloatExpr {
     }
 }
 
-impl<R: Into<Self>> AddAssign<R> for FloatExpr {
-    fn add_assign(&mut self, rhs: R) {
-        self.add_scaled(rhs.into(), 1.0);
+/// An operand that adds its terms to an expression in place, like the
+/// integer `Operand` of [`LinearExpr`].
+trait Operand {
+    /// How many terms each operand adds, to reserve before a sum.
+    const TERMS: usize;
+
+    /// Adds `sign * self` to `expr`.
+    fn add_to(self, expr: &mut FloatExpr, sign: f64);
+}
+
+impl Operand for f64 {
+    const TERMS: usize = 0;
+
+    fn add_to(self, expr: &mut FloatExpr, sign: f64) {
+        expr.offset += self * sign;
     }
 }
 
-impl<R: Into<Self>> SubAssign<R> for FloatExpr {
-    fn sub_assign(&mut self, rhs: R) {
-        self.add_scaled(rhs.into(), -1.0);
+impl Operand for i64 {
+    const TERMS: usize = 0;
+
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "the schema stores float objectives as doubles, like Python"
+    )]
+    fn add_to(self, expr: &mut FloatExpr, sign: f64) {
+        expr.offset += self as f64 * sign;
+    }
+}
+
+impl Operand for IntVar {
+    const TERMS: usize = 1;
+
+    fn add_to(self, expr: &mut FloatExpr, sign: f64) {
+        expr.terms.push((self.0, sign));
+    }
+}
+
+impl Operand for BoolVar {
+    const TERMS: usize = 1;
+
+    fn add_to(self, expr: &mut FloatExpr, sign: f64) {
+        if self.is_negated() {
+            expr.terms.push((self.to_int_var().0, -sign));
+            expr.offset += sign;
+        } else {
+            expr.terms.push((self.0, sign));
+        }
+    }
+}
+
+impl Operand for LinearExpr {
+    const TERMS: usize = 0;
+
+    fn add_to(self, expr: &mut FloatExpr, sign: f64) {
+        expr.add_linear(&self, sign);
+    }
+}
+
+impl Operand for &LinearExpr {
+    const TERMS: usize = 0;
+
+    fn add_to(self, expr: &mut FloatExpr, sign: f64) {
+        expr.add_linear(self, sign);
+    }
+}
+
+impl Operand for FloatExpr {
+    const TERMS: usize = 0;
+
+    fn add_to(self, expr: &mut FloatExpr, sign: f64) {
+        expr.add_scaled(self, sign);
+    }
+}
+
+impl Operand for &FloatExpr {
+    const TERMS: usize = 0;
+
+    fn add_to(self, expr: &mut FloatExpr, sign: f64) {
+        expr.add_scaled_ref(self, sign);
+    }
+}
+
+/// The sum of `operands`, reserving their terms up front.
+fn sum<T: Operand>(operands: impl Iterator<Item = T>) -> FloatExpr {
+    let mut sum = FloatExpr::default();
+    sum.terms.reserve(operands.size_hint().0 * T::TERMS);
+    for operand in operands {
+        operand.add_to(&mut sum, 1.0);
+    }
+    sum
+}
+
+/// `+=`, `-=`, `+`, and `-` for each [`Operand`].
+macro_rules! accumulate {
+    ($($ty:ty),*) => {$(
+        impl AddAssign<$ty> for FloatExpr {
+            fn add_assign(&mut self, rhs: $ty) {
+                rhs.add_to(self, 1.0);
+            }
+        }
+
+        impl SubAssign<$ty> for FloatExpr {
+            fn sub_assign(&mut self, rhs: $ty) {
+                rhs.add_to(self, -1.0);
+            }
+        }
+
+        impl Add<$ty> for FloatExpr {
+            type Output = Self;
+
+            fn add(mut self, rhs: $ty) -> Self {
+                self += rhs;
+                self
+            }
+        }
+
+        impl Sub<$ty> for FloatExpr {
+            type Output = Self;
+
+            fn sub(mut self, rhs: $ty) -> Self {
+                self -= rhs;
+                self
+            }
+        }
+    )*};
+}
+
+accumulate!(
+    f64,
+    i64,
+    IntVar,
+    BoolVar,
+    LinearExpr,
+    &LinearExpr,
+    FloatExpr,
+    &FloatExpr
+);
+
+/// `Sum` for each owned [`Operand`].
+macro_rules! sum {
+    ($($ty:ty),*) => {$(
+        impl Sum<$ty> for FloatExpr {
+            fn sum<I: Iterator<Item = $ty>>(iter: I) -> Self {
+                sum(iter)
+            }
+        }
+    )*};
+}
+
+sum!(f64, i64, IntVar, BoolVar, LinearExpr, FloatExpr);
+
+impl<'a> Sum<&'a LinearExpr> for FloatExpr {
+    fn sum<I: Iterator<Item = &'a LinearExpr>>(iter: I) -> Self {
+        sum(iter)
+    }
+}
+
+impl<'a> Sum<&'a Self> for FloatExpr {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        sum(iter)
     }
 }
 
@@ -178,24 +360,6 @@ impl MulAssign<f64> for FloatExpr {
             *coeff *= factor;
         }
         self.offset *= factor;
-    }
-}
-
-impl<R: Into<Self>> Add<R> for FloatExpr {
-    type Output = Self;
-
-    fn add(mut self, rhs: R) -> Self {
-        self += rhs;
-        self
-    }
-}
-
-impl<R: Into<Self>> Sub<R> for FloatExpr {
-    type Output = Self;
-
-    fn sub(mut self, rhs: R) -> Self {
-        self -= rhs;
-        self
     }
 }
 
@@ -237,12 +401,6 @@ impl Neg for FloatExpr {
 
     fn neg(self) -> Self {
         self * -1.0
-    }
-}
-
-impl<T: Into<Self>> Sum<T> for FloatExpr {
-    fn sum<I: Iterator<Item = T>>(iter: I) -> Self {
-        iter.fold(Self::default(), |sum, item| sum + item)
     }
 }
 
