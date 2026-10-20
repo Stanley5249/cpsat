@@ -171,10 +171,10 @@ struct CpsatSession {
   // callback's state.
   std::mutex callback_mutex;
   bool used = false;
-  SolveWrapper solve_wrapper;
-  // SolveWrapper keeps a reference to each observer, so the observers live as
-  // long as the session, in a list whose elements never move.
+  // SolveWrapper keeps a reference to each observer, so the observers sit in a
+  // list whose elements never move, declared first so they outlive it.
   std::list<Observer> observers;
+  SolveWrapper solve_wrapper;
 
   template <typename Call>
   void Dispatch(Call call) {

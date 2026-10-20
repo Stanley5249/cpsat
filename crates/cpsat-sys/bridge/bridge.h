@@ -27,9 +27,9 @@ typedef struct CpsatBuffer {
   size_t len;
 } CpsatBuffer;
 
-// Each callback runs with at most one other callback call at a time, possibly
-// on a solver worker thread, and borrows its arguments only during the call.
-// A nonzero return requests the solver to stop.
+// At most one callback of a session runs at a time, possibly on a solver worker
+// thread, and it borrows its arguments only during the call. A nonzero return
+// requests the solver to stop.
 // response holds a serialized CpSolverResponse.
 typedef int32_t (*CpsatSolutionCallback)(void* context, const uint8_t* response,
                                          size_t response_len);
