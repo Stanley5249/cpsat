@@ -46,6 +46,7 @@ mod expr;
 mod model;
 pub mod prelude;
 #[expect(
+    missing_docs,
     clippy::all,
     clippy::pedantic,
     clippy::allow_attributes,

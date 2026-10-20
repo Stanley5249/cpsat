@@ -19,6 +19,7 @@ use crate::expr::{BoolVar, Domain, IntVar};
     note = "a variable needs finite `i64` bounds, such as `0..=10`"
 )]
 pub trait NewVar: sealed::Sealed {
+    /// The handle that [`Model::new_var`] returns.
     type Output;
 
     /// Appends the variable and returns its handle.
@@ -49,6 +50,7 @@ pub struct Named<T> {
 /// Names a variable before [`Model::new_var`] inserts it, like the `name`
 /// argument of Python's `new_int_var` and `new_bool_var`.
 pub trait WithName: sealed::Sealed + Sized {
+    /// Attaches `name`, which the model stores with the variable.
     #[must_use]
     fn with_name(self, name: impl Into<String>) -> Named<Self> {
         Named {

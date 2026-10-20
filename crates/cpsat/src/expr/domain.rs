@@ -31,6 +31,8 @@ impl Domain {
         Self(vec![(i64::MIN, i64::MAX)])
     }
 
+    /// The domain that holds exactly `values`, in any order and with
+    /// duplicates allowed.
     #[must_use]
     pub fn from_values(values: impl IntoIterator<Item = i64>) -> Self {
         Self::from_intervals(values.into_iter().map(|value| (value, value)))
@@ -69,11 +71,13 @@ impl Domain {
         ))
     }
 
+    /// The sorted, disjoint, non-adjacent `[min, max]` intervals.
     #[must_use]
     pub fn intervals(&self) -> &[(i64, i64)] {
         &self.0
     }
 
+    /// Whether the domain holds no value.
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -100,6 +104,7 @@ impl Domain {
         })
     }
 
+    /// Whether the domain holds `value`.
     #[must_use]
     pub fn contains(&self, value: i64) -> bool {
         self.0
@@ -156,6 +161,7 @@ impl Domain {
         .is_some()
     }
 
+    /// The values in either domain.
     #[must_use]
     pub fn union_with(&self, other: &Self) -> Self {
         let mut merged = Vec::with_capacity(self.0.len() + other.0.len());
@@ -172,6 +178,7 @@ impl Domain {
         Self(merged)
     }
 
+    /// The values in both domains.
     #[must_use]
     pub fn intersection_with(&self, other: &Self) -> Self {
         Self(

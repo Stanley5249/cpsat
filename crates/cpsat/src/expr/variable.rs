@@ -43,6 +43,7 @@ impl BoolVar {
         }
     }
 
+    /// Whether the literal is the negation of its variable.
     #[must_use]
     pub const fn is_negated(self) -> bool {
         self.0 < 0

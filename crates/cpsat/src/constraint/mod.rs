@@ -58,11 +58,13 @@ impl Constraint {
         self
     }
 
+    /// The constraint's message.
     #[must_use]
     pub fn proto(&self) -> &ConstraintProto {
         &self.0
     }
 
+    /// Unwraps the constraint's message.
     #[must_use]
     pub fn into_proto(self) -> ConstraintProto {
         self.0

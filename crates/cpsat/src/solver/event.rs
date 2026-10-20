@@ -9,19 +9,27 @@ use crate::proto::view::CpSolverResponseView;
 pub struct EventSet(u32);
 
 impl EventSet {
+    /// No events.
     pub const NONE: Self = Self(0);
+    /// Each improving solution, as [`Event::Solution`].
     pub const SOLUTION: Self = Self(CPSAT_EVENT_SOLUTION);
+    /// Each improved objective bound, as [`Event::BestBound`].
     pub const BEST_BOUND: Self = Self(CPSAT_EVENT_BEST_BOUND);
+    /// Each log line, as [`Event::Log`].
+    ///
     /// Log lines arrive only when `log_search_progress` is set. Set
     /// `log_to_stdout` to false to avoid printing them twice.
     pub const LOG: Self = Self(CPSAT_EVENT_LOG);
+    /// Every event.
     pub const ALL: Self = Self(CPSAT_EVENT_SOLUTION | CPSAT_EVENT_BEST_BOUND | CPSAT_EVENT_LOG);
 
+    /// Whether every event in `other` is in the set.
     #[must_use]
     pub const fn contains(self, other: Self) -> bool {
         self.0 & other.0 == other.0
     }
 
+    /// Whether the set holds no event.
     #[must_use]
     pub const fn is_empty(self) -> bool {
         self.0 == 0

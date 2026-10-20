@@ -30,6 +30,7 @@ pub struct FloatExpr {
 }
 
 impl FloatExpr {
+    /// The expression with no terms and offset `value`.
     #[must_use]
     pub fn constant(value: f64) -> Self {
         Self {

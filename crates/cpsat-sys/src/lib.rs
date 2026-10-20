@@ -4,6 +4,11 @@
 //! preconditions every call must meet, and buffer ownership. Use the `cpsat`
 //! crate for a safe interface.
 
+#![expect(
+    missing_docs,
+    reason = "`bridge/bridge.h` documents each item, and a copy here would drift"
+)]
+
 use core::ffi::c_void;
 
 pub const CPSAT_OK: i32 = 0;

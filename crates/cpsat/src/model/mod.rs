@@ -27,6 +27,7 @@ mod sealed {
 
 /// What `add_hint` accepts, and the type of its value.
 pub trait Hint: sealed::Sealed {
+    /// The type of the hinted value: `i64` or `bool`.
     type Value;
 
     /// The variable index and the value the schema stores.
@@ -108,6 +109,7 @@ impl Model {
         Self::default()
     }
 
+    /// The model's message.
     #[must_use]
     pub fn proto(&self) -> &CpModelProto {
         &self.0
@@ -119,6 +121,7 @@ impl Model {
         &mut self.0
     }
 
+    /// Unwraps the model's message.
     #[must_use]
     pub fn into_proto(self) -> CpModelProto {
         self.0

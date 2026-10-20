@@ -37,6 +37,7 @@ pub struct LinearExpr {
 const OVERFLOW: &str = "linear expression overflows i64";
 
 impl LinearExpr {
+    /// The expression with no terms and offset `value`.
     #[must_use]
     pub fn constant(value: i64) -> Self {
         Self {

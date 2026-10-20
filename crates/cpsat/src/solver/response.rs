@@ -33,6 +33,7 @@ mod sealed {
 /// floating-point expression. A handle reads its slot directly, so no
 /// expression is built.
 pub trait Evaluate: sealed::Sealed {
+    /// The type of the value: `i64`, `bool`, or `f64`.
     type Output;
 
     /// The value under `solution`, or `None` if a variable has no value.

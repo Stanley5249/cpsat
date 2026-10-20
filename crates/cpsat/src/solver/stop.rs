@@ -26,6 +26,7 @@ struct SessionPtr(*mut CpsatSession);
 unsafe impl Send for SessionPtr {}
 
 impl StopHandle {
+    /// A handle that has not stopped.
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -43,6 +44,7 @@ impl StopHandle {
         }
     }
 
+    /// Whether [`StopHandle::stop`] has been called.
     #[must_use]
     pub fn is_stopped(&self) -> bool {
         self.0.stopped.load(Ordering::SeqCst)
