@@ -56,16 +56,16 @@ impl FloatExpr {
     /// as Python writes them into the objective, and the offset.
     pub(crate) fn into_terms(self) -> (Vec<i32>, Vec<f64>, f64) {
         let mut terms = self.terms;
+        // A stable sort keeps the sum of a run in the original order, so the
+        // rounding is deterministic.
         terms.sort_by_key(|&(var, _)| var);
-        let mut merged: Vec<(i32, f64)> = Vec::with_capacity(terms.len());
-        for (var, coeff) in terms {
-            match merged.last_mut() {
-                Some(last) if last.0 == var => last.1 += coeff,
-                _ => merged.push((var, coeff)),
-            }
-        }
-        merged.retain(|&(_, coeff)| coeff != 0.0);
-        let (vars, coeffs) = merged.into_iter().unzip();
+        let (vars, coeffs) = terms
+            .chunk_by(|a, b| a.0 == b.0)
+            .filter_map(|run| {
+                let sum: f64 = run.iter().map(|&(_, coeff)| coeff).sum();
+                (sum != 0.0).then_some((run[0].0, sum))
+            })
+            .unzip();
         (vars, coeffs, self.offset)
     }
 
@@ -160,8 +160,10 @@ impl<R: Into<Self>> SubAssign<R> for FloatExpr {
 
 impl MulAssign<f64> for FloatExpr {
     fn mul_assign(&mut self, factor: f64) {
-        let expr = std::mem::take(self);
-        self.add_scaled(expr, factor);
+        for (_, coeff) in &mut self.terms {
+            *coeff *= factor;
+        }
+        self.offset *= factor;
     }
 }
 
