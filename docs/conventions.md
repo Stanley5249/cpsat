@@ -60,9 +60,9 @@ CP-SAT APIs at the OR-Tools version that `docs/parity.md` pins.
 - **Content.** Each example adapts the matching official sample and names it in
   a comment. Without a sample, use the example in the `cp_model.proto` comment,
   and otherwise the smallest construction.
-- **Repeated variables.** Examples and tests create a fixed number of
-  variables with `std::array::from_fn(|_| model.new_var(...))`, destructured
-  as `let [x, y, z]` where possible, and a number that depends on data with
+- **Repeated variables.** Examples and tests create a fixed number of variables
+  with `std::array::from_fn(|_| model.new_var(...))`, destructured as
+  `let [x, y, z]` where possible, and a number that depends on data with
   `(0..n).map(...).collect()`.
 - **`crates/cpsat/examples/`** holds only `solve.rs`, which CI runs as the
   deployment check. Ported samples live in `tests/e2e/samples.rs`.
