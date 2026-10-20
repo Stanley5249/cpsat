@@ -6,9 +6,9 @@ its imported modeling types in
 [`cp_model_helper.cc`](https://github.com/google/or-tools/blob/v9.15/ortools/sat/python/cp_model_helper.cc),
 and `Domain` from
 [`sorted_interval_list.cc`](https://github.com/google/or-tools/blob/v9.15/ortools/util/python/sorted_interval_list.cc).
-Rows distinguish direct APIs, equivalents built with Rust iterators or Protobuf
-fields, and Python-specific conveniences. Deprecated aliases share their
-canonical method's row rather than requiring a second Rust API. Private
+Entries distinguish direct APIs, equivalents built with Rust iterators or
+Protobuf fields, and Python-specific conveniences. Deprecated aliases share
+their canonical method's entry rather than requiring a second Rust API. Private
 underscore-prefixed methods, decorator/name-conversion utilities, Python typing
 aliases, and extension-only implementation classes are outside this surface; the
 imported `FlatIntExpr`, `FlatFloatExpr`, and `BoundedLinearExpression` are
@@ -516,8 +516,8 @@ or mutable solver state with types.
   Boolean constant and `to_literal` for a 0-1 integer variable.
 - Integer expression overflow panics in Rust, while Python's native expression
   arithmetic can wrap. `Domain::size` and empty-bound behavior differ as noted
-  in the Domain rows. Compare supported values and explicit edge cases instead
-  of assuming all error paths match.
+  in the Domain entries. Compare supported values and explicit edge cases
+  instead of assuming all error paths match.
 - Rust registers solution callbacks with `Solver::on_event` before solving and
   borrows the view only during the event. Python passes a reusable callback
   object to `solve` and exposes response-presence checks on that object.
