@@ -24,7 +24,7 @@ use crate::proto::IntegerVariableProto;
     note = "a variable needs finite `i64` bounds, such as `0..=10`",
     note = "an `Interval` goes through `CpModel::add`"
 )]
-pub trait NewVar: sealed::LowerVar {
+pub trait NewVar: sealed::IntoVarProto {
     /// The handle that [`CpModel::new_var`] returns.
     type Handle: sealed::FromIndex;
 }
@@ -65,11 +65,11 @@ pub trait WithName: sealed::Sealed + Sized {
     }
 }
 
-impl<T: NewVar + WithName> sealed::LowerVar for Named<T> {
-    fn into_proto(self) -> IntegerVariableProto {
+impl<T: NewVar + WithName> sealed::IntoVarProto for Named<T> {
+    fn into_var_proto(self) -> IntegerVariableProto {
         IntegerVariableProto {
             name: self.name,
-            ..self.var.into_proto()
+            ..self.var.into_var_proto()
         }
     }
 }
@@ -91,8 +91,8 @@ macro_rules! domain_var {
         impl sealed::Sealed for $ty {}
         impl WithName for $ty {}
 
-        impl sealed::LowerVar for $ty {
-            fn into_proto(self) -> IntegerVariableProto {
+        impl sealed::IntoVarProto for $ty {
+            fn into_var_proto(self) -> IntegerVariableProto {
                 variable(Domain::from(self).into_flattened_intervals())
             }
         }
@@ -108,8 +108,8 @@ domain_var!(Domain, Range<i64>, RangeInclusive<i64>);
 impl sealed::Sealed for Bool {}
 impl WithName for Bool {}
 
-impl sealed::LowerVar for Bool {
-    fn into_proto(self) -> IntegerVariableProto {
+impl sealed::IntoVarProto for Bool {
+    fn into_var_proto(self) -> IntegerVariableProto {
         variable(vec![0, 1])
     }
 }
@@ -121,8 +121,8 @@ impl NewVar for Bool {
 impl sealed::Sealed for bool {}
 impl WithName for bool {}
 
-impl sealed::LowerVar for bool {
-    fn into_proto(self) -> IntegerVariableProto {
+impl sealed::IntoVarProto for bool {
+    fn into_var_proto(self) -> IntegerVariableProto {
         variable(vec![self.into(); 2])
     }
 }

@@ -31,8 +31,8 @@ mod sealed {
     /// Lowers a `NewVar` input to the row that `CpModel::new_var` appends.
     /// Generic code bound on `NewVar` can still call it, but it only builds
     /// a message, never a handle.
-    pub trait LowerVar {
-        fn into_proto(self) -> crate::proto::IntegerVariableProto;
+    pub trait IntoVarProto {
+        fn into_var_proto(self) -> crate::proto::IntegerVariableProto;
     }
 }
 
@@ -194,7 +194,9 @@ impl CpModel {
     pub fn new_var<V: NewVar>(&mut self, var: V) -> V::Handle {
         let index = i32::try_from(self.0.variables.len())
             .expect("the model is full, because the schema indexes variables with i32");
-        self.0.variables.push(sealed::LowerVar::into_proto(var));
+        self.0
+            .variables
+            .push(sealed::IntoVarProto::into_var_proto(var));
         <V::Handle as sealed::FromIndex>::from_index(index)
     }
 
