@@ -263,8 +263,8 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
   - Rust: Before insertion, `Constraint::proto` or `into_proto`; after insertion, `model[ConstraintIndex]` to read and `proto_mut` to change; an existing constraint is accessible through `proto().constraints[index]`
   - Test: `model.rs::constraint_builder_sets_enforcement_and_name`, `looks_up_handles_by_index`
 - `IntervalVar.proto`, construction from an existing index; `IntVar(model_proto, index)`
-  - Rust: `model[interval]` to read; `CpModel::interval_var_from_index` and `int_var_from_index` return checked handles
-  - Test: `model.rs::looks_up_handles_by_index`
+  - Rust: `model[ConstraintIndex::from(interval)]` to read the row and `model[interval]` its interval message; `CpModel::interval_var_from_index` and `int_var_from_index` return checked handles
+  - Test: `model.rs::looks_up_handles_by_index`, `indexes_an_interval_as_its_message`
 - `get_or_make_index_from_constant`, `get_or_make_variable_index`, `get_or_make_boolean_index`, `rebuild_constant_map` inherited from `CpBaseModel`
   - Rust: `new_var(value..=value).index()`, typed handle indices, `new_var(bool)` / `to_bool_var`; no constant cache to rebuild
   - Test: `model.rs::a_bool_creates_a_fixed_literal`, `equivalence.rs::constants`
@@ -341,7 +341,7 @@ These items have no Python counterpart. Most replace Python's runtime dispatch o
 - `Constraint` and `ConstraintIndex`: A constraint value before insertion, and the index `CpModel::add` returns; `ConstraintIndex::from(interval)` reaches an interval's whole row
 - `Error`, `Result`: Typed failures where Python raises or returns a string
 - `CpSolverResponseView`: Buffa's zero-copy view of a solution inside a solution callback
-- `Index` on `CpModel`: `model[x]`, `model[interval]`, and `model[constraint]` read the stored message
+- `Index` on `CpModel`: `model[x]` and `model[constraint]` read the stored message, and `model[interval]` its `IntervalConstraintProto`
 - `CpModel::proto`, `proto_mut`, `into_proto`, `From`, `AsRef`: Move between `CpModel` and `CpModelProto`, and solve, validate, or describe a bare message
 - `BoolVar::to_int_var`, `is_negated`, and `index` on handles: Read a handle's encoding without a model
 - `+=`, `-=`, `*=`, and `Sum` on `LinearExpr` and `FloatExpr`: Build expressions in loops and iterator chains

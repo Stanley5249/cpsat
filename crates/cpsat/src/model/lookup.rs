@@ -7,7 +7,7 @@ use super::CpModel;
 use crate::constraint::ConstraintIndex;
 use crate::expr::{BoolVar, IntVar, IntervalVar};
 use crate::proto::constraint_proto::Constraint as Kind;
-use crate::proto::{ConstraintProto, IntegerVariableProto};
+use crate::proto::{ConstraintProto, IntegerVariableProto, IntervalConstraintProto};
 
 /// Converts a handle into a `Vec` index, which panics for a negative index
 /// like an index out of range does.
@@ -71,10 +71,19 @@ impl Index<IntVar> for CpModel {
 }
 
 impl Index<IntervalVar> for CpModel {
-    type Output = ConstraintProto;
+    type Output = IntervalConstraintProto;
 
-    fn index(&self, interval: IntervalVar) -> &ConstraintProto {
-        &self.0.constraints[slot(interval.0)]
+    /// The interval's message. [`ConstraintIndex::from`] reaches its whole
+    /// row, with its name and enforcement literals.
+    ///
+    /// # Panics
+    ///
+    /// If the model lacks the row, or if the row does not hold an interval.
+    fn index(&self, interval: IntervalVar) -> &IntervalConstraintProto {
+        match &self[ConstraintIndex::from(interval)].constraint {
+            Some(Kind::Interval(proto)) => proto,
+            _ => panic!("{interval:?} is not an interval of this model"),
+        }
     }
 }
 

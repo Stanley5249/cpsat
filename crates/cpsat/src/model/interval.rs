@@ -4,9 +4,8 @@
 use buffa::MessageField;
 
 use super::{AddConstraint, CpModel, sealed};
-use crate::constraint::Constraint;
+use crate::constraint::{Constraint, ConstraintIndex};
 use crate::expr::{BoolVar, IntervalVar, LinearExpr};
-use crate::proto::constraint_proto::Constraint as Kind;
 use crate::proto::{ConstraintProto, IntervalConstraintProto, LinearExpressionProto};
 
 /// An interval before [`CpModel::add`] inserts it, which returns its
@@ -131,7 +130,7 @@ impl CpModel {
     #[doc(alias("start_expr", "StartExpr"))]
     #[must_use]
     pub fn interval_start(&self, interval: IntervalVar) -> LinearExpr {
-        interval_part(interval, &self.interval_proto(interval).start)
+        interval_part(interval, &self[interval].start)
     }
 
     /// The size of `interval`.
@@ -143,7 +142,7 @@ impl CpModel {
     #[doc(alias("size_expr", "SizeExpr"))]
     #[must_use]
     pub fn interval_size(&self, interval: IntervalVar) -> LinearExpr {
-        interval_part(interval, &self.interval_proto(interval).size)
+        interval_part(interval, &self[interval].size)
     }
 
     /// The end of `interval`.
@@ -155,7 +154,7 @@ impl CpModel {
     #[doc(alias("end_expr", "EndExpr"))]
     #[must_use]
     pub fn interval_end(&self, interval: IntervalVar) -> LinearExpr {
-        interval_part(interval, &self.interval_proto(interval).end)
+        interval_part(interval, &self[interval].end)
     }
 
     /// The literals that make `interval` present, none for an interval that is
@@ -169,19 +168,13 @@ impl CpModel {
         &self,
         interval: IntervalVar,
     ) -> impl Iterator<Item = BoolVar> + '_ {
-        self.interval_proto(interval);
-        self[interval]
+        // Panics like the other readers when the row holds no interval.
+        let _ = &self[interval];
+        self[ConstraintIndex::from(interval)]
             .enforcement_literal
             .iter()
             .copied()
             .map(BoolVar)
-    }
-
-    fn interval_proto(&self, interval: IntervalVar) -> &IntervalConstraintProto {
-        match &self[interval].constraint {
-            Some(Kind::Interval(proto)) => proto,
-            _ => panic!("{interval:?} is not an interval of this model"),
-        }
     }
 }
 

@@ -85,7 +85,10 @@ fn constraint_builder_sets_enforcement_and_name() {
     );
     assert_eq!(model[constraint].name, "positive");
     assert_eq!(
-        (model[x].name.as_str(), model[interval].name.as_str()),
+        (
+            model[x].name.as_str(),
+            model[ConstraintIndex::from(interval)].name.as_str()
+        ),
         ("x", "task")
     );
 
@@ -423,6 +426,27 @@ fn reads_interval_parts_like_python() {
             .collect::<Vec<_>>(),
         [present]
     );
+}
+
+#[test]
+fn indexes_an_interval_as_its_message() {
+    let mut model = CpModel::new();
+    let x = model.new_var(0..=9);
+    let interval = model.add(Interval::fixed_size(x, 3));
+    assert_eq!(*model[interval].start, LinearExpr::from(x).into_proto());
+    assert_eq!(*model[interval].size, LinearExpr::constant(3).into_proto());
+    assert_eq!(*model[interval].end, (x + 3).into_proto());
+}
+
+#[test]
+#[should_panic(expected = "is not an interval of this model")]
+fn indexing_a_replaced_interval_panics() {
+    let mut model = CpModel::new();
+    let x = model.new_var(0..=9);
+    let interval = model.add(Interval::fixed_size(x, 3));
+    model.proto_mut().constraints[usize::try_from(interval.index()).unwrap()] =
+        x.le(5).into_proto();
+    let _ = &model[interval];
 }
 
 #[test]
