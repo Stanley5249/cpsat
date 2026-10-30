@@ -45,7 +45,7 @@ impl CpModelProto {
 ///         println!("objective {}", response.objective_value);
 ///         ControlFlow::Continue(())
 ///     })
-///     .solve(model.proto())?;
+///     .solve(&model)?;
 /// # Ok::<(), cpsat::Error>(())
 /// ```
 #[derive(Debug)]
