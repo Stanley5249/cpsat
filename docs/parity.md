@@ -245,7 +245,7 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
   - Rust: `CpModel::int_var_from_index`, `interval_var_from_index`; `to_bool_var` on the variable for a literal
   - Test: `model.rs::looks_up_handles_by_index`
 - `IntVar.name`, `IntervalVar.name`, `Constraint.name`, `CpModel.name`
-  - Rust: `with_name` before insertion, `model[handle].name` to read, `CpModel::var_mut` to rename a variable, and `model.proto_mut()` for the rest
+  - Rust: `with_name` before insertion, `model[handle].name` to read, with `model[ConstraintIndex::from(interval)].name` for an interval, `CpModel::var_mut` to rename a variable, `CpModel::set_name` to rename the model, and `model.proto_mut()` for the rest
   - Test: `model.rs::literals_negate_and_name_their_variable`, `constraint_builder_sets_enforcement_and_name`
 - `remove_all_names`
   - Rust: `CpModel::clear_names`

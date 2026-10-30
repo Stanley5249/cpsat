@@ -256,6 +256,12 @@ impl CpModel {
         });
     }
 
+    /// Names the model, like setting Python's `CpModel.name`.
+    #[doc(alias("SetName"))]
+    pub fn set_name(&mut self, name: impl Into<String>) {
+        self.0.name = name.into();
+    }
+
     /// Clears the names of the model, its variables, and its constraints.
     #[doc(alias("remove_all_names"))]
     pub fn clear_names(&mut self) {

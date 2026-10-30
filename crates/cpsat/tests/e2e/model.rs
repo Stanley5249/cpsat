@@ -92,7 +92,8 @@ fn constraint_builder_sets_enforcement_and_name() {
         ("x", "task")
     );
 
-    model.proto_mut().name = "model".into();
+    model.set_name("model");
+    assert_eq!(model.proto().name, "model");
     model.clear_names();
     assert_eq!(model.proto().name, "");
     assert_eq!(model[x].name, "");
