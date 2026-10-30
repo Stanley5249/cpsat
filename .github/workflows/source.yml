@@ -21,9 +21,5 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: .cpsat-cache
-          key:
-            ortools-source-${{ runner.os }}-${{
-            hashFiles('crates/cpsat-sys/build/**') }}
-      - run:
-          cargo test --locked --workspace --features
-          cpsat/json,cpsat/build-libortools
+          key: ortools-source-${{ runner.os }}-${{ hashFiles('crates/cpsat-sys/build/**') }}
+      - run: cargo test --locked --workspace --features cpsat/json,cpsat/build-libortools

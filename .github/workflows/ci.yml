@@ -50,9 +50,7 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: .cpsat-cache
-          key:
-            ortools-${{ runner.os }}-${{
-            hashFiles('crates/cpsat-sys/build/artifacts.rs') }}
+          key: ortools-${{ runner.os }}-${{ hashFiles('crates/cpsat-sys/build/artifacts.rs') }}
       - uses: Swatinem/rust-cache@v2
       - uses: extractions/setup-just@v4
       - run: just lint
@@ -143,9 +141,7 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: .cpsat-cache
-          key:
-            ortools-${{ runner.os }}-${{
-            hashFiles('crates/cpsat-sys/build/artifacts.rs') }}
+          key: ortools-${{ runner.os }}-${{ hashFiles('crates/cpsat-sys/build/artifacts.rs') }}
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.name }}
