@@ -95,3 +95,47 @@ impl Drop for Detach<'_> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    use super::*;
+
+    /// The number of sessions attached to `handle`.
+    fn attached_sessions(handle: &StopHandle) -> usize {
+        handle.lock().len()
+    }
+
+    #[test]
+    fn detaches_after_the_solve_returns() {
+        let handle = StopHandle::new();
+        let session = Session::new().unwrap();
+        let during = attached(Some(&handle), &session, || attached_sessions(&handle));
+        assert_eq!(during, 1);
+        assert_eq!(attached_sessions(&handle), 0);
+    }
+
+    #[test]
+    fn detaches_after_the_solve_fails() {
+        let handle = StopHandle::new();
+        let session = Session::new().unwrap();
+        // The bridge rejects bytes that do not parse as a CpModelProto.
+        let response = attached(Some(&handle), &session, || session.solve(&[0xff]));
+        assert!(response.is_err());
+        assert_eq!(attached_sessions(&handle), 0);
+    }
+
+    #[test]
+    fn detaches_when_the_solve_panics() {
+        let handle = StopHandle::new();
+        let session = Session::new().unwrap();
+        let panic = catch_unwind(AssertUnwindSafe(|| {
+            attached(Some(&handle), &session, || panic!("the solve failed"))
+        }));
+        assert!(panic.is_err());
+        assert_eq!(attached_sessions(&handle), 0);
+        // A later stop must not reach the session, which the caller may free.
+        handle.stop();
+    }
+}
