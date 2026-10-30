@@ -14,8 +14,9 @@ pub enum Error {
     /// OR-Tools' validation rejected the model.
     #[error("invalid model: {0}")]
     InvalidModel(String),
-    /// The bridge returned bytes that are not a valid message.
-    #[error("failed to decode the solver response")]
+    /// The bridge returned bytes that are not a valid message, such as a
+    /// response or the default parameters.
+    #[error("failed to decode a message from the bridge")]
     Decode(#[from] buffa::DecodeError),
 }
 
