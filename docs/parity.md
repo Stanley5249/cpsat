@@ -338,7 +338,7 @@ These items have no Python counterpart. Most replace Python's runtime dispatch o
 - `SolutionCallback`, `BestBoundCallback`, `LogCallback`: One wrapper per callback kind, so `CpSolver` stays generic over each closure
 - `StopHandle`: A shareable, sticky cancellation token
 - `Evaluate`, `Objective`, `Hint`: Sealed traits that pick the value type at compile time, such as `bool` for a literal
-- `Constraint` and `ConstraintIndex`: A constraint value before insertion, and the index `CpModel::add` returns
+- `Constraint` and `ConstraintIndex`: A constraint value before insertion, and the index `CpModel::add` returns; `ConstraintIndex::from(interval)` reaches an interval's whole row
 - `Error`, `Result`: Typed failures where Python raises or returns a string
 - `CpSolverResponseView`: Buffa's zero-copy view of a solution inside a solution callback
 - `Index` on `CpModel`: `model[x]`, `model[interval]`, and `model[constraint]` read the stored message

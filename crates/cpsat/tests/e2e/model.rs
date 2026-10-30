@@ -60,7 +60,8 @@ fn adds_an_interval_as_a_typed_or_plain_constraint() {
     let raw: ConstraintIndex = model.add(model[plain].clone());
 
     assert_eq!((typed.index(), plain.index(), raw.index()), (0, 1, 2));
-    assert_eq!(model[typed], model[plain]);
+    assert_eq!(ConstraintIndex::from(typed).index(), typed.index());
+    assert_eq!(model[ConstraintIndex::from(typed)], model[plain]);
     assert_eq!(model[raw], model[plain]);
     // The plain handle forgets the kind, but the row still holds an interval.
     assert!(model.interval_var_from_index(plain.index()).is_some());

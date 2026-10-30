@@ -21,7 +21,7 @@ mod global;
 mod linear;
 mod scheduling;
 
-use crate::expr::{BoolVar, IntVar};
+use crate::expr::{BoolVar, IntVar, IntervalVar};
 use crate::proto::ConstraintProto;
 use crate::proto::constraint_proto::Constraint as Kind;
 
@@ -105,6 +105,15 @@ impl ConstraintIndex {
     #[must_use]
     pub const fn index(self) -> i32 {
         self.0
+    }
+}
+
+impl From<IntervalVar> for ConstraintIndex {
+    /// The interval's row, which the schema stores as a constraint, so
+    /// `model[ConstraintIndex::from(interval)]` reads its name and
+    /// enforcement literals.
+    fn from(interval: IntervalVar) -> Self {
+        Self(interval.index())
     }
 }
 
