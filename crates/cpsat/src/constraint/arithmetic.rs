@@ -2,7 +2,7 @@
 
 use buffa::MessageField;
 
-use super::{Constraint, Kind, exprs};
+use super::{Constraint, Kind};
 use crate::expr::LinearExpr;
 use crate::proto::LinearArgumentProto;
 
@@ -13,7 +13,7 @@ fn linear_argument(
 ) -> Constraint {
     Constraint::of(kind(Box::new(LinearArgumentProto {
         target: MessageField::some(LinearExpr::into_proto(target.into())),
-        exprs: self::exprs(exprs),
+        exprs: LinearExpr::protos(exprs),
         ..Default::default()
     })))
 }

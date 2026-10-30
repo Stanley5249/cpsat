@@ -21,9 +21,9 @@ mod global;
 mod linear;
 mod scheduling;
 
-use crate::expr::{BoolVar, IntVar, LinearExpr};
+use crate::expr::{BoolVar, IntVar};
+use crate::proto::ConstraintProto;
 use crate::proto::constraint_proto::Constraint as Kind;
-use crate::proto::{ConstraintProto, LinearExpressionProto};
 
 /// A constraint before insertion, like the `Constraint` that Python's `add_*`
 /// methods return, except that it is configured before insertion.
@@ -106,14 +106,6 @@ impl ConstraintIndex {
     pub const fn index(self) -> i32 {
         self.0
     }
-}
-
-fn exprs(exprs: impl IntoIterator<Item = impl Into<LinearExpr>>) -> Vec<LinearExpressionProto> {
-    exprs
-        .into_iter()
-        .map(Into::into)
-        .map(LinearExpr::into_proto)
-        .collect()
 }
 
 fn literals(literals: impl IntoIterator<Item = BoolVar>) -> Vec<i32> {

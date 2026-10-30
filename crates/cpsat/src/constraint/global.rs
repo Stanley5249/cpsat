@@ -2,7 +2,7 @@
 
 use buffa::MessageField;
 
-use super::{Constraint, exprs, vars};
+use super::{Constraint, vars};
 use crate::expr::{IntVar, LinearExpr};
 use crate::proto::{
     AllDifferentConstraintProto, AutomatonConstraintProto, ElementConstraintProto,
@@ -16,7 +16,7 @@ impl Constraint {
     #[must_use]
     pub fn all_different(exprs: impl IntoIterator<Item = impl Into<LinearExpr>>) -> Self {
         Self::of(AllDifferentConstraintProto {
-            exprs: self::exprs(exprs),
+            exprs: LinearExpr::protos(exprs),
             ..Default::default()
         })
     }
@@ -32,7 +32,7 @@ impl Constraint {
         Self::of(ElementConstraintProto {
             linear_index: MessageField::some(LinearExpr::into_proto(index.into())),
             linear_target: MessageField::some(LinearExpr::into_proto(target.into())),
-            exprs: self::exprs(exprs),
+            exprs: LinearExpr::protos(exprs),
             ..Default::default()
         })
     }
@@ -127,7 +127,7 @@ impl Constraint {
         let mut automaton = AutomatonConstraintProto {
             starting_state,
             final_states: final_states.into_iter().collect(),
-            exprs: self::exprs(exprs),
+            exprs: LinearExpr::protos(exprs),
             ..Default::default()
         };
         for (tail, label, head) in transitions {
@@ -143,7 +143,7 @@ fn table(
     exprs: impl IntoIterator<Item = impl Into<LinearExpr>>,
     rows: impl IntoIterator<Item = impl IntoIterator<Item = i64>>,
 ) -> TableConstraintProto {
-    let exprs = self::exprs(exprs);
+    let exprs = LinearExpr::protos(exprs);
     let mut values = Vec::new();
     for row in rows {
         assert!(!exprs.is_empty(), "a table with rows needs an expression");

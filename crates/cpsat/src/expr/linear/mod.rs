@@ -188,6 +188,20 @@ impl LinearExpr {
         }
     }
 
+    /// Each expression as [`into_proto`](Self::into_proto) writes it.
+    ///
+    /// # Panics
+    ///
+    /// If a merged coefficient overflows `i64`.
+    pub(crate) fn protos(
+        exprs: impl IntoIterator<Item = impl Into<Self>>,
+    ) -> Vec<LinearExpressionProto> {
+        exprs
+            .into_iter()
+            .map(|expr| expr.into().into_proto())
+            .collect()
+    }
+
     /// The expression that `proto` writes, or `None` if its `vars` and
     /// `coeffs` differ in length, which `validate` rejects.
     pub(crate) fn from_proto(proto: &LinearExpressionProto) -> Option<Self> {
