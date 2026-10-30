@@ -26,9 +26,9 @@ pub trait NewVar: sealed::Sealed {
     /// The handle that [`CpModel::new_var`] returns.
     type Output;
 
-    /// Appends the variable and returns its handle.
+    /// Appends the variable with `name` and returns its handle.
     #[doc(hidden)]
-    fn insert(self, model: &mut CpModel) -> Self::Output;
+    fn insert(self, model: &mut CpModel, name: String) -> Self::Output;
 }
 
 /// A 0-1 variable for [`CpModel::new_var`].
@@ -69,6 +69,14 @@ pub trait WithName: sealed::Sealed + Sized {
 
 impl<T> sealed::Sealed for Named<T> {}
 
+impl<T: NewVar + WithName> NewVar for Named<T> {
+    type Output = T::Output;
+
+    fn insert(self, model: &mut CpModel, _: String) -> T::Output {
+        self.var.insert(model, self.name)
+    }
+}
+
 macro_rules! domain_var {
     ($($ty:ty),*) => {$(
         impl sealed::Sealed for $ty {}
@@ -77,18 +85,9 @@ macro_rules! domain_var {
         impl NewVar for $ty {
             type Output = IntVar;
 
-            fn insert(self, model: &mut CpModel) -> IntVar {
+            fn insert(self, model: &mut CpModel, name: String) -> IntVar {
                 let domain = Domain::from(self).into_flattened_intervals();
-                IntVar(model.push_var(domain, String::new()))
-            }
-        }
-
-        impl NewVar for Named<$ty> {
-            type Output = IntVar;
-
-            fn insert(self, model: &mut CpModel) -> IntVar {
-                let domain = Domain::from(self.var).into_flattened_intervals();
-                IntVar(model.push_var(domain, self.name))
+                IntVar(model.push_var(domain, name))
             }
         }
     )*};
@@ -102,16 +101,8 @@ impl WithName for Bool {}
 impl NewVar for Bool {
     type Output = BoolVar;
 
-    fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.push_var(vec![0, 1], String::new()))
-    }
-}
-
-impl NewVar for Named<Bool> {
-    type Output = BoolVar;
-
-    fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.push_var(vec![0, 1], self.name))
+    fn insert(self, model: &mut CpModel, name: String) -> BoolVar {
+        BoolVar(model.push_var(vec![0, 1], name))
     }
 }
 
@@ -121,16 +112,8 @@ impl WithName for bool {}
 impl NewVar for bool {
     type Output = BoolVar;
 
-    fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.push_var(vec![self.into(); 2], String::new()))
-    }
-}
-
-impl NewVar for Named<bool> {
-    type Output = BoolVar;
-
-    fn insert(self, model: &mut CpModel) -> BoolVar {
-        BoolVar(model.push_var(vec![self.var.into(); 2], self.name))
+    fn insert(self, model: &mut CpModel, name: String) -> BoolVar {
+        BoolVar(model.push_var(vec![self.into(); 2], name))
     }
 }
 

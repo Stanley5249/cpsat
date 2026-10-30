@@ -105,7 +105,9 @@ impl sealed::Sealed for Interval {}
 impl NewVar for Interval {
     type Output = IntervalVar;
 
-    fn insert(self, model: &mut CpModel) -> IntervalVar {
+    /// `name` is always empty, because `Interval` names itself through its
+    /// own `with_name` instead of [`WithName`](crate::prelude::WithName).
+    fn insert(self, model: &mut CpModel, _: String) -> IntervalVar {
         IntervalVar(model.add(self.0).index())
     }
 }

@@ -179,7 +179,7 @@ impl CpModel {
         "FalseVar"
     ))]
     pub fn new_var<V: NewVar>(&mut self, var: V) -> V::Output {
-        var.insert(self)
+        var.insert(self, String::new())
     }
 
     /// Appends a variable and returns its index.
