@@ -137,10 +137,10 @@ fn arithmetic() {
 fn scheduling() {
     let mut model = CpModel::new();
     let (x, y, b, c) = vars(&mut model);
-    let i = model.new_var(Interval::new(x, 2, y));
-    let j = model.new_var(Interval::fixed_size(x + 1, 3));
-    let k = model.new_var(Interval::new(x, y, x + 5).only_enforce_if(b));
-    let l = model.new_var(Interval::fixed_size(y, 4).only_enforce_if(!c));
+    let i = model.add(Interval::new(x, 2, y));
+    let j = model.add(Interval::fixed_size(x + 1, 3));
+    let k = model.add(Interval::new(x, y, x + 5).only_enforce_if(b));
+    let l = model.add(Interval::fixed_size(y, 4).only_enforce_if(!c));
     model.add(Constraint::no_overlap([i, j]));
     model.add(Constraint::no_overlap_2d([(i, k), (j, l)]));
     model.add(Constraint::cumulative(

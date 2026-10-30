@@ -76,8 +76,8 @@ Every change follows these rules.
 - **Paired forms.** When two forms of one concept share a scope, both get the same pattern of names, such as `model` with `model_proto` and `parameters` with `parameters_proto`.
 - **Files.** A file takes the spelling of the types it holds. Sibling modules may reuse a file name, as the `expr::linear` and `constraint::linear` modules do.
 - **Parity.** Where a Python name breaks a Rust convention or the API's own pattern, the Rust name wins and the Python name becomes a `#[doc(alias)]`.
-- **Entry points.** One method per meaning. Several input types share one method over a sealed trait, such as `value` over `Evaluate`, `new_var` over `NewVar`, and `add_hint` over `Hint`. Take `impl IntoIterator` instead of a single-item twin.
-- **Insertion.** `CpModel::new_var` appends what other parts of the model refer to, a variable or an interval, and returns the handle they take as input. `CpModel::add` appends a constraint that nothing refers to, and its `ConstraintIndex` only reads that row.
+- **Entry points.** One method per meaning. Several input types share one method over a sealed trait, such as `value` over `Evaluate`, `new_var` over `NewVar`, `add` over `AddConstraint`, and `add_hint` over `Hint`. Take `impl IntoIterator` instead of a single-item twin.
+- **Insertion.** `CpModel::new_var` appends a row of `CpModelProto::variables` and `CpModel::add` a row of `CpModelProto::constraints`, so each method maps to one table. Each returns the handle that the input's kind of row calls for: an `IntVar` or `BoolVar` for a variable, an `IntervalVar` for an interval, which other constraints take as input, and a `ConstraintIndex` that only reads any other row. Only these two methods allocate an index and build a handle, through a sealed `FromIndex` trait that code outside the crate cannot call.
 - **Methods.** Operations on a model or response are methods on `CpModel`, `CpModelProto`, and `CpSolverResponse`, and `CpModel` forwards `solve`, `validate`, and `stats` to its message. Only `default_parameters` is a free function. Method names do not repeat the receiver.
 - **Allocation.** Reads, predicates, and lookups allocate nothing, because callbacks and model-building loops call them often. Building owned model data and encoding each solve are the exceptions.
 - **Ownership.** Take stored data by value through `impl Into<T>`, and borrow read-only data, such as `CpSolver::new(&SatParameters)`.
@@ -115,16 +115,16 @@ Each decision names the cost it accepts, so a review can weigh it against the ru
 ```text
 model.new_var(0..=10) -------------------------> IntVar(i32)
 model.new_var(Bool) ---------------------------> BoolVar(i32), !b = -i - 1
-model.new_var(Interval::fixed_size(x, 3)) -----> IntervalVar(i32)
 x + 2 * y - 3 ---------------------------------> LinearExpr { terms, offset }
 (x + 2 * y).le(10).only_enforce_if(b) ---------> Constraint(ConstraintProto)
 Constraint::circuit([(0, 1, a)]) --------------> Constraint
 model.add(constraint) ---- move into model ----> ConstraintIndex(i32)
+model.add(Interval::fixed_size(x, 3)) ---------> IntervalVar(i32)
 ```
 
 - **Handles** are typed `i32` indices without a model identity, like `petgraph` and `slotmap`.
 - **Expressions** sort, merge, and drop zero terms when written, like Python, and panic on `i64` overflow, where Python wraps silently or fails.
 - **Comparisons** are inherent `eq`, `le`, `in_domain`, and so on, because Rust's comparison traits return `bool`. Handles still derive `Ord` by their `i32`, so negated literals sort before plain ones.
-- **Constraints.** Every family is a constructor on `Constraint`, and `CpModel::add` is their only insertion path. Variables and intervals come from `CpModel::new_var`. The schema stores an interval as a constraint, but `new_var` returns an `IntervalVar`, because other constraints reference it by index like a variable.
+- **Constraints.** Every family is a constructor on `Constraint`, and `CpModel::add` is their only insertion path. An `Interval` is a constraint row too, so `add` inserts it and returns an `IntervalVar`, and `Constraint::from(interval)` forgets the kind when a plain `ConstraintIndex` suffices.
 - **Compositions.** Python helpers that compose other calls, such as `add_map_domain` and `weighted_sum`, stay compositions, and `docs/parity.md` gives each encoding.
 - **Responses.** `solution` returns a `Solution` when the status has one, on both the owned response and the view, and `Solution::value` takes any `Evaluate` input and returns an `i64`, `bool`, or `f64` to match it. A `Solution` borrows one `repeated int64` row, so `additional_solutions` reads the same way.

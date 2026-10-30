@@ -28,7 +28,7 @@ fn looks_up_handles_by_index() {
     let b = model.new_var(Bool);
     let one = model.new_var(1..=1);
     let start = model.new_var(0..=10);
-    let interval = model.new_var(Interval::fixed_size(start, 2));
+    let interval = model.add(Interval::fixed_size(start, 2));
     let constraint = model.add(x.le(3));
 
     assert_eq!(model.int_var_from_index(x.index()), Some(x));
@@ -51,11 +51,27 @@ fn looks_up_handles_by_index() {
 }
 
 #[test]
+fn adds_an_interval_as_a_typed_or_plain_constraint() {
+    let mut model = CpModel::new();
+    let start = model.new_var(0..=10);
+    let interval = Interval::fixed_size(start, 2).with_name("task");
+    let typed: IntervalVar = model.add(interval.clone());
+    let plain: ConstraintIndex = model.add(Constraint::from(interval));
+    let raw: ConstraintIndex = model.add(model[plain].clone());
+
+    assert_eq!((typed.index(), plain.index(), raw.index()), (0, 1, 2));
+    assert_eq!(model[typed], model[plain]);
+    assert_eq!(model[raw], model[plain]);
+    // The plain handle forgets the kind, but the row still holds an interval.
+    assert!(model.interval_var_from_index(plain.index()).is_some());
+}
+
+#[test]
 fn constraint_builder_sets_enforcement_and_name() {
     let mut model = CpModel::new();
     let x = model.new_var((0..=5).with_name("x"));
     let [a, b] = std::array::from_fn(|_| model.new_var(Bool));
-    let interval = model.new_var(Interval::fixed_size(x, 2).with_name("task"));
+    let interval = model.add(Interval::fixed_size(x, 2).with_name("task"));
     let constraint = model.add(
         x.ge(1)
             .only_enforce_if(a)
@@ -385,8 +401,8 @@ fn reads_interval_parts_like_python() {
     let mut model = CpModel::new();
     let x = model.new_var(0..=9);
     let present = model.new_var(Bool);
-    let fixed = model.new_var(Interval::fixed_size(x, 3));
-    let optional = model.new_var(Interval::new(x, 2, x + 2).only_enforce_if(present));
+    let fixed = model.add(Interval::fixed_size(x, 3));
+    let optional = model.add(Interval::new(x, 2, x + 2).only_enforce_if(present));
     let parts = |interval| {
         [
             model.interval_start(interval),
@@ -413,7 +429,7 @@ fn reads_interval_parts_like_python() {
 fn interval_parts_panic_on_a_replaced_interval() {
     let mut model = CpModel::new();
     let x = model.new_var(0..=9);
-    let interval = model.new_var(Interval::fixed_size(x, 3));
+    let interval = model.add(Interval::fixed_size(x, 3));
     model.proto_mut().constraints[usize::try_from(interval.index()).unwrap()] =
         x.le(5).into_proto();
     let _ = model.interval_start(interval);
@@ -425,7 +441,7 @@ fn interval_parts_panic_on_a_ragged_expression() {
     let mut model = CpModel::new();
     let x = model.new_var(0..=9);
     let y = model.new_var(0..=9);
-    let interval = model.new_var(Interval::fixed_size(x, 3));
+    let interval = model.add(Interval::fixed_size(x, 3));
     let constraint = &mut model.proto_mut().constraints[usize::try_from(interval.index()).unwrap()];
     let Some(Kind::Interval(proto)) = &mut constraint.constraint else {
         unreachable!("Interval::fixed_size writes an interval");

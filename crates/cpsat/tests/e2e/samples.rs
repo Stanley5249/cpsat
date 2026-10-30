@@ -373,10 +373,10 @@ fn no_overlap() {
     for duration in [2, 4, 3] {
         let start = model.new_var(0..=horizon);
         let end = model.new_var(0..=horizon);
-        tasks.push(model.new_var(Interval::new(start, duration, end)));
+        tasks.push(model.add(Interval::new(start, duration, end)));
         ends.push(end);
     }
-    let weekends = [5, 12, 19].map(|start| model.new_var(Interval::new(start, 2, start + 2)));
+    let weekends = [5, 12, 19].map(|start| model.add(Interval::new(start, 2, start + 2)));
     model.add(Constraint::no_overlap(tasks.into_iter().chain(weekends)));
     let makespan = model.new_var(0..=horizon);
     model.add(Constraint::max_equality(makespan, ends));
@@ -409,7 +409,7 @@ fn minimal_jobshop() {
         for &(machine, duration) in job {
             let start = model.new_var(0..=horizon);
             let end = model.new_var(0..=horizon);
-            machines[machine].push(model.new_var(Interval::new(start, duration, end)));
+            machines[machine].push(model.add(Interval::new(start, duration, end)));
             if let Some(previous_end) = previous_end {
                 model.add(start.ge(previous_end));
             }
@@ -441,8 +441,7 @@ fn ranking_circuit() {
     for (task, duration) in durations.into_iter().enumerate() {
         let start = model.new_var(0..=horizon);
         let presence = model.new_var(Bool);
-        intervals
-            .push(model.new_var(Interval::fixed_size(start, duration).only_enforce_if(presence)));
+        intervals.push(model.add(Interval::fixed_size(start, duration).only_enforce_if(presence)));
         if task < 2 {
             model.add(presence.eq(1));
         }
@@ -687,11 +686,11 @@ fn cumulative_variable_profile() {
         starts.iter().zip(tasks.iter().zip(&performed))
     {
         let interval = Interval::fixed_size(start, duration).only_enforce_if(presence);
-        max_tasks.push((model.new_var(interval), load));
+        max_tasks.push((model.add(interval), load));
     }
     for (hour, load) in (0..).step_by(2).zip(max_loads) {
         let interval = Interval::fixed_size(hour * minutes_per_hour, period_length);
-        max_tasks.push((model.new_var(interval), max_load - load));
+        max_tasks.push((model.add(interval), max_load - load));
     }
     model.add(Constraint::cumulative(max_load, max_tasks));
 
@@ -703,12 +702,12 @@ fn cumulative_variable_profile() {
         let prefix = Interval::new(0, start, start).only_enforce_if(presence);
         let suffix = Interval::new(start + duration, horizon - start - duration, horizon)
             .only_enforce_if(presence);
-        min_tasks.push((model.new_var(prefix), load));
-        min_tasks.push((model.new_var(suffix), load));
+        min_tasks.push((model.add(prefix), load));
+        min_tasks.push((model.add(suffix), load));
     }
     for (hour, load) in (0..).step_by(2).zip(min_loads) {
         let interval = Interval::fixed_size(hour * minutes_per_hour, period_length);
-        min_tasks.push((model.new_var(interval), load));
+        min_tasks.push((model.add(interval), load));
     }
     let total_demand: i64 = tasks.iter().map(|task| task.1).sum();
     let complement_capacity = model.new_var(0..=total_demand);

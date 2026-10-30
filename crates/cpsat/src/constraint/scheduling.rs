@@ -48,7 +48,7 @@ impl Constraint {
     /// let mut model = CpModel::new();
     /// let start = model.new_var(0..=1380);
     /// let performed = model.new_var(Bool);
-    /// let task = model.new_var(Interval::fixed_size(start, 60).only_enforce_if(performed));
+    /// let task = model.add(Interval::fixed_size(start, 60).only_enforce_if(performed));
     /// let capacity = model.new_var(0..=12);
     /// model.add(Constraint::cumulative(capacity, [(task, 3)]));
     /// ```

@@ -95,8 +95,8 @@ fn no_overlap_2d_stacks_the_squares() {
         let x_start = model.new_var(0..=0);
         let y_start = model.new_var(0..=2);
         rectangles.push((
-            model.new_var(Interval::fixed_size(x_start, 2)),
-            model.new_var(Interval::fixed_size(y_start, 2)),
+            model.add(Interval::fixed_size(x_start, 2)),
+            model.add(Interval::fixed_size(y_start, 2)),
         ));
         y_starts.push(y_start);
     }
@@ -140,7 +140,7 @@ fn cumulative_runs_two_tasks_at_a_time() {
     let starts: [IntVar; 3] = std::array::from_fn(|_| model.new_var(0..=10));
     let tasks: Vec<(IntervalVar, i64)> = starts
         .iter()
-        .map(|&start| (model.new_var(Interval::fixed_size(start, 2)), 1))
+        .map(|&start| (model.add(Interval::fixed_size(start, 2)), 1))
         .collect();
     model.add(Constraint::cumulative(2, tasks));
     model.minimize(starts.into_iter().sum::<LinearExpr>());

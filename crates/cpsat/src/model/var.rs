@@ -10,9 +10,9 @@ use crate::proto::IntegerVariableProto;
 
 /// What [`CpModel::new_var`] creates, and the handle it returns: an
 /// [`IntVar`] for a [`Domain`] or a bounded range, a [`BoolVar`] for
-/// [`Bool`], a fixed [`BoolVar`] for a `bool`, and an
-/// [`IntervalVar`](crate::prelude::IntervalVar) for an
-/// [`Interval`](crate::prelude::Interval).
+/// [`Bool`], and a fixed [`BoolVar`] for a `bool`. An
+/// [`Interval`](crate::prelude::Interval) goes through
+/// [`CpModel::add`] instead, because the schema stores it as a constraint.
 ///
 /// `RangeFrom` and `RangeToInclusive` are missing on purpose, because they
 /// always reach `i64::MAX` or `i64::MIN`, which makes a variable invalid. A
@@ -20,8 +20,9 @@ use crate::proto::IntegerVariableProto;
 /// [`validate`](CpModel::validate) rejects it.
 #[diagnostic::on_unimplemented(
     message = "`{Self}` cannot create a variable",
-    label = "expected a bounded `i64` domain, `Bool`, a `bool`, or an `Interval`",
-    note = "a variable needs finite `i64` bounds, such as `0..=10`"
+    label = "expected a bounded `i64` domain, `Bool`, or a `bool`",
+    note = "a variable needs finite `i64` bounds, such as `0..=10`",
+    note = "an `Interval` goes through `CpModel::add`"
 )]
 pub trait NewVar: sealed::Sealed {
     /// The handle that [`CpModel::new_var`] returns.

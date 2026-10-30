@@ -3,13 +3,13 @@
 
 use buffa::MessageField;
 
-use super::{CpModel, NewVar, sealed};
+use super::{AddConstraint, CpModel, sealed};
 use crate::constraint::Constraint;
 use crate::expr::{BoolVar, IntervalVar, LinearExpr};
 use crate::proto::constraint_proto::Constraint as Kind;
 use crate::proto::{ConstraintProto, IntervalConstraintProto, LinearExpressionProto};
 
-/// An interval before [`CpModel::new_var`] inserts it, which returns its
+/// An interval before [`CpModel::add`] inserts it, which returns its
 /// [`IntervalVar`].
 ///
 /// The schema stores an interval as a constraint row that scheduling
@@ -26,12 +26,12 @@ use crate::proto::{ConstraintProto, IntervalConstraintProto, LinearExpressionPro
 /// let start = model.new_var((0..=100).with_name("start"));
 /// let end = model.new_var((0..=100).with_name("end"));
 /// let presence = model.new_var(Bool.with_name("presence"));
-/// let interval = model.new_var(
+/// let interval = model.add(
 ///     Interval::new(start, 10, end + 2)
 ///         .only_enforce_if(presence)
 ///         .with_name("interval"),
 /// );
-/// let fixed = model.new_var(Interval::fixed_size(5, 10).only_enforce_if(presence));
+/// let fixed = model.add(Interval::fixed_size(5, 10).only_enforce_if(presence));
 /// ```
 #[derive(Clone, Debug, PartialEq)]
 pub struct Interval(Constraint);
@@ -103,14 +103,21 @@ impl Interval {
 }
 
 impl sealed::Sealed for Interval {}
+impl AddConstraint for Interval {
+    type Handle = IntervalVar;
+}
 
-impl NewVar for Interval {
-    type Output = IntervalVar;
+impl From<Interval> for Constraint {
+    /// The interval as a plain constraint, which [`CpModel::add`] inserts
+    /// with a [`ConstraintIndex`](crate::prelude::ConstraintIndex) handle.
+    fn from(interval: Interval) -> Self {
+        interval.0
+    }
+}
 
-    /// `name` is always empty, because `Interval` names itself through its
-    /// own `with_name` instead of [`WithName`](crate::prelude::WithName).
-    fn insert(self, model: &mut CpModel, _: String) -> IntervalVar {
-        IntervalVar(model.add(self.0).index())
+impl From<Interval> for ConstraintProto {
+    fn from(interval: Interval) -> Self {
+        interval.0.into_proto()
     }
 }
 

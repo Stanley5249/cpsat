@@ -15,14 +15,55 @@ use lookup::next_index;
 
 use crate::constraint::{Constraint, ConstraintIndex};
 use crate::error::Result;
-use crate::expr::{BoolVar, LinearExpr};
+use crate::expr::{BoolVar, IntervalVar, LinearExpr};
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use crate::proto::{
-    CpModelProto, CpSolverResponse, DecisionStrategyProto, IntegerVariableProto, SatParameters,
+    ConstraintProto, CpModelProto, CpSolverResponse, DecisionStrategyProto, IntegerVariableProto,
+    SatParameters,
 };
 
 mod sealed {
     pub trait Sealed {}
+
+    /// Builds a handle from the index that `CpModel` allocated. Code outside
+    /// the crate cannot name this trait, so only the model creates handles.
+    pub trait FromIndex {
+        fn from_index(index: i32) -> Self;
+    }
+}
+
+impl sealed::FromIndex for IntervalVar {
+    fn from_index(index: i32) -> Self {
+        Self(index)
+    }
+}
+
+impl sealed::FromIndex for ConstraintIndex {
+    fn from_index(index: i32) -> Self {
+        Self(index)
+    }
+}
+
+/// What [`CpModel::add`] inserts, and the handle it returns: a
+/// [`ConstraintIndex`] for a [`Constraint`] or a `ConstraintProto`, and an
+/// [`IntervalVar`] for an [`Interval`].
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` cannot be added as a constraint",
+    label = "expected a `Constraint`, an `Interval`, or a `ConstraintProto`"
+)]
+pub trait AddConstraint: Into<ConstraintProto> + sealed::Sealed {
+    /// The handle that [`CpModel::add`] returns.
+    type Handle: sealed::FromIndex;
+}
+
+impl sealed::Sealed for Constraint {}
+impl AddConstraint for Constraint {
+    type Handle = ConstraintIndex;
+}
+
+impl sealed::Sealed for ConstraintProto {}
+impl AddConstraint for ConstraintProto {
+    type Handle = ConstraintIndex;
 }
 
 /// A CP-SAT model, which owns its `CpModelProto` and hands out typed handles.
@@ -104,10 +145,9 @@ impl CpModel {
         self.0.stats()
     }
 
-    /// A variable or an interval: an [`IntVar`](crate::prelude::IntVar) for a domain or a bounded
-    /// range, a [`BoolVar`] for [`Bool`], a [`BoolVar`] fixed to the value of
-    /// a `bool`, and an [`IntervalVar`](crate::prelude::IntervalVar) for an
-    /// [`Interval`]. [`WithName::with_name`] names a variable.
+    /// A variable: an [`IntVar`](crate::prelude::IntVar) for a domain or a
+    /// bounded range, a [`BoolVar`] for [`Bool`], and a [`BoolVar`] fixed to
+    /// the value of a `bool`. [`WithName::with_name`] names it.
     ///
     /// A fixed variable, such as `5..=5` or `true`, serves where the schema
     /// needs a variable or a literal, such as in [`Constraint::inverse`] or
@@ -117,17 +157,15 @@ impl CpModel {
     /// ```
     /// use cpsat::prelude::*;
     ///
-    /// // From `interval_sample_sat.py`.
+    /// // From `literal_sample_sat.py`.
     /// let mut model = CpModel::new();
-    /// let start = model.new_var((0..=100).with_name("start"));
-    /// let end = model.new_var((0..=100).with_name("end"));
-    /// let interval = model.new_var(Interval::new(start, 10, end + 2).with_name("interval"));
+    /// let x = model.new_var(Bool.with_name("x"));
+    /// let not_x = !x;
     /// ```
     ///
     /// # Panics
     ///
-    /// Panics if the model already holds more than `i32::MAX` variables or
-    /// constraints.
+    /// Panics if the model already holds more than `i32::MAX` variables.
     #[doc(alias(
         "new_int_var",
         "new_int_var_from_domain",
@@ -152,15 +190,28 @@ impl CpModel {
         index
     }
 
-    /// Inserts a constraint.
+    /// Inserts a constraint and returns its handle: a [`ConstraintIndex`] for
+    /// a [`Constraint`] or a `ConstraintProto`, and an [`IntervalVar`] for an
+    /// [`Interval`], which scheduling constraints take as input.
+    ///
+    /// ```
+    /// use cpsat::prelude::*;
+    ///
+    /// // From `interval_sample_sat.py`.
+    /// let mut model = CpModel::new();
+    /// let start = model.new_var((0..=100).with_name("start"));
+    /// let end = model.new_var((0..=100).with_name("end"));
+    /// let interval = model.add(Interval::new(start, 10, end + 2).with_name("interval"));
+    /// model.add(Constraint::no_overlap([interval]));
+    /// ```
     ///
     /// # Panics
     ///
     /// Panics if the model already holds more than `i32::MAX` constraints.
-    pub fn add(&mut self, constraint: impl Into<Constraint>) -> ConstraintIndex {
+    pub fn add<C: AddConstraint>(&mut self, constraint: C) -> C::Handle {
         let index = next_index(self.0.constraints.len(), "constraints");
-        self.0.constraints.push(constraint.into().into_proto());
-        ConstraintIndex(index)
+        self.0.constraints.push(constraint.into());
+        <C::Handle as sealed::FromIndex>::from_index(index)
     }
 
     /// Solves under the assumption that each literal is true. An infeasible

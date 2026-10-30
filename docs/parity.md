@@ -128,7 +128,7 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
   - Rust: `CpModel::new_var` with a fixed range such as `5..=5`, or with `true` or `false` for a fixed literal; each call appends a variable, while Python and C++ share one variable per value
   - Test: `model.rs::constants_and_true_literals_solve_to_their_values`
 - `new_interval_var`, `new_fixed_size_interval_var`
-  - Rust: `CpModel::new_var` with `Interval::new` or `Interval::fixed_size`
+  - Rust: `CpModel::add` with `Interval::new` or `Interval::fixed_size`
   - Test: `samples.rs::no_overlap`, `equivalence.rs::scheduling`
 - `new_optional_interval_var`, `new_optional_fixed_size_interval_var`
   - Rust: `Interval::only_enforce_if` on either
@@ -353,7 +353,7 @@ These items have no Python counterpart. Most replace Python's runtime dispatch o
 
 - Python's `validate` returns an empty string or an error description. Rust's `validate` returns `Result<(), Error>`, with `Error::InvalidModel` carrying the description. Python's `export_to_file` returns a success Boolean; Rust callers handle the result of their chosen file-writing operation.
 - Python's `solve` returns a status and stores its response on the solver. Rust returns an owned response, and response access is explicit. `solution` returns `None` without a solution, where Python raises, and the values it returns need no further checks.
-- Python constructors accept names, and constraint methods mutate an already inserted constraint. Rust names variables and intervals with `with_name` before `new_var`, configures a `Constraint` before insertion, and changes it later through `proto_mut`.
+- Python constructors accept names, and constraint methods mutate an already inserted constraint. Rust names variables and intervals with `with_name` before insertion, configures a `Constraint` before insertion, and changes it later through `proto_mut`.
 - Python accepts dynamic literal inputs and sequence/varargs overloads. Rust takes typed `BoolVar` literals and iterator inputs. Use `new_var(true)` for a fixed literal and `to_bool_var` for a 0-1 integer variable. Where Python mixes `True` into a list of presence literals, an `Option<BoolVar>` says the same without a variable.
 - Integer expression overflow panics in Rust, while Python's native expression arithmetic can wrap. `Domain::size` and empty-bound behavior differ as noted in the Domain entries. Compare supported values and explicit edge cases instead of assuming all error paths match.
 - Rust registers callbacks with `CpSolver::add_solution_callback` and its siblings before solving and borrows the view only during the callback. Python passes a reusable callback object to `solve` and exposes response-presence checks on that object.
