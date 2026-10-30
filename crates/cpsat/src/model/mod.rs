@@ -15,11 +15,10 @@ use lookup::next_index;
 
 use crate::constraint::{Constraint, ConstraintIndex};
 use crate::error::Result;
-use crate::expr::{BoolVar, IntervalVar, LinearExpr};
+use crate::expr::{BoolVar, IntVar, IntervalVar, LinearExpr};
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use crate::proto::{
-    ConstraintProto, CpModelProto, CpSolverResponse, DecisionStrategyProto, IntegerVariableProto,
-    SatParameters,
+    ConstraintProto, CpModelProto, CpSolverResponse, DecisionStrategyProto, SatParameters,
 };
 
 mod sealed {
@@ -29,6 +28,25 @@ mod sealed {
     /// the crate cannot name this trait, so only the model creates handles.
     pub trait FromIndex {
         fn from_index(index: i32) -> Self;
+    }
+
+    /// Lowers a `NewVar` input to the row that `CpModel::new_var` appends.
+    /// Generic code bound on `NewVar` can still call it, but it only builds
+    /// a message, never a handle.
+    pub trait LowerVar {
+        fn into_proto(self) -> crate::proto::IntegerVariableProto;
+    }
+}
+
+impl sealed::FromIndex for IntVar {
+    fn from_index(index: i32) -> Self {
+        Self(index)
+    }
+}
+
+impl sealed::FromIndex for BoolVar {
+    fn from_index(index: i32) -> Self {
+        Self(index)
     }
 }
 
@@ -175,19 +193,10 @@ impl CpModel {
         "TrueVar",
         "FalseVar"
     ))]
-    pub fn new_var<V: NewVar>(&mut self, var: V) -> V::Output {
-        var.insert(self, String::new())
-    }
-
-    /// Appends a variable and returns its index.
-    fn push_var(&mut self, domain: Vec<i64>, name: String) -> i32 {
+    pub fn new_var<V: NewVar>(&mut self, var: V) -> V::Handle {
         let index = next_index(self.0.variables.len(), "variables");
-        self.0.variables.push(IntegerVariableProto {
-            name,
-            domain,
-            ..Default::default()
-        });
-        index
+        self.0.variables.push(sealed::LowerVar::into_proto(var));
+        <V::Handle as sealed::FromIndex>::from_index(index)
     }
 
     /// Inserts a constraint and returns its handle: a [`ConstraintIndex`] for

@@ -24,13 +24,9 @@ use crate::proto::IntegerVariableProto;
     note = "a variable needs finite `i64` bounds, such as `0..=10`",
     note = "an `Interval` goes through `CpModel::add`"
 )]
-pub trait NewVar: sealed::Sealed {
+pub trait NewVar: sealed::LowerVar {
     /// The handle that [`CpModel::new_var`] returns.
-    type Output;
-
-    /// Appends the variable with `name` and returns its handle.
-    #[doc(hidden)]
-    fn insert(self, model: &mut CpModel, name: String) -> Self::Output;
+    type Handle: sealed::FromIndex;
 }
 
 /// A 0-1 variable for [`CpModel::new_var`].
@@ -69,13 +65,24 @@ pub trait WithName: sealed::Sealed + Sized {
     }
 }
 
-impl<T> sealed::Sealed for Named<T> {}
+impl<T: NewVar + WithName> sealed::LowerVar for Named<T> {
+    fn into_proto(self) -> IntegerVariableProto {
+        IntegerVariableProto {
+            name: self.name,
+            ..self.var.into_proto()
+        }
+    }
+}
 
 impl<T: NewVar + WithName> NewVar for Named<T> {
-    type Output = T::Output;
+    type Handle = T::Handle;
+}
 
-    fn insert(self, model: &mut CpModel, _: String) -> T::Output {
-        self.var.insert(model, self.name)
+/// An unnamed variable with the flat `domain`.
+fn variable(domain: Vec<i64>) -> IntegerVariableProto {
+    IntegerVariableProto {
+        domain,
+        ..Default::default()
     }
 }
 
@@ -84,13 +91,14 @@ macro_rules! domain_var {
         impl sealed::Sealed for $ty {}
         impl WithName for $ty {}
 
-        impl NewVar for $ty {
-            type Output = IntVar;
-
-            fn insert(self, model: &mut CpModel, name: String) -> IntVar {
-                let domain = Domain::from(self).into_flattened_intervals();
-                IntVar(model.push_var(domain, name))
+        impl sealed::LowerVar for $ty {
+            fn into_proto(self) -> IntegerVariableProto {
+                variable(Domain::from(self).into_flattened_intervals())
             }
+        }
+
+        impl NewVar for $ty {
+            type Handle = IntVar;
         }
     )*};
 }
@@ -100,23 +108,27 @@ domain_var!(Domain, Range<i64>, RangeInclusive<i64>);
 impl sealed::Sealed for Bool {}
 impl WithName for Bool {}
 
-impl NewVar for Bool {
-    type Output = BoolVar;
-
-    fn insert(self, model: &mut CpModel, name: String) -> BoolVar {
-        BoolVar(model.push_var(vec![0, 1], name))
+impl sealed::LowerVar for Bool {
+    fn into_proto(self) -> IntegerVariableProto {
+        variable(vec![0, 1])
     }
+}
+
+impl NewVar for Bool {
+    type Handle = BoolVar;
 }
 
 impl sealed::Sealed for bool {}
 impl WithName for bool {}
 
-impl NewVar for bool {
-    type Output = BoolVar;
-
-    fn insert(self, model: &mut CpModel, name: String) -> BoolVar {
-        BoolVar(model.push_var(vec![self.into(); 2], name))
+impl sealed::LowerVar for bool {
+    fn into_proto(self) -> IntegerVariableProto {
+        variable(vec![self.into(); 2])
     }
+}
+
+impl NewVar for bool {
+    type Handle = BoolVar;
 }
 
 impl CpModel {
