@@ -98,3 +98,5 @@ are out of scope.
 - **The other files** cover the binding's own mechanics: encoding, the FFI,
   callbacks, callback panics, stops across threads, and response reading. These
   get full coverage, because nothing upstream tests them.
+- **Unit tests** in a `#[cfg(test)]` module check private state that no public
+  API shows, such as the sessions attached to a `StopHandle`.
