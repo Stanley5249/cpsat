@@ -1,5 +1,5 @@
-//! Handle lookups: indexing with a handle, finding a handle by its schema
-//! index, and converting between handles and schema indices.
+//! Handle lookups: indexing with a handle and finding a handle by its
+//! schema index.
 
 use std::ops::Index;
 
@@ -13,11 +13,6 @@ use crate::proto::{ConstraintProto, IntegerVariableProto, IntervalConstraintProt
 /// like an index out of range does.
 pub(super) fn slot(index: i32) -> usize {
     usize::try_from(index).expect("a handle index is non-negative")
-}
-
-/// Converts a length into the `i32` index the schema uses.
-pub(super) fn next_index(len: usize, what: &str) -> i32 {
-    i32::try_from(len).unwrap_or_else(|_| panic!("the schema indexes {what} with i32"))
 }
 
 impl CpModel {

@@ -11,8 +11,6 @@ pub use interval::Interval;
 pub use objective::Objective;
 pub use var::{Bool, Named, NewVar, VarMut, WithName};
 
-use lookup::next_index;
-
 use crate::constraint::{Constraint, ConstraintIndex};
 use crate::error::Result;
 use crate::expr::{BoolVar, IntVar, IntervalVar, LinearExpr};
@@ -194,7 +192,8 @@ impl CpModel {
         "FalseVar"
     ))]
     pub fn new_var<V: NewVar>(&mut self, var: V) -> V::Handle {
-        let index = next_index(self.0.variables.len(), "variables");
+        let index = i32::try_from(self.0.variables.len())
+            .expect("the model is full, because the schema indexes variables with i32");
         self.0.variables.push(sealed::LowerVar::into_proto(var));
         <V::Handle as sealed::FromIndex>::from_index(index)
     }
@@ -218,7 +217,8 @@ impl CpModel {
     ///
     /// Panics if the model already holds more than `i32::MAX` constraints.
     pub fn add<C: AddConstraint>(&mut self, constraint: C) -> C::Handle {
-        let index = next_index(self.0.constraints.len(), "constraints");
+        let index = i32::try_from(self.0.constraints.len())
+            .expect("the model is full, because the schema indexes constraints with i32");
         self.0.constraints.push(constraint.into());
         <C::Handle as sealed::FromIndex>::from_index(index)
     }
