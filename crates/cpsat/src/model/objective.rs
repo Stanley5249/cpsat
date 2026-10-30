@@ -22,14 +22,7 @@ pub trait Objective: sealed::Sealed {
 impl<T: Into<LinearExpr>> sealed::Sealed for T {}
 impl<T: Into<LinearExpr>> Objective for T {
     fn set(self, model: &mut CpModel, maximize: bool) {
-        // Like Python, maximizing minimizes `-expr` with a scaling factor
-        // of -1.
-        let expr = self.into();
-        if maximize {
-            model.set_objective(-expr, -1);
-        } else {
-            model.set_objective(expr, 1);
-        }
+        model.set_objective(self.into(), maximize);
     }
 }
 
@@ -79,7 +72,10 @@ impl CpModel {
         clippy::cast_precision_loss,
         reason = "the schema stores the offset as a double, like Python"
     )]
-    fn set_objective(&mut self, expr: LinearExpr, scaling: i8) {
+    fn set_objective(&mut self, expr: LinearExpr, maximize: bool) {
+        // Like Python, maximizing minimizes `-expr` with a scaling factor
+        // of -1.
+        let (expr, scaling) = if maximize { (-expr, -1.0) } else { (expr, 1.0) };
         // Lower first, because the lowering can panic and must keep the old
         // objective.
         let (vars, coeffs, offset) = expr.into_terms();
@@ -88,7 +84,7 @@ impl CpModel {
             vars,
             coeffs,
             offset: offset as f64,
-            scaling_factor: scaling.into(),
+            scaling_factor: scaling,
             ..Default::default()
         });
     }
