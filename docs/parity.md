@@ -129,7 +129,7 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
   - Test: `model.rs::constants_and_true_literals_solve_to_their_values`
 - `new_interval_var`, `new_fixed_size_interval_var`
   - Rust: `CpModel::add` with `Interval::new` or `Interval::fixed_size`
-  - Test: `samples.rs::no_overlap`, `equivalence.rs::scheduling`
+  - Test: `samples.rs::no_overlap`, `equivalence.rs::scheduling`, `model.rs::adds_an_interval_as_a_typed_or_plain_constraint`
 - `new_optional_interval_var`, `new_optional_fixed_size_interval_var`
   - Rust: `Interval::only_enforce_if` on either
   - Test: `samples.rs::ranking_circuit`, `equivalence.rs::scheduling`
@@ -338,6 +338,7 @@ These items have no Python counterpart. Most replace Python's runtime dispatch o
 - `SolutionCallback`, `BestBoundCallback`, `LogCallback`: One wrapper per callback kind, so `CpSolver` stays generic over each closure
 - `StopHandle`: A shareable, sticky cancellation token
 - `Evaluate`, `Objective`, `Hint`: Sealed traits that pick the value type at compile time, such as `bool` for a literal
+- `NewVar`, `AddConstraint`: Sealed traits that pick the returned handle from the input, such as `IntervalVar` for an `Interval`
 - `Constraint` and `ConstraintIndex`: A constraint value before insertion, and the index `CpModel::add` returns; `ConstraintIndex::from(interval)` reaches an interval's whole row
 - `Error`, `Result`: Typed failures where Python raises or returns a string
 - `CpSolverResponseView`: Buffa's zero-copy view of a solution inside a solution callback
