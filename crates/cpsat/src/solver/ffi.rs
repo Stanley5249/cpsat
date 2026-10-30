@@ -83,6 +83,12 @@ impl Session {
         self.0
     }
 
+    /// Stops the solve, from any thread, or the next solve if none runs.
+    pub fn stop(&self) {
+        // SAFETY: the session is alive, and the bridge's stop is thread-safe.
+        unsafe { cpsat_sys::cpsat_session_stop(self.0) };
+    }
+
     /// Sends the parameters for the solve.
     pub fn set_parameters(&self, parameters: &[u8]) -> Result<()> {
         // SAFETY: the session is alive, and the bytes outlive the call.

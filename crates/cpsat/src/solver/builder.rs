@@ -9,7 +9,7 @@ use crate::proto::view::CpSolverResponseView;
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
 use crate::solver::callback::{BestBoundCallback, Callbacks, LogCallback, SolutionCallback};
 use crate::solver::ffi::Session;
-use crate::solver::stop::StopHandle;
+use crate::solver::stop::{self, StopHandle};
 
 impl CpModelProto {
     /// Solves the model and returns the final response without a callback.
@@ -176,9 +176,7 @@ fn run<C: Callbacks>(
     // SAFETY: `callbacks` stays borrowed in place until this function returns,
     // after the solve.
     unsafe { callbacks.register(&session)? };
-    // SAFETY: the guard drops at the end of this scope, before the session.
-    let _attached = stop.map(|stop| unsafe { crate::solver::stop::attach(stop, session.as_ptr()) });
-    let response = session.solve(&model);
+    let response = stop::attached(stop, &session, || session.solve(&model));
     if let Some((_, payload)) = callbacks.take_panic() {
         resume_unwind(payload);
     }

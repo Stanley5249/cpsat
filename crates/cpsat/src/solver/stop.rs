@@ -3,6 +3,8 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use cpsat_sys::CpsatSession;
 
+use crate::solver::ffi::Session;
+
 /// Stops solves from any thread, including from inside a callback.
 ///
 /// Like a cancellation token, one handle stops every solve it is passed to,
@@ -35,7 +37,7 @@ impl StopHandle {
     /// Stops every attached solve and every later one.
     #[doc(alias("stop_search", "StopSearch"))]
     pub fn stop(&self) {
-        // Set the flag before locking, so attach either sees it or registers
+        // Set the flag before locking, so `attached` either sees it or registers
         // its session before this thread looks.
         self.0.stopped.store(true, Ordering::SeqCst);
         for session in self.lock().iter() {
@@ -59,34 +61,36 @@ impl StopHandle {
     }
 }
 
-/// Registers a live session with `handle` until the returned guard drops.
+/// Runs `solve` while `handle`, if any, can stop `session`.
 ///
 /// This is a free function rather than a method so it stays out of the public
-/// API.
-///
-/// # Safety
-///
-/// The session must stay alive until the guard drops.
-pub unsafe fn attach(handle: &StopHandle, session: *mut CpsatSession) -> AttachGuard<'_> {
+/// API. It takes a closure instead of returning a guard, because a forgotten
+/// guard would leave a dangling session in the handle.
+pub fn attached<R>(handle: Option<&StopHandle>, session: &Session, solve: impl FnOnce() -> R) -> R {
+    let Some(handle) = handle else {
+        return solve();
+    };
     let mut sessions = handle.lock();
-    sessions.push(SessionPtr(session));
+    sessions.push(SessionPtr(session.as_ptr()));
     if handle.is_stopped() {
-        // SAFETY: the caller keeps the session alive.
-        unsafe { cpsat_sys::cpsat_session_stop(session) };
+        session.stop();
     }
-    AttachGuard { handle, session }
+    drop(sessions);
+    let _detach = Detach { handle, session };
+    solve()
 }
 
-/// Detaches one session from its handle on drop.
-pub struct AttachGuard<'a> {
+/// Detaches one session from its handle on drop, including on unwind.
+struct Detach<'a> {
     handle: &'a StopHandle,
-    session: *mut CpsatSession,
+    session: &'a Session,
 }
 
-impl Drop for AttachGuard<'_> {
+impl Drop for Detach<'_> {
     fn drop(&mut self) {
         let mut sessions = self.handle.lock();
-        if let Some(index) = sessions.iter().position(|s| s.0 == self.session) {
+        let session = self.session.as_ptr();
+        if let Some(index) = sessions.iter().position(|s| s.0 == session) {
             sessions.swap_remove(index);
         }
     }
