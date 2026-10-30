@@ -1,19 +1,21 @@
 //! The modeling API, like Python's `CpModel`.
 
+mod hint;
 mod interval;
 mod lookup;
 mod objective;
 mod var;
 
+pub use hint::Hint;
 pub use interval::Interval;
 pub use objective::Objective;
 pub use var::{Bool, Named, NewVar, VarMut, WithName};
 
-use buffa::MessageField;
+use lookup::next_index;
 
 use crate::constraint::{Constraint, ConstraintIndex};
 use crate::error::Result;
-use crate::expr::{BoolVar, IntVar, LinearExpr};
+use crate::expr::{BoolVar, LinearExpr};
 use crate::proto::decision_strategy_proto::{DomainReductionStrategy, VariableSelectionStrategy};
 use crate::proto::{
     CpModelProto, CpSolverResponse, DecisionStrategyProto, IntegerVariableProto, SatParameters,
@@ -21,38 +23,6 @@ use crate::proto::{
 
 mod sealed {
     pub trait Sealed {}
-}
-
-/// What `add_hint` accepts, and the type of its value.
-pub trait Hint: sealed::Sealed {
-    /// The type of the hinted value: `i64` or `bool`.
-    type Value;
-
-    /// The variable index and the value the schema stores.
-    #[doc(hidden)]
-    fn hint(self, value: Self::Value) -> (i32, i64);
-}
-
-impl sealed::Sealed for IntVar {}
-impl Hint for IntVar {
-    type Value = i64;
-
-    fn hint(self, value: i64) -> (i32, i64) {
-        (self.index(), value)
-    }
-}
-
-impl sealed::Sealed for BoolVar {}
-impl Hint for BoolVar {
-    type Value = bool;
-
-    /// A negated literal hints its variable with the opposite value.
-    fn hint(self, value: bool) -> (i32, i64) {
-        (
-            self.to_int_var().index(),
-            (value != self.is_negated()).into(),
-        )
-    }
 }
 
 /// A CP-SAT model, which owns its `CpModelProto` and hands out typed handles.
@@ -75,17 +45,6 @@ impl Hint for BoolVar {
 #[doc(alias("CpModelBuilder"))]
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CpModel(CpModelProto);
-
-/// Converts a handle into a `Vec` index, which panics for a negative index
-/// like an index out of range does.
-fn slot(index: i32) -> usize {
-    usize::try_from(index).expect("a handle index is non-negative")
-}
-
-/// Converts a length into the `i32` index the schema uses.
-fn next_index(len: usize, what: &str) -> i32 {
-    i32::try_from(len).unwrap_or_else(|_| panic!("the schema indexes {what} with i32"))
-}
 
 impl CpModel {
     /// An empty model.
@@ -145,7 +104,7 @@ impl CpModel {
         self.0.stats()
     }
 
-    /// A variable or an interval: an [`IntVar`] for a domain or a bounded
+    /// A variable or an interval: an [`IntVar`](crate::prelude::IntVar) for a domain or a bounded
     /// range, a [`BoolVar`] for [`Bool`], a [`BoolVar`] fixed to the value of
     /// a `bool`, and an [`IntervalVar`](crate::prelude::IntervalVar) for an
     /// [`Interval`]. [`WithName::with_name`] names a variable.
@@ -202,22 +161,6 @@ impl CpModel {
         let index = next_index(self.0.constraints.len(), "constraints");
         self.0.constraints.push(constraint.into().into_proto());
         ConstraintIndex(index)
-    }
-
-    /// Hints that `var` has `value`: an `i64` for an integer variable and a
-    /// `bool` for a literal.
-    #[doc(alias("AddHint"))]
-    pub fn add_hint<H: Hint>(&mut self, var: H, value: H::Value) {
-        let (var, value) = var.hint(value);
-        let hint = self.0.solution_hint.get_or_insert_default();
-        hint.vars.push(var);
-        hint.values.push(value);
-    }
-
-    /// Removes every hint.
-    #[doc(alias("ClearHints"))]
-    pub fn clear_hints(&mut self) {
-        self.0.solution_hint = MessageField::none();
     }
 
     /// Solves under the assumption that each literal is true. An infeasible

@@ -3,7 +3,8 @@
 
 use std::ops::{Range, RangeInclusive};
 
-use super::{CpModel, sealed, slot};
+use super::lookup::slot;
+use super::{CpModel, sealed};
 use crate::expr::{BoolVar, Domain, IntVar};
 use crate::proto::IntegerVariableProto;
 

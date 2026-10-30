@@ -1,11 +1,13 @@
-//! Intervals before insertion, like Python's `new_*interval_var` methods.
+//! Intervals, like Python's `new_*interval_var` methods, and reading them
+//! back from a model.
 
 use buffa::MessageField;
 
 use super::{CpModel, NewVar, sealed};
 use crate::constraint::Constraint;
 use crate::expr::{BoolVar, IntervalVar, LinearExpr};
-use crate::proto::{ConstraintProto, IntervalConstraintProto};
+use crate::proto::constraint_proto::Constraint as Kind;
+use crate::proto::{ConstraintProto, IntervalConstraintProto, LinearExpressionProto};
 
 /// An interval before [`CpModel::new_var`] inserts it, which returns its
 /// [`IntervalVar`].
@@ -110,4 +112,76 @@ impl NewVar for Interval {
     fn insert(self, model: &mut CpModel, _: String) -> IntervalVar {
         IntervalVar(model.add(self.0).index())
     }
+}
+
+impl CpModel {
+    /// The start of `interval`.
+    ///
+    /// # Panics
+    ///
+    /// If `interval` is not an interval of this model, or if its start has
+    /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
+    #[doc(alias("start_expr", "StartExpr"))]
+    #[must_use]
+    pub fn interval_start(&self, interval: IntervalVar) -> LinearExpr {
+        interval_part(interval, &self.interval_proto(interval).start)
+    }
+
+    /// The size of `interval`.
+    ///
+    /// # Panics
+    ///
+    /// If `interval` is not an interval of this model, or if its size has
+    /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
+    #[doc(alias("size_expr", "SizeExpr"))]
+    #[must_use]
+    pub fn interval_size(&self, interval: IntervalVar) -> LinearExpr {
+        interval_part(interval, &self.interval_proto(interval).size)
+    }
+
+    /// The end of `interval`.
+    ///
+    /// # Panics
+    ///
+    /// If `interval` is not an interval of this model, or if its end has
+    /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
+    #[doc(alias("end_expr", "EndExpr"))]
+    #[must_use]
+    pub fn interval_end(&self, interval: IntervalVar) -> LinearExpr {
+        interval_part(interval, &self.interval_proto(interval).end)
+    }
+
+    /// The literals that make `interval` present, none for an interval that is
+    /// always present.
+    ///
+    /// # Panics
+    ///
+    /// If `interval` is not an interval of this model.
+    #[doc(alias("presence_literals", "PresenceBoolVar"))]
+    pub fn interval_presence_literals(
+        &self,
+        interval: IntervalVar,
+    ) -> impl Iterator<Item = BoolVar> + '_ {
+        self.interval_proto(interval);
+        self[interval]
+            .enforcement_literal
+            .iter()
+            .copied()
+            .map(BoolVar)
+    }
+
+    fn interval_proto(&self, interval: IntervalVar) -> &IntervalConstraintProto {
+        match &self[interval].constraint {
+            Some(Kind::Interval(proto)) => proto,
+            _ => panic!("{interval:?} is not an interval of this model"),
+        }
+    }
+}
+
+/// Converts a part of `interval`, which only a hand-edited message leaves
+/// ragged.
+fn interval_part(interval: IntervalVar, expr: &LinearExpressionProto) -> LinearExpr {
+    LinearExpr::from_proto(expr).unwrap_or_else(|| {
+        panic!("{interval:?} has an expression with vars and coeffs of unequal lengths")
+    })
 }

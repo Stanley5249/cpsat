@@ -1,15 +1,24 @@
-//! Handle lookups: indexing with a handle, reading an interval, and finding
-//! a handle by its schema index.
+//! Handle lookups: indexing with a handle, finding a handle by its schema
+//! index, and converting between handles and schema indices.
 
 use std::ops::Index;
 
-use super::{CpModel, slot};
+use super::CpModel;
 use crate::constraint::ConstraintIndex;
-use crate::expr::{BoolVar, IntVar, IntervalVar, LinearExpr};
+use crate::expr::{BoolVar, IntVar, IntervalVar};
 use crate::proto::constraint_proto::Constraint as Kind;
-use crate::proto::{
-    ConstraintProto, IntegerVariableProto, IntervalConstraintProto, LinearExpressionProto,
-};
+use crate::proto::{ConstraintProto, IntegerVariableProto};
+
+/// Converts a handle into a `Vec` index, which panics for a negative index
+/// like an index out of range does.
+pub(super) fn slot(index: i32) -> usize {
+    usize::try_from(index).expect("a handle index is non-negative")
+}
+
+/// Converts a length into the `i32` index the schema uses.
+pub(super) fn next_index(len: usize, what: &str) -> i32 {
+    i32::try_from(len).unwrap_or_else(|_| panic!("the schema indexes {what} with i32"))
+}
 
 impl CpModel {
     /// The variable at `index`.
@@ -48,79 +57,9 @@ impl CpModel {
         matches!(constraint.constraint, Some(Kind::Interval(_))).then_some(IntervalVar(index))
     }
 
-    /// The start of `interval`.
-    ///
-    /// # Panics
-    ///
-    /// If `interval` is not an interval of this model, or if its start has
-    /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
-    #[doc(alias("start_expr", "StartExpr"))]
-    #[must_use]
-    pub fn interval_start(&self, interval: IntervalVar) -> LinearExpr {
-        interval_part(interval, &self.interval_proto(interval).start)
-    }
-
-    /// The size of `interval`.
-    ///
-    /// # Panics
-    ///
-    /// If `interval` is not an interval of this model, or if its size has
-    /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
-    #[doc(alias("size_expr", "SizeExpr"))]
-    #[must_use]
-    pub fn interval_size(&self, interval: IntervalVar) -> LinearExpr {
-        interval_part(interval, &self.interval_proto(interval).size)
-    }
-
-    /// The end of `interval`.
-    ///
-    /// # Panics
-    ///
-    /// If `interval` is not an interval of this model, or if its end has
-    /// `vars` and `coeffs` of unequal lengths, which `validate` rejects.
-    #[doc(alias("end_expr", "EndExpr"))]
-    #[must_use]
-    pub fn interval_end(&self, interval: IntervalVar) -> LinearExpr {
-        interval_part(interval, &self.interval_proto(interval).end)
-    }
-
-    /// The literals that make `interval` present, none for an interval that is
-    /// always present.
-    ///
-    /// # Panics
-    ///
-    /// If `interval` is not an interval of this model.
-    #[doc(alias("presence_literals", "PresenceBoolVar"))]
-    pub fn interval_presence_literals(
-        &self,
-        interval: IntervalVar,
-    ) -> impl Iterator<Item = BoolVar> + '_ {
-        self.interval_proto(interval);
-        self[interval]
-            .enforcement_literal
-            .iter()
-            .copied()
-            .map(BoolVar)
-    }
-
-    fn interval_proto(&self, interval: IntervalVar) -> &IntervalConstraintProto {
-        match &self[interval].constraint {
-            Some(Kind::Interval(proto)) => proto,
-            _ => panic!("{interval:?} is not an interval of this model"),
-        }
-    }
-
     fn var_proto(&self, index: i32) -> Option<&IntegerVariableProto> {
         self.0.variables.get(usize::try_from(index).ok()?)
     }
-}
-
-/// Converts a part of `interval`, which only a hand-edited message leaves
-/// ragged.
-fn interval_part(interval: IntervalVar, expr: &LinearExpressionProto) -> LinearExpr {
-    LinearExpr::from_proto(expr).unwrap_or_else(|| {
-        panic!("{interval:?} has an expression with vars and coeffs of unequal lengths")
-    })
 }
 
 impl Index<IntVar> for CpModel {
