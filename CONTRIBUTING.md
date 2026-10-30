@@ -70,6 +70,12 @@ docs: link the docs with absolute URLs
 
 Name a branch `<type>/<topic>` with a short kebab-case topic, such as `feat/reservoir` or `fix/domain-union`.
 
+## Issues and pull requests
+
+- Write the title as a plain description of the problem or the change, such as "Add the reservoir constraint". Commit types and scopes are not needed.
+- Keep the description short. Say what changes and why, and add only the context a reviewer needs, such as related issues or how you tested it.
+- Apply the existing labels that fit, such as `bug`, `enhancement`, or `documentation`.
+
 ## License
 
 Unless you state otherwise, any contribution you submit for inclusion, as defined in the Apache-2.0 license, is dual licensed as in the README, without additional terms or conditions.
