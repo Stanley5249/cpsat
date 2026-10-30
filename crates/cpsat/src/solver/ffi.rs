@@ -52,9 +52,11 @@ pub unsafe fn slice<'a, T>(data: *const T, len: usize) -> &'a [T] {
     unsafe { core::slice::from_raw_parts(data, len) }
 }
 
-/// Turns a bridge return code into a result, using the bridge's message.
-pub fn check(code: i32, error: &Buffer) -> Result<()> {
-    if code == CPSAT_OK {
+/// Runs a bridge function with an empty error buffer, and turns its return
+/// code into a result with the bridge's message.
+pub fn call(function: impl FnOnce(*mut CpsatBuffer) -> i32) -> Result<()> {
+    let mut error = Buffer::new();
+    if function(error.as_mut_ptr()) == CPSAT_OK {
         return Ok(());
     }
     let message = match error.text() {
@@ -83,17 +85,15 @@ impl Session {
 
     /// Sends the parameters for the solve.
     pub fn set_parameters(&self, parameters: &[u8]) -> Result<()> {
-        let mut error = Buffer::new();
         // SAFETY: the session is alive, and the bytes outlive the call.
-        let code = unsafe {
+        call(|error| unsafe {
             cpsat_sys::cpsat_session_set_parameters(
                 self.0,
                 parameters.as_ptr(),
                 parameters.len(),
-                error.as_mut_ptr(),
+                error,
             )
-        };
-        check(code, &error)
+        })
     }
 
     /// Adds a solution callback with its context.
@@ -107,17 +107,10 @@ impl Session {
         callback: CpsatSolutionCallback,
         context: *mut c_void,
     ) -> Result<()> {
-        let mut error = Buffer::new();
         // SAFETY: the session is alive, and the caller upholds the rest.
-        let code = unsafe {
-            cpsat_sys::cpsat_session_add_solution_callback(
-                self.0,
-                callback,
-                context,
-                error.as_mut_ptr(),
-            )
-        };
-        check(code, &error)
+        call(|error| unsafe {
+            cpsat_sys::cpsat_session_add_solution_callback(self.0, callback, context, error)
+        })
     }
 
     /// Adds a best-bound callback with its context.
@@ -130,17 +123,10 @@ impl Session {
         callback: CpsatBestBoundCallback,
         context: *mut c_void,
     ) -> Result<()> {
-        let mut error = Buffer::new();
         // SAFETY: the session is alive, and the caller upholds the rest.
-        let code = unsafe {
-            cpsat_sys::cpsat_session_add_best_bound_callback(
-                self.0,
-                callback,
-                context,
-                error.as_mut_ptr(),
-            )
-        };
-        check(code, &error)
+        call(|error| unsafe {
+            cpsat_sys::cpsat_session_add_best_bound_callback(self.0, callback, context, error)
+        })
     }
 
     /// Adds a log callback with its context.
@@ -153,30 +139,26 @@ impl Session {
         callback: CpsatLogCallback,
         context: *mut c_void,
     ) -> Result<()> {
-        let mut error = Buffer::new();
         // SAFETY: the session is alive, and the caller upholds the rest.
-        let code = unsafe {
-            cpsat_sys::cpsat_session_add_log_callback(self.0, callback, context, error.as_mut_ptr())
-        };
-        check(code, &error)
+        call(|error| unsafe {
+            cpsat_sys::cpsat_session_add_log_callback(self.0, callback, context, error)
+        })
     }
 
     /// Solves `model` and returns the encoded response.
     pub fn solve(&self, model: &[u8]) -> Result<Buffer> {
         let mut response = Buffer::new();
-        let mut error = Buffer::new();
         // SAFETY: the session is alive, the bytes outlive the call, and the
         // buffers are empty bridge buffers.
-        let code = unsafe {
+        call(|error| unsafe {
             cpsat_sys::cpsat_session_solve(
                 self.0,
                 model.as_ptr(),
                 model.len(),
                 response.as_mut_ptr(),
-                error.as_mut_ptr(),
+                error,
             )
-        };
-        check(code, &error)?;
+        })?;
         Ok(response)
     }
 }

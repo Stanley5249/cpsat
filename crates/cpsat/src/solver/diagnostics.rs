@@ -6,25 +6,16 @@ use cpsat_sys::CpsatBuffer;
 
 use crate::error::{Error, Result};
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
-use crate::solver::ffi::Buffer;
+use crate::solver::ffi::{self, Buffer};
 
-fn call(
+fn call_helper(
     helper: unsafe extern "C" fn(*const u8, usize, *mut CpsatBuffer, *mut CpsatBuffer) -> i32,
     bytes: &[u8],
 ) -> Result<String> {
     let mut output = Buffer::new();
-    let mut error = Buffer::new();
     // SAFETY: bytes is valid for its length, and both buffers are empty
     // bridge buffers.
-    let code = unsafe {
-        helper(
-            bytes.as_ptr(),
-            bytes.len(),
-            output.as_mut_ptr(),
-            error.as_mut_ptr(),
-        )
-    };
-    crate::solver::ffi::check(code, &error)?;
+    ffi::call(|error| unsafe { helper(bytes.as_ptr(), bytes.len(), output.as_mut_ptr(), error) })?;
     Ok(output.text().into_owned())
 }
 
@@ -38,7 +29,7 @@ impl CpModelProto {
     /// is invalid.
     #[doc(alias("ValidateCpModel"))]
     pub fn validate(&self) -> Result<()> {
-        let message = call(cpsat_sys::cpsat_model_validate, &self.encode_to_vec())?;
+        let message = call_helper(cpsat_sys::cpsat_model_validate, &self.encode_to_vec())?;
         if message.is_empty() {
             Ok(())
         } else {
@@ -53,7 +44,7 @@ impl CpModelProto {
     /// Returns an error if the bridge call fails.
     #[doc(alias("model_stats", "CpModelStats"))]
     pub fn stats(&self) -> Result<String> {
-        call(cpsat_sys::cpsat_model_stats, &self.encode_to_vec())
+        call_helper(cpsat_sys::cpsat_model_stats, &self.encode_to_vec())
     }
 }
 
@@ -65,7 +56,7 @@ impl CpSolverResponse {
     /// Returns an error if the bridge call fails.
     #[doc(alias("response_stats", "CpSolverResponseStats"))]
     pub fn stats(&self) -> Result<String> {
-        call(cpsat_sys::cpsat_response_stats, &self.encode_to_vec())
+        call_helper(cpsat_sys::cpsat_response_stats, &self.encode_to_vec())
     }
 }
 
@@ -81,10 +72,9 @@ impl CpSolverResponse {
 /// Returns an error if the bridge call fails or its output does not decode.
 pub fn default_parameters() -> Result<SatParameters> {
     let mut parameters = Buffer::new();
-    let mut error = Buffer::new();
     // SAFETY: both buffers are empty bridge buffers.
-    let code =
-        unsafe { cpsat_sys::cpsat_parameters_default(parameters.as_mut_ptr(), error.as_mut_ptr()) };
-    crate::solver::ffi::check(code, &error)?;
+    ffi::call(|error| unsafe {
+        cpsat_sys::cpsat_parameters_default(parameters.as_mut_ptr(), error)
+    })?;
     Ok(SatParameters::decode_from_slice(parameters.bytes())?)
 }
