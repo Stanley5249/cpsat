@@ -67,14 +67,18 @@ impl CpSolverResponse {
 /// so this asks OR-Tools for the defaults. A solve applies the defaults
 /// either way.
 ///
-/// # Errors
+/// # Panics
 ///
-/// Returns an error if the bridge call fails or its output does not decode.
-pub fn default_parameters() -> Result<SatParameters> {
+/// If the bridge call fails or its output does not decode, which only a
+/// broken build of the bridge can cause.
+#[must_use]
+pub fn default_parameters() -> SatParameters {
     let mut parameters = Buffer::new();
     // SAFETY: both buffers are empty bridge buffers.
     ffi::call(|error| unsafe {
         cpsat_sys::cpsat_parameters_default(parameters.as_mut_ptr(), error)
-    })?;
-    Ok(SatParameters::decode_from_slice(parameters.bytes())?)
+    })
+    .expect("the bridge reads the SatParameters defaults");
+    SatParameters::decode_from_slice(parameters.bytes())
+        .expect("the bridge encodes valid SatParameters")
 }
