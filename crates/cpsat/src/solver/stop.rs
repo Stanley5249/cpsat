@@ -1,9 +1,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
-use cpsat_sys::CpsatSession;
-
-use crate::solver::ffi::Session;
+use crate::solver::ffi::{Session, SessionPtr};
 
 /// Stops solves from any thread, including from inside a callback.
 ///
@@ -20,13 +18,6 @@ struct Shared {
     sessions: Mutex<Vec<SessionPtr>>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-struct SessionPtr(*mut CpsatSession);
-
-// SAFETY: cpsat_session_stop is thread-safe, and the pointer is only used
-// under the mutex while the session is alive.
-unsafe impl Send for SessionPtr {}
-
 impl StopHandle {
     /// A handle that has not stopped.
     #[must_use]
@@ -41,8 +32,9 @@ impl StopHandle {
         // its session before this thread looks.
         self.0.stopped.store(true, Ordering::SeqCst);
         for session in self.lock().iter() {
-            // SAFETY: a session stays alive while it is registered.
-            unsafe { cpsat_sys::cpsat_session_stop(session.0) };
+            // SAFETY: `attached` borrows the session until `Detach` removes it
+            // under this lock, so a registered session is alive.
+            unsafe { session.stop() };
         }
     }
 
@@ -71,7 +63,7 @@ pub fn attached<R>(handle: Option<&StopHandle>, session: &Session, solve: impl F
         return solve();
     };
     let mut sessions = handle.lock();
-    sessions.push(SessionPtr(session.as_ptr()));
+    sessions.push(session.as_ptr());
     if handle.is_stopped() {
         session.stop();
     }
@@ -90,7 +82,7 @@ impl Drop for Detach<'_> {
     fn drop(&mut self) {
         let mut sessions = self.handle.lock();
         let session = self.session.as_ptr();
-        if let Some(index) = sessions.iter().position(|s| s.0 == session) {
+        if let Some(index) = sessions.iter().position(|s| *s == session) {
             sessions.swap_remove(index);
         }
     }

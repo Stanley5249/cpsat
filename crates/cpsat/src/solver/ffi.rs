@@ -115,8 +115,8 @@ impl Session {
         Ok(Self(session))
     }
 
-    pub fn as_ptr(&self) -> *mut CpsatSession {
-        self.0
+    pub fn as_ptr(&self) -> SessionPtr {
+        SessionPtr(self.0)
     }
 
     /// Stops the solve, from any thread, or the next solve if none runs.
@@ -202,6 +202,30 @@ impl Session {
             )
         })?;
         Ok(response)
+    }
+}
+
+/// The address of a [`Session`], which owns nothing and lets another thread
+/// stop the session while it solves.
+#[derive(Debug, PartialEq, Eq)]
+pub struct SessionPtr(*mut CpsatSession);
+
+// SAFETY: sending the pointer does not dereference it, the bridge allows a
+// stop from any thread, and the callers of `SessionPtr::stop` keep the
+// session alive.
+unsafe impl Send for SessionPtr {}
+
+impl SessionPtr {
+    /// Stops the session's solve, from any thread.
+    ///
+    /// # Safety
+    ///
+    /// The session must stay alive for the whole call, so no thread may drop
+    /// it meanwhile.
+    pub unsafe fn stop(&self) {
+        // SAFETY: the caller keeps the session alive, and the bridge's stop is
+        // thread-safe.
+        unsafe { cpsat_sys::cpsat_session_stop(self.0) };
     }
 }
 
