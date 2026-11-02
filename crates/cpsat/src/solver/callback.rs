@@ -29,13 +29,13 @@ static PANICS: AtomicU64 = AtomicU64::new(0);
 /// panic of all its callbacks, as Python's binding reraises the first callback
 /// exception.
 #[derive(Debug)]
-struct Slot<F> {
+struct CallbackState<F> {
     callback: F,
     panic: Option<Panic>,
 }
 
-impl<F> Slot<F> {
-    /// A slot without a panic.
+impl<F> CallbackState<F> {
+    /// A state without a panic.
     fn new(callback: F) -> Self {
         Self {
             callback,
@@ -43,11 +43,11 @@ impl<F> Slot<F> {
         }
     }
 
-    /// Recovers the slot that a trampoline's context points to.
+    /// Recovers the state that a trampoline's context points to.
     ///
     /// # Safety
     ///
-    /// `context` must point to a live `Slot<F>`, and the bridge's callback
+    /// `context` must point to a live `CallbackState<F>`, and the bridge's callback
     /// mutex makes this the only live reference to it.
     unsafe fn from_context<'a>(context: *mut c_void) -> &'a mut Self {
         // SAFETY: the caller upholds the contract above.
@@ -73,36 +73,36 @@ impl<F> Slot<F> {
 /// A solution callback in a [`CpSolver`](crate::prelude::CpSolver), added by
 /// [`CpSolver::add_solution_callback`](crate::prelude::CpSolver::add_solution_callback).
 #[derive(Debug)]
-pub struct SolutionCallback<F>(Slot<F>);
+pub struct SolutionCallback<F>(CallbackState<F>);
 
 /// A best-bound callback in a [`CpSolver`](crate::prelude::CpSolver), added by
 /// [`CpSolver::add_best_bound_callback`](crate::prelude::CpSolver::add_best_bound_callback).
 #[derive(Debug)]
-pub struct BestBoundCallback<F>(Slot<F>);
+pub struct BestBoundCallback<F>(CallbackState<F>);
 
 /// A log callback in a [`CpSolver`](crate::prelude::CpSolver), added by
 /// [`CpSolver::add_log_callback`](crate::prelude::CpSolver::add_log_callback).
 #[derive(Debug)]
-pub struct LogCallback<F>(Slot<F>);
+pub struct LogCallback<F>(CallbackState<F>);
 
 impl<F> SolutionCallback<F> {
     /// Wraps `callback` for [`CpSolver::add_solution_callback`](crate::prelude::CpSolver::add_solution_callback).
     pub(crate) fn new(callback: F) -> Self {
-        Self(Slot::new(callback))
+        Self(CallbackState::new(callback))
     }
 }
 
 impl<F> BestBoundCallback<F> {
     /// Wraps `callback` for [`CpSolver::add_best_bound_callback`](crate::prelude::CpSolver::add_best_bound_callback).
     pub(crate) fn new(callback: F) -> Self {
-        Self(Slot::new(callback))
+        Self(CallbackState::new(callback))
     }
 }
 
 impl<F> LogCallback<F> {
     /// Wraps `callback` for [`CpSolver::add_log_callback`](crate::prelude::CpSolver::add_log_callback).
     pub(crate) fn new(callback: F) -> Self {
-        Self(Slot::new(callback))
+        Self(CallbackState::new(callback))
     }
 }
 
@@ -223,13 +223,13 @@ where
 {
     // SAFETY: the bridge passes the context it was given and a response valid
     // for the duration of the call.
-    let (slot, response) = unsafe {
+    let (state, response) = unsafe {
         (
-            Slot::<F>::from_context(context),
+            CallbackState::<F>::from_context(context),
             crate::solver::ffi::slice(response, response_len),
         )
     };
-    slot.call(|callback| {
+    state.call(|callback| {
         let view = CpSolverResponseView::decode_view(response)
             .expect("the bridge sends a serialized CpSolverResponse");
         callback(&view)
@@ -241,7 +241,7 @@ where
     F: FnMut(f64) -> ControlFlow<()>,
 {
     // SAFETY: the bridge passes the context it was given.
-    unsafe { Slot::<F>::from_context(context) }.call(|callback| callback(bound))
+    unsafe { CallbackState::<F>::from_context(context) }.call(|callback| callback(bound))
 }
 
 unsafe extern "C" fn log<F>(context: *mut c_void, message: *const u8, message_len: usize) -> i32
@@ -250,11 +250,11 @@ where
 {
     // SAFETY: the bridge passes the context it was given and a message valid
     // for the duration of the call.
-    let (slot, message) = unsafe {
+    let (state, message) = unsafe {
         (
-            Slot::<F>::from_context(context),
+            CallbackState::<F>::from_context(context),
             crate::solver::ffi::slice(message, message_len),
         )
     };
-    slot.call(|callback| callback(&String::from_utf8_lossy(message)))
+    state.call(|callback| callback(&String::from_utf8_lossy(message)))
 }
