@@ -91,7 +91,7 @@ Every change follows these rules.
 - **Builders.** A value configured before insertion takes `self` and returns `Self` with `#[must_use]`, such as `Constraint::only_enforce_if`. After insertion, `CpModel::var_mut` edits a variable through setters that keep its fields well formed, and everything else changes through `proto_mut`. `CpModel` holds nothing besides its message, so `proto_mut` cannot leave the model inconsistent. It can only break the handles to rows it changes, such as an `IntervalVar` whose row no longer holds an interval.
 - **`#[must_use]`.** Every public method without side effects carries it, unless its return type is already `#[must_use]`, such as `Result`. Appending model methods such as `new_var` do not.
 - **Docs and tests.** `docs/conventions.md` sets the rules for doc comments, examples, and tests.
-- **Visibility.** `pub` or private, except `pub(crate)` on handle indices, expression terms and evaluation, and the callback wrappers' `new`, which sibling modules share.
+- **Visibility.** Only the items that Paths names are public API. An item that another module uses is `pub` when it is a free item in a private module, and `pub(crate)` when it is a field or method of a public type. Everything else is private. Internal code reads another type's data through a field rather than an accessor that returns it unchanged.
 
 ## Decisions
 
