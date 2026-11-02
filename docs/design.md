@@ -26,7 +26,7 @@ user code
    |
 crates/cpsat          CpModel, Buffa types, CpSolver, StopHandle, diagnostics
    |  (safe Rust, owns the model)
-crates/cpsat-sys      build.rs, raw extern "C" declarations, links = "ortools"
+crates/cpsat-sys      build/main.rs, raw extern "C" declarations, links = "ortools"
    |  (serialized bytes, one fn pointer + context per callback, opaque session)
 cpsat-sys/bridge      extern "C" over SolveWrapper and CpSatHelper
    |

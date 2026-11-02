@@ -9,6 +9,7 @@ repository.workspace = true
 license.workspace = true
 keywords = ["cp-sat", "ffi", "or-tools", "solver"]
 categories = ["algorithms", "external-ffi-bindings"]
+build = "build/main.rs"
 links = "ortools"
 
 [build-dependencies]

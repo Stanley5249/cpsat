@@ -21,6 +21,6 @@ Checklists for the recurring upgrades. A step that names a CI check fails the bu
 ## Add a target
 
 1. Add the official archive to `crates/cpsat-sys/build/artifacts.rs` and its `prebuilt` match.
-2. Extend `toolchain`, the library filter in `place_runtime`, and `link` in `crates/cpsat-sys/build.rs`.
+2. Extend `toolchain`, the library filter in `place_runtime`, and `link` in `crates/cpsat-sys/build/main.rs`.
 3. Add the target's rpath to `.cargo/config.toml`, such as `@loader_path` on macOS, and to the deployment section of `docs/build.md`.
 4. Add the target to the `test` matrix in `.github/workflows/ci.yml` and to the supported targets in the README.

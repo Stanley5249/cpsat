@@ -11,11 +11,8 @@
 //! outside it, so this fails when `build.build-dir` leaves the target
 //! directory.
 
-#[path = "build/artifacts.rs"]
 mod artifacts;
-#[path = "build/fetch.rs"]
 mod fetch;
-#[path = "build/source.rs"]
 mod source;
 
 use std::env;
@@ -42,7 +39,7 @@ const CMAKE_TARGETS: &str = "cmake/ortools/ortoolsTargets.cmake";
 const LIB_DIRS: [&str; 2] = ["lib", "lib64"];
 
 fn main() -> Result<()> {
-    for path in ["build.rs", "build", "bridge"] {
+    for path in ["build", "bridge"] {
         println!("cargo::rerun-if-changed={path}");
     }
     // The default cache directory comes from the platform variables.
