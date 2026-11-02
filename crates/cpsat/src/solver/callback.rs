@@ -43,6 +43,17 @@ impl<F> Slot<F> {
         }
     }
 
+    /// Recovers the slot that a trampoline's context points to.
+    ///
+    /// # Safety
+    ///
+    /// `context` must point to a live `Slot<F>`, and the bridge's callback
+    /// mutex makes this the only live reference to it.
+    unsafe fn from_context<'a>(context: *mut c_void) -> &'a mut Self {
+        // SAFETY: the caller upholds the contract above.
+        unsafe { &mut *context.cast::<Self>() }
+    }
+
     /// Returns nonzero to stop the search.
     fn call(&mut self, run: impl FnOnce(&mut F) -> ControlFlow<()>) -> i32 {
         if self.panic.is_some() {
@@ -202,17 +213,6 @@ where
     }
 }
 
-/// Recovers the slot that a trampoline's context points to.
-///
-/// # Safety
-///
-/// `context` must point to a live `Slot<F>`, and the bridge's callback mutex
-/// makes this the only live reference to it.
-unsafe fn slot<'a, F>(context: *mut c_void) -> &'a mut Slot<F> {
-    // SAFETY: the caller upholds the contract above.
-    unsafe { &mut *context.cast::<Slot<F>>() }
-}
-
 unsafe extern "C" fn solution<F>(
     context: *mut c_void,
     response: *const u8,
@@ -225,7 +225,7 @@ where
     // for the duration of the call.
     let (slot, response) = unsafe {
         (
-            slot::<F>(context),
+            Slot::<F>::from_context(context),
             crate::solver::ffi::slice(response, response_len),
         )
     };
@@ -241,7 +241,7 @@ where
     F: FnMut(f64) -> ControlFlow<()>,
 {
     // SAFETY: the bridge passes the context it was given.
-    unsafe { slot::<F>(context) }.call(|callback| callback(bound))
+    unsafe { Slot::<F>::from_context(context) }.call(|callback| callback(bound))
 }
 
 unsafe extern "C" fn log<F>(context: *mut c_void, message: *const u8, message_len: usize) -> i32
@@ -252,7 +252,7 @@ where
     // for the duration of the call.
     let (slot, message) = unsafe {
         (
-            slot::<F>(context),
+            Slot::<F>::from_context(context),
             crate::solver::ffi::slice(message, message_len),
         )
     };
