@@ -36,8 +36,8 @@ fn complements_at_the_i64_limits() {
 fn unions_and_intersects() {
     let a = Domain::from_intervals([(0, 5), (10, 15)]);
     let b = Domain::from_intervals([(4, 11)]);
-    assert_eq!(a.union_with(&b).intervals(), [[0, 15]]);
-    assert_eq!(a.intersection_with(&b).intervals(), [[4, 5], [10, 11]]);
+    assert_eq!(a.union(&b).intervals(), [[0, 15]]);
+    assert_eq!(a.intersection(&b).intervals(), [[4, 5], [10, 11]]);
     assert!(a.contains(12) && !a.contains(7));
 }
 
@@ -46,8 +46,8 @@ fn flat_form_round_trips() {
     let domain = Domain::from_intervals([(0, 2), (5, 5)]);
     let flat = domain.flattened_intervals();
     assert_eq!(flat, [0, 2, 5, 5]);
-    assert_eq!(Domain::from_flat_intervals(flat), Some(domain.clone()));
-    assert_eq!(Domain::from_flat_intervals(&[1, 2, 3]), None);
+    assert_eq!(Domain::from_flattened_intervals(flat), Some(domain.clone()));
+    assert_eq!(Domain::from_flattened_intervals(&[1, 2, 3]), None);
 }
 
 #[test]
@@ -81,13 +81,13 @@ fn reports_bounds_and_size() {
 fn compares_sets() {
     let small = Domain::new(2, 3);
     let large = Domain::from_intervals([(0, 5), (10, 15)]);
-    assert!(small.is_included_in(&large) && !large.is_included_in(&small));
-    assert!(Domain::default().is_included_in(&small));
-    assert!(small.overlaps_with(&large));
-    assert!(!small.overlaps_with(&Domain::new(4, 9)));
-    assert!(small.overlaps_with(&Domain::new(3, 9)));
-    assert!(small.is_included_in(&small));
-    assert!(!small.is_included_in(&Domain::default()));
+    assert!(small.is_subset(&large) && !large.is_subset(&small));
+    assert!(Domain::default().is_subset(&small));
+    assert!(!small.is_disjoint(&large));
+    assert!(small.is_disjoint(&Domain::new(4, 9)));
+    assert!(!small.is_disjoint(&Domain::new(3, 9)));
+    assert!(small.is_subset(&small));
+    assert!(!small.is_subset(&Domain::default()));
 }
 
 #[test]
@@ -104,24 +104,20 @@ fn negates_and_adds_like_python() {
 
     let a = Domain::from_intervals([(0, 1), (10, 11)]);
     let b = Domain::from_values([0, 5]);
-    assert_eq!(flat(a.addition_with(&b)), [0, 1, 5, 6, 10, 11, 15, 16]);
+    assert_eq!(flat(a.addition(&b)), [0, 1, 5, 6, 10, 11, 15, 16]);
     let five = Domain::new(5, 5);
     assert_eq!(
-        flat(Domain::new(MAX - 1, MAX).addition_with(&five)),
+        flat(Domain::new(MAX - 1, MAX).addition(&five)),
         [] as [i64; 0]
     );
     let minus_three = Domain::new(-3, -3);
     assert_eq!(
-        flat(Domain::new(0, MAX).addition_with(&minus_three)),
+        flat(Domain::new(0, MAX).addition(&minus_three)),
         [-3, MAX - 3]
     );
     let min = Domain::new(MIN, MIN);
-    assert_eq!(flat(Domain::new(MIN, 0).addition_with(&min)), [MIN, MIN]);
-    assert!(
-        Domain::new(0, 1)
-            .addition_with(&Domain::default())
-            .is_empty()
-    );
+    assert_eq!(flat(Domain::new(MIN, 0).addition(&min)), [MIN, MIN]);
+    assert!(Domain::new(0, 1).addition(&Domain::default()).is_empty());
 }
 
 #[test]
@@ -157,21 +153,21 @@ fn set_operations_handle_touching_and_limit_intervals() {
     let low = Domain::from_intervals([(i64::MIN, -5), (0, 2)]);
     let high = Domain::from_intervals([(3, 4), (10, i64::MAX)]);
     assert_eq!(
-        low.union_with(&high).intervals(),
+        low.union(&high).intervals(),
         [[i64::MIN, -5], [0, 4], [10, i64::MAX]]
     );
-    assert!(low.intersection_with(&high).is_empty());
-    assert!(!low.overlaps_with(&high));
+    assert!(low.intersection(&high).is_empty());
+    assert!(low.is_disjoint(&high));
 
     let wide = Domain::from_intervals([(i64::MIN, 0), (5, 20)]);
     let parts = Domain::from_intervals([(-3, -1), (6, 7), (19, 25)]);
     assert_eq!(
-        wide.intersection_with(&parts).intervals(),
+        wide.intersection(&parts).intervals(),
         [[-3, -1], [6, 7], [19, 20]]
     );
-    assert!(!parts.is_included_in(&wide));
-    assert!(Domain::from_intervals([(-3, -1), (6, 7)]).is_included_in(&wide));
-    assert!(!Domain::new(0, 5).is_included_in(&wide), "spans a gap");
-    assert_eq!(Domain::all_values().intersection_with(&wide), wide);
-    assert_eq!(wide.union_with(&wide.complement()), Domain::all_values());
+    assert!(!parts.is_subset(&wide));
+    assert!(Domain::from_intervals([(-3, -1), (6, 7)]).is_subset(&wide));
+    assert!(!Domain::new(0, 5).is_subset(&wide), "spans a gap");
+    assert_eq!(Domain::all_values().intersection(&wide), wide);
+    assert_eq!(wide.union(&wide.complement()), Domain::all_values());
 }

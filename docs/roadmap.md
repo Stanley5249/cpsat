@@ -15,4 +15,4 @@ These decisions are expensive to reverse after a crates.io release.
 
 - **Buffa in the public API.** Buffa is 0.x, so each of its minor releases is a breaking change here. Keeping the wire bytes as the stable interchange keeps a later switch possible.
 - **Platforms.** Two x86_64 targets for now. OR-Tools also publishes macOS and aarch64 archives.
-- **Allocation rule.** The rule covers every read, which made `CpModel::to_bool_var` and `Domain::union_with` more complex than their simpler forms, though neither is on a hot path. The benchmarks decide whether to narrow it to hot paths.
+- **Allocation rule.** The rule covers every read, which made `CpModel::to_bool_var` and `Domain::union` more complex than their simpler forms, though neither is on a hot path. The benchmarks decide whether to narrow it to hot paths.

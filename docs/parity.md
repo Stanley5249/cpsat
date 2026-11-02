@@ -173,7 +173,7 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
   - Rust: `CpModel::to_bool_var(var).is_some()`, `!literal`, `BoolVar::is_negated`, `to_int_var`; one Rust literal type represents both signs
   - Test: `model.rs::a_zero_one_variable_serves_as_a_literal`, `only_domains_within_zero_and_one_are_literals`, `literals_negate_and_name_their_variable`
 - `IntVar.domain`, `with_domain`, `with_name`, constructor names
-  - Rust: Name with `with_name` before `new_var`, read `model[var].domain` and `.name`, and change both through `CpModel::var_mut`; convert domains with `Domain::from_flat_intervals` and `flattened_intervals`
+  - Rust: Name with `with_name` before `new_var`, read `model[var].domain` and `.name`, and change both through `CpModel::var_mut`; convert domains with `Domain::from_flattened_intervals` and `flattened_intervals`
   - Test: `solve.rs::resolves_after_model_change`, `model.rs::literals_negate_and_name_their_variable`
 - A 0-1 `IntVar` where a literal goes
   - Rust: `CpModel::to_bool_var`
@@ -294,7 +294,7 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
   - OR-Tools: none
   - Test: `domain.rs::complements_at_the_i64_limits`, `normalizes_intervals`, `builds_half_lines_from_ranges`
 - `Domain.from_values`, `from_intervals`, `from_flat_intervals`, `flattened_intervals`
-  - Rust: Same-named `Domain` methods; `FromIterator<i64>` also builds one from values
+  - Rust: Same-named `Domain` methods, except `from_flattened_intervals`; `FromIterator<i64>` also builds one from values
   - OR-Tools: none
   - Test: `domain.rs::normalizes_intervals`, `flat_form_round_trips`
 - `Domain.is_empty`, `min`, `max`, `size`, `contains`
@@ -302,15 +302,15 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
   - OR-Tools: none
   - Test: `domain.rs::reports_bounds_and_size`, `unions_and_intersects`
 - `Domain.complement`, `union_with`, `intersection_with`
-  - Rust: Same-named `Domain` methods
+  - Rust: `Domain::complement`, `union`, `intersection`
   - OR-Tools: none
   - Test: `domain.rs::complements_at_the_i64_limits`, `unions_and_intersects`
 - `Domain.is_included_in`, `overlaps_with`
-  - Rust: Same-named `Domain` methods
+  - Rust: `Domain::is_subset`, and `is_disjoint`, which returns the negation of `overlaps_with`
   - OR-Tools: none
   - Test: `domain.rs::compares_sets`
 - `Domain.negation`, `addition_with`
-  - Rust: Same-named `Domain` methods
+  - Rust: `Domain::negation`, `addition`
   - OR-Tools: none
   - Test: `domain.rs::negates_and_adds_like_python`
 - `Domain.__copy__`, `__deepcopy__`
