@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
-use crate::solver::ffi::{Session, SessionPtr};
+use crate::solver::ffi::Stopper;
 
 /// Stops solves from any thread, including from inside a callback.
 ///
@@ -15,7 +15,7 @@ pub struct StopHandle(Arc<Shared>);
 #[derive(Debug, Default)]
 struct Shared {
     stopped: AtomicBool,
-    sessions: Mutex<Vec<SessionPtr>>,
+    sessions: Mutex<Vec<Stopper>>,
 }
 
 impl StopHandle {
@@ -28,13 +28,11 @@ impl StopHandle {
     /// Stops every attached solve and every later one.
     #[doc(alias("stop_search", "StopSearch"))]
     pub fn stop(&self) {
-        // Set the flag before locking, so `attached` either sees it or registers
+        // Set the flag before locking, so `attach` either sees it or registers
         // its session before this thread looks.
         self.0.stopped.store(true, Ordering::SeqCst);
         for session in self.lock().iter() {
-            // SAFETY: `attached` borrows the session until `Detach` removes it
-            // under this lock, so a registered session is alive.
-            unsafe { session.stop() };
+            session.stop();
         }
     }
 
@@ -44,7 +42,7 @@ impl StopHandle {
         self.0.stopped.load(Ordering::SeqCst)
     }
 
-    fn lock(&self) -> MutexGuard<'_, Vec<SessionPtr>> {
+    fn lock(&self) -> MutexGuard<'_, Vec<Stopper>> {
         // Nothing panics while holding the lock, so a poisoned state is intact.
         self.0
             .sessions
@@ -53,46 +51,24 @@ impl StopHandle {
     }
 }
 
-/// Runs `solve` while `handle`, if any, can stop `session`.
+/// Lets `handle` stop the session behind `session` until the session drops.
 ///
 /// This is a free function rather than a method so it stays out of the public
-/// API. It takes a closure instead of returning a guard, because a forgotten
-/// guard would leave a dangling session in the handle.
-pub fn attached<R>(handle: Option<&StopHandle>, session: &Session, solve: impl FnOnce() -> R) -> R {
-    let Some(handle) = handle else {
-        return solve();
-    };
+/// API. It also drops the stoppers of sessions that are gone, so a handle
+/// that serves many solves holds only the live ones.
+pub fn attach(handle: &StopHandle, session: Stopper) {
     let mut sessions = handle.lock();
-    sessions.push(session.as_ptr());
+    sessions.retain(Stopper::is_live);
     if handle.is_stopped() {
         session.stop();
     }
-    drop(sessions);
-    let _detach = Detach { handle, session };
-    solve()
-}
-
-/// Detaches one session from its handle on drop, including on unwind.
-struct Detach<'a> {
-    handle: &'a StopHandle,
-    session: &'a Session,
-}
-
-impl Drop for Detach<'_> {
-    fn drop(&mut self) {
-        let mut sessions = self.handle.lock();
-        let session = self.session.as_ptr();
-        if let Some(index) = sessions.iter().position(|s| *s == session) {
-            sessions.swap_remove(index);
-        }
-    }
+    sessions.push(session);
 }
 
 #[cfg(test)]
 mod tests {
-    use std::panic::{AssertUnwindSafe, catch_unwind};
-
     use super::*;
+    use crate::solver::ffi::Session;
 
     /// The number of sessions attached to `handle`.
     fn attached_sessions(handle: &StopHandle) -> usize {
@@ -100,34 +76,22 @@ mod tests {
     }
 
     #[test]
-    fn detaches_after_the_solve_returns() {
+    fn attach_drops_the_stoppers_of_dropped_sessions() {
         let handle = StopHandle::new();
         let session = Session::new().unwrap();
-        let during = attached(Some(&handle), &session, || attached_sessions(&handle));
-        assert_eq!(during, 1);
-        assert_eq!(attached_sessions(&handle), 0);
+        attach(&handle, session.stopper());
+        drop(session);
+        let session = Session::new().unwrap();
+        attach(&handle, session.stopper());
+        assert_eq!(attached_sessions(&handle), 1);
     }
 
     #[test]
-    fn detaches_after_the_solve_fails() {
+    fn stop_after_the_session_drops_does_nothing() {
         let handle = StopHandle::new();
         let session = Session::new().unwrap();
-        // The bridge rejects bytes that do not parse as a CpModelProto.
-        let response = attached(Some(&handle), &session, || session.solve(&[0xff]));
-        assert!(response.is_err());
-        assert_eq!(attached_sessions(&handle), 0);
-    }
-
-    #[test]
-    fn detaches_when_the_solve_panics() {
-        let handle = StopHandle::new();
-        let session = Session::new().unwrap();
-        let panic = catch_unwind(AssertUnwindSafe(|| {
-            attached(Some(&handle), &session, || panic!("the solve failed"))
-        }));
-        assert!(panic.is_err());
-        assert_eq!(attached_sessions(&handle), 0);
-        // A later stop must not reach the session, which the caller may free.
+        attach(&handle, session.stopper());
+        drop(session);
         handle.stop();
     }
 }

@@ -37,7 +37,7 @@ mod sealed {
         /// # Safety
         ///
         /// `self` must neither move nor drop until the solve returns.
-        unsafe fn register(&mut self, session: &Session) -> Result<()>;
+        unsafe fn register(&mut self, session: &mut Session) -> Result<()>;
 
         /// Takes every stored panic and returns the earliest, so the next
         /// solve starts without one.
@@ -48,7 +48,7 @@ mod sealed {
 impl Callbacks for () {}
 
 impl sealed::Sealed for () {
-    unsafe fn register(&mut self, _: &Session) -> Result<()> {
+    unsafe fn register(&mut self, _: &mut Session) -> Result<()> {
         Ok(())
     }
 
@@ -60,7 +60,7 @@ impl sealed::Sealed for () {
 impl<C: Callbacks, K: sealed::Sealed> Callbacks for (C, K) {}
 
 impl<C: Callbacks, K: sealed::Sealed> sealed::Sealed for (C, K) {
-    unsafe fn register(&mut self, session: &Session) -> Result<()> {
+    unsafe fn register(&mut self, session: &mut Session) -> Result<()> {
         // SAFETY: the caller keeps both parts in place.
         unsafe {
             self.0.register(session)?;
@@ -94,7 +94,7 @@ impl<F> sealed::Sealed for SolutionCallback<F>
 where
     F: FnMut(&CpSolverResponseView<'_>) -> ControlFlow<()> + Send,
 {
-    unsafe fn register(&mut self, session: &Session) -> Result<()> {
+    unsafe fn register(&mut self, session: &mut Session) -> Result<()> {
         // SAFETY: the trampoline matches the context type, and the caller
         // keeps the context in place.
         unsafe { session.add_solution_callback(Some(solution::<F>), (&raw mut self.0).cast()) }
@@ -144,7 +144,7 @@ impl<F> sealed::Sealed for BestBoundCallback<F>
 where
     F: FnMut(f64) -> ControlFlow<()> + Send,
 {
-    unsafe fn register(&mut self, session: &Session) -> Result<()> {
+    unsafe fn register(&mut self, session: &mut Session) -> Result<()> {
         // SAFETY: as for the solution callback.
         unsafe { session.add_best_bound_callback(Some(best_bound::<F>), (&raw mut self.0).cast()) }
     }
@@ -178,7 +178,7 @@ impl<F> sealed::Sealed for LogCallback<F>
 where
     F: FnMut(&str) -> ControlFlow<()> + Send,
 {
-    unsafe fn register(&mut self, session: &Session) -> Result<()> {
+    unsafe fn register(&mut self, session: &mut Session) -> Result<()> {
         // SAFETY: as for the solution callback.
         unsafe { session.add_log_callback(Some(log::<F>), (&raw mut self.0).cast()) }
     }

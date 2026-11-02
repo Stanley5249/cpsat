@@ -183,12 +183,15 @@ fn run<C: Callbacks>(
     callbacks: &mut C,
 ) -> Result<CpSolverResponse> {
     let model = model.encode_to_vec();
-    let session = Session::new()?;
+    let mut session = Session::new()?;
     session.set_parameters(&parameters.encode_to_vec())?;
     // SAFETY: `callbacks` stays borrowed in place until this function returns,
     // after the solve.
-    unsafe { callbacks.register(&session)? };
-    let response = stop::attached(stop, &session, || session.solve(&model));
+    unsafe { callbacks.register(&mut session)? };
+    if let Some(stop) = stop {
+        stop::attach(stop, session.stopper());
+    }
+    let response = session.solve(&model);
     if let Some((_, payload)) = callbacks.take_panic() {
         resume_unwind(payload);
     }

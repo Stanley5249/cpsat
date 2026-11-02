@@ -6,6 +6,7 @@
 
 use core::ffi::c_void;
 use std::borrow::Cow;
+use std::sync::{Arc, Weak};
 
 use cpsat_sys::{
     CPSAT_OK, CpsatBestBoundCallback, CpsatBuffer, CpsatLogCallback, CpsatSession,
@@ -111,7 +112,7 @@ pub fn default_parameters() -> Result<Buffer> {
 }
 
 /// Owns one bridge session, which serves one solve.
-pub struct Session(*mut CpsatSession);
+pub struct Session(Arc<Raw>);
 
 impl Session {
     /// Allocates a session.
@@ -121,27 +122,21 @@ impl Session {
         if session.is_null() {
             return Err(Error::OrTools("failed to allocate a session".into()));
         }
-        Ok(Self(session))
+        Ok(Self(Arc::new(Raw(session))))
     }
 
-    /// The address that a [`StopHandle`](crate::prelude::StopHandle) keeps
-    /// while the session solves.
-    pub fn as_ptr(&self) -> SessionPtr {
-        SessionPtr(self.0)
-    }
-
-    /// Stops the solve, from any thread, or the next solve if none runs.
-    pub fn stop(&self) {
-        // SAFETY: the session is alive, and the bridge's stop is thread-safe.
-        unsafe { cpsat_sys::cpsat_session_stop(self.0) };
+    /// A handle that stops this session from any thread, and does nothing
+    /// once the session is gone.
+    pub fn stopper(&self) -> Stopper {
+        Stopper(Arc::downgrade(&self.0))
     }
 
     /// Sends the parameters for the solve.
-    pub fn set_parameters(&self, parameters: &[u8]) -> Result<()> {
+    pub fn set_parameters(&mut self, parameters: &[u8]) -> Result<()> {
         // SAFETY: the session is alive, and the bytes outlive the call.
         call(|error| unsafe {
             cpsat_sys::cpsat_session_set_parameters(
-                self.0,
+                self.0.0,
                 parameters.as_ptr(),
                 parameters.len(),
                 error,
@@ -156,13 +151,13 @@ impl Session {
     /// `context` must suit `callback` and stay valid until [`Session::solve`]
     /// returns.
     pub unsafe fn add_solution_callback(
-        &self,
+        &mut self,
         callback: CpsatSolutionCallback,
         context: *mut c_void,
     ) -> Result<()> {
         // SAFETY: the session is alive, and the caller upholds the rest.
         call(|error| unsafe {
-            cpsat_sys::cpsat_session_add_solution_callback(self.0, callback, context, error)
+            cpsat_sys::cpsat_session_add_solution_callback(self.0.0, callback, context, error)
         })
     }
 
@@ -172,13 +167,13 @@ impl Session {
     ///
     /// As for [`Session::add_solution_callback`].
     pub unsafe fn add_best_bound_callback(
-        &self,
+        &mut self,
         callback: CpsatBestBoundCallback,
         context: *mut c_void,
     ) -> Result<()> {
         // SAFETY: the session is alive, and the caller upholds the rest.
         call(|error| unsafe {
-            cpsat_sys::cpsat_session_add_best_bound_callback(self.0, callback, context, error)
+            cpsat_sys::cpsat_session_add_best_bound_callback(self.0.0, callback, context, error)
         })
     }
 
@@ -188,24 +183,24 @@ impl Session {
     ///
     /// As for [`Session::add_solution_callback`].
     pub unsafe fn add_log_callback(
-        &self,
+        &mut self,
         callback: CpsatLogCallback,
         context: *mut c_void,
     ) -> Result<()> {
         // SAFETY: the session is alive, and the caller upholds the rest.
         call(|error| unsafe {
-            cpsat_sys::cpsat_session_add_log_callback(self.0, callback, context, error)
+            cpsat_sys::cpsat_session_add_log_callback(self.0.0, callback, context, error)
         })
     }
 
     /// Solves `model` and returns the encoded response.
-    pub fn solve(&self, model: &[u8]) -> Result<Buffer> {
+    pub fn solve(&mut self, model: &[u8]) -> Result<Buffer> {
         let mut response = Buffer::new();
         // SAFETY: the session is alive, the bytes outlive the call, and the
         // buffers are empty bridge buffers.
         call(|error| unsafe {
             cpsat_sys::cpsat_session_solve(
-                self.0,
+                self.0.0,
                 model.as_ptr(),
                 model.len(),
                 response.as_mut_ptr(),
@@ -216,34 +211,42 @@ impl Session {
     }
 }
 
-impl Drop for Session {
-    fn drop(&mut self) {
-        // SAFETY: the session came from cpsat_session_new, and every
-        // StopHandle detaches before the session drops.
-        unsafe { cpsat_sys::cpsat_session_free(self.0) };
+/// Stops a [`Session`] from any thread while the session lives.
+#[derive(Debug)]
+pub struct Stopper(Weak<Raw>);
+
+impl Stopper {
+    /// Stops the session's solve, or the next solve if none runs, and does
+    /// nothing once the session is gone.
+    pub fn stop(&self) {
+        if let Some(session) = self.0.upgrade() {
+            // SAFETY: the strong reference keeps the session alive, and the
+            // bridge's stop is thread-safe.
+            unsafe { cpsat_sys::cpsat_session_stop(session.0) };
+        }
+    }
+
+    /// Whether the session still lives.
+    pub fn is_live(&self) -> bool {
+        self.0.strong_count() > 0
     }
 }
 
-/// The address of a [`Session`], which owns nothing and lets another thread
-/// stop the session while it solves.
-#[derive(Debug, PartialEq, Eq)]
-pub struct SessionPtr(*mut CpsatSession);
+/// The bridge session that a [`Session`] and its [`Stopper`]s share. The last
+/// strong reference frees it.
+struct Raw(*mut CpsatSession);
 
-// SAFETY: sending the pointer does not dereference it, the bridge allows a
-// stop from any thread, and the callers of `SessionPtr::stop` keep the
-// session alive.
-unsafe impl Send for SessionPtr {}
+// SAFETY: the bridge allows calls on a session from any thread. Shared
+// references from other threads only stop the session, which the bridge
+// allows during any other call, and `Arc` runs the free after every call.
+unsafe impl Send for Raw {}
+// SAFETY: as for `Send`.
+unsafe impl Sync for Raw {}
 
-impl SessionPtr {
-    /// Stops the session's solve, from any thread.
-    ///
-    /// # Safety
-    ///
-    /// The session must stay alive for the whole call, so no thread may drop
-    /// it meanwhile.
-    pub unsafe fn stop(&self) {
-        // SAFETY: the caller keeps the session alive, and the bridge's stop is
-        // thread-safe.
-        unsafe { cpsat_sys::cpsat_session_stop(self.0) };
+impl Drop for Raw {
+    fn drop(&mut self) {
+        // SAFETY: the session came from cpsat_session_new, and the last
+        // reference is dropping, so no other call can run.
+        unsafe { cpsat_sys::cpsat_session_free(self.0) };
     }
 }
