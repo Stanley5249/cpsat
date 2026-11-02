@@ -254,3 +254,14 @@ fn bool_xor_needs_an_odd_count() {
     let solution = response.solution().unwrap();
     assert!(solution.value(literals[2]));
 }
+
+#[test]
+fn circuit_takes_arcs_from_an_iterator() {
+    let mut model = CpModel::new();
+    let arcs: Vec<(i32, i32, BoolVar)> = (0..3)
+        .map(|i| (i, (i + 1) % 3, model.new_var(Bool)))
+        .collect();
+    model.add(Constraint::circuit(arcs));
+    let response = model.solve(&SatParameters::default()).unwrap();
+    assert_eq!(response.solution, [1, 1, 1]);
+}

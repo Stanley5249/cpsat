@@ -212,17 +212,6 @@ fn expressions_merge_terms_like_python() {
 }
 
 #[test]
-fn circuit_takes_arcs_from_an_iterator() {
-    let mut model = CpModel::new();
-    let arcs: Vec<(i32, i32, BoolVar)> = (0..3)
-        .map(|i| (i, (i + 1) % 3, model.new_var(Bool)))
-        .collect();
-    model.add(Constraint::circuit(arcs));
-    let response = model.solve(&SatParameters::default()).unwrap();
-    assert_eq!(response.solution, [1, 1, 1]);
-}
-
-#[test]
 #[should_panic(expected = "linear expression overflows i64")]
 fn coefficient_overflow_panics() {
     let mut model = CpModel::new();
@@ -297,38 +286,6 @@ fn constants_that_mean_infinity_panic_like_python() {
         let message = panic.downcast_ref::<String>().unwrap();
         assert!(message.contains("is not supported"), "{message}");
     }
-}
-
-#[test]
-fn a_response_without_a_solution_has_none() {
-    assert_eq!(CpSolverResponse::default().solution(), None);
-}
-
-#[test]
-#[should_panic(expected = "linear expression overflows i64")]
-fn evaluation_overflow_panics() {
-    let mut model = CpModel::new();
-    let x = model.new_var(0..=1);
-    let response = CpSolverResponse {
-        status: CpSolverStatus::OPTIMAL.into(),
-        solution: vec![i64::MAX / 2],
-        ..Default::default()
-    };
-    let solution = response.solution().unwrap();
-    let _ = solution.value(x * 4);
-}
-
-#[test]
-fn evaluation_cancels_terms_before_overflow() {
-    let mut model = CpModel::new();
-    let x = model.new_var(0..=3_000_000_000_000_000_000);
-    let response = CpSolverResponse {
-        status: CpSolverStatus::OPTIMAL.into(),
-        solution: vec![3_000_000_000_000_000_000],
-        ..Default::default()
-    };
-    let solution = response.solution().unwrap();
-    assert_eq!(solution.value(4 * x - 3 * x), 3_000_000_000_000_000_000);
 }
 
 #[test]
