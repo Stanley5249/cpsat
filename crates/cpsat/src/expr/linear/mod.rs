@@ -34,8 +34,9 @@ use crate::proto::LinearExpressionProto;
 /// ```
 #[derive(Clone, Debug, Default)]
 pub struct LinearExpr {
-    terms: Vec<(i32, i64)>,
-    offset: i64,
+    /// The terms in insertion order, unsorted and unmerged.
+    pub(crate) terms: Vec<(i32, i64)>,
+    pub(crate) offset: i64,
 }
 
 const OVERFLOW: &str = "linear expression overflows i64";
@@ -121,16 +122,6 @@ impl LinearExpr {
             })
             .unzip();
         (vars, coeffs, self.offset)
-    }
-
-    /// The terms in insertion order, unsorted and unmerged, and the offset.
-    pub(crate) fn into_raw_parts(self) -> (Vec<(i32, i64)>, i64) {
-        (self.terms, self.offset)
-    }
-
-    /// The terms in insertion order and the offset, borrowed.
-    pub(crate) fn raw_parts(&self) -> (&[(i32, i64)], i64) {
-        (&self.terms, self.offset)
     }
 
     /// The value if the expression has no variables.

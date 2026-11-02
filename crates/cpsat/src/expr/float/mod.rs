@@ -79,13 +79,12 @@ impl FloatExpr {
         reason = "the schema stores float objectives as doubles, like Python"
     )]
     fn add_linear(&mut self, expr: &LinearExpr, factor: f64) {
-        let (terms, offset) = expr.raw_parts();
         self.terms.extend(
-            terms
+            expr.terms
                 .iter()
                 .map(|&(var, coeff)| (var, coeff as f64 * factor)),
         );
-        self.offset += offset as f64 * factor;
+        self.offset += expr.offset as f64 * factor;
     }
 
     /// The terms, sorted by variable, merged, and without zero coefficients,
@@ -138,7 +137,7 @@ impl From<LinearExpr> for FloatExpr {
         reason = "the schema stores float objectives as doubles, like Python"
     )]
     fn from(expr: LinearExpr) -> Self {
-        let (terms, offset) = expr.into_raw_parts();
+        let LinearExpr { terms, offset } = expr;
         Self {
             terms: terms
                 .into_iter()
@@ -156,13 +155,13 @@ impl From<&LinearExpr> for FloatExpr {
         reason = "the schema stores float objectives as doubles, like Python"
     )]
     fn from(expr: &LinearExpr) -> Self {
-        let (terms, offset) = expr.raw_parts();
         Self {
-            terms: terms
+            terms: expr
+                .terms
                 .iter()
                 .map(|&(var, coeff)| (var, coeff as f64))
                 .collect(),
-            offset: offset as f64,
+            offset: expr.offset as f64,
         }
     }
 }
