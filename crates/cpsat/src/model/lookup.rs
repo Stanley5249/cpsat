@@ -5,15 +5,9 @@ use std::ops::Index;
 
 use super::CpModel;
 use crate::constraint::ConstraintIndex;
-use crate::expr::{BoolVar, IntVar, IntervalVar};
+use crate::expr::{BoolVar, IntVar, IntervalVar, slot};
 use crate::proto::constraint_proto::Constraint as Kind;
 use crate::proto::{ConstraintProto, IntegerVariableProto, IntervalConstraintProto};
-
-/// Converts a handle into a `Vec` index, which panics for a negative index
-/// like an index out of range does.
-pub(super) fn slot(index: i32) -> usize {
-    usize::try_from(index).expect("a handle index is non-negative")
-}
 
 impl CpModel {
     /// The variable at `index`.

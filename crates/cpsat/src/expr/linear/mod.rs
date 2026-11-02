@@ -2,7 +2,7 @@
 
 mod ops;
 
-use crate::expr::{BoolVar, IntVar};
+use crate::expr::{BoolVar, IntVar, slot};
 use crate::proto::LinearExpressionProto;
 
 /// `sum(coeff * var) + offset` with `i64` coefficients.
@@ -144,8 +144,7 @@ impl LinearExpr {
             .terms
             .iter()
             .fold(i128::from(self.offset), |sum, &(var, coeff)| {
-                let value =
-                    solution[usize::try_from(var).expect("a variable index is non-negative")];
+                let value = solution[slot(var)];
                 sum.checked_add(i128::from(coeff) * i128::from(value))
                     .expect(OVERFLOW)
             });

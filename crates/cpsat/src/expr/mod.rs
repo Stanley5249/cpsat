@@ -10,3 +10,9 @@ pub use domain::Domain;
 pub use float::FloatExpr;
 pub use linear::LinearExpr;
 pub use var::{BoolVar, IntVar, IntervalVar};
+
+/// Converts a schema index into a `Vec` index, which panics for a negative
+/// index like an index out of range does.
+pub fn slot(index: i32) -> usize {
+    usize::try_from(index).expect("an index is non-negative")
+}

@@ -3,7 +3,7 @@
 
 mod ops;
 
-use crate::expr::{BoolVar, IntVar, LinearExpr};
+use crate::expr::{BoolVar, IntVar, LinearExpr, slot};
 
 /// `sum(coeff * var) + offset` with `f64` coefficients.
 ///
@@ -115,7 +115,7 @@ impl FloatExpr {
     )]
     pub(crate) fn value_in(&self, solution: &[i64]) -> f64 {
         self.terms.iter().fold(self.offset, |sum, &(var, coeff)| {
-            let value = solution[usize::try_from(var).expect("a variable index is non-negative")];
+            let value = solution[slot(var)];
             sum + coeff * value as f64
         })
     }

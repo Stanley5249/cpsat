@@ -5,7 +5,7 @@ use std::fmt;
 
 use buffa::Enumeration;
 
-use crate::expr::{BoolVar, FloatExpr, IntVar, LinearExpr};
+use crate::expr::{BoolVar, FloatExpr, IntVar, LinearExpr, slot};
 use crate::proto::view::CpSolverResponseView;
 use crate::proto::{CpSolverResponse, CpSolverStatus};
 
@@ -87,16 +87,12 @@ pub trait Evaluate: sealed::Sealed {
     fn evaluate(&self, solution: &[i64]) -> Self::Output;
 }
 
-fn slot(solution: &[i64], var: IntVar) -> i64 {
-    solution[usize::try_from(var.index()).expect("a variable index is non-negative")]
-}
-
 impl sealed::Sealed for IntVar {}
 impl Evaluate for IntVar {
     type Output = i64;
 
     fn evaluate(&self, solution: &[i64]) -> i64 {
-        slot(solution, *self)
+        solution[slot(self.index())]
     }
 }
 
@@ -105,7 +101,7 @@ impl Evaluate for BoolVar {
     type Output = bool;
 
     fn evaluate(&self, solution: &[i64]) -> bool {
-        (slot(solution, self.to_int_var()) != 0) != self.is_negated()
+        (solution[slot(self.to_int_var().index())] != 0) != self.is_negated()
     }
 }
 

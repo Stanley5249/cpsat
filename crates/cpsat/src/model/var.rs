@@ -3,9 +3,8 @@
 
 use std::ops::{Range, RangeInclusive};
 
-use super::lookup::slot;
 use super::{CpModel, sealed};
-use crate::expr::{BoolVar, Domain, IntVar};
+use crate::expr::{BoolVar, Domain, IntVar, slot};
 use crate::proto::IntegerVariableProto;
 
 /// What [`CpModel::new_var`] creates, and the handle it returns: an
