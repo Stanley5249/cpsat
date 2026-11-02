@@ -2,22 +2,10 @@
 //! `CpSatHelper` exposes, and the schema defaults of `SatParameters`.
 
 use buffa::Message;
-use cpsat_sys::CpsatBuffer;
 
 use crate::error::{Error, Result};
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
-use crate::solver::ffi::{self, Buffer};
-
-fn call_helper(
-    helper: unsafe extern "C" fn(*const u8, usize, *mut CpsatBuffer, *mut CpsatBuffer) -> i32,
-    bytes: &[u8],
-) -> Result<String> {
-    let mut output = Buffer::new();
-    // SAFETY: bytes is valid for its length, and both buffers are empty
-    // bridge buffers.
-    ffi::call(|error| unsafe { helper(bytes.as_ptr(), bytes.len(), output.as_mut_ptr(), error) })?;
-    Ok(output.text().into_owned())
-}
+use crate::solver::ffi;
 
 impl CpModelProto {
     /// Checks the model with OR-Tools' own validation, which a solve also runs
@@ -29,7 +17,7 @@ impl CpModelProto {
     /// is invalid.
     #[doc(alias("ValidateCpModel"))]
     pub fn validate(&self) -> Result<()> {
-        let message = call_helper(cpsat_sys::cpsat_model_validate, &self.encode_to_vec())?;
+        let message = ffi::validate(&self.encode_to_vec())?;
         if message.is_empty() {
             Ok(())
         } else {
@@ -44,7 +32,7 @@ impl CpModelProto {
     /// Returns an error if the bridge call fails.
     #[doc(alias("model_stats", "CpModelStats"))]
     pub fn stats(&self) -> Result<String> {
-        call_helper(cpsat_sys::cpsat_model_stats, &self.encode_to_vec())
+        ffi::model_stats(&self.encode_to_vec())
     }
 }
 
@@ -56,7 +44,7 @@ impl CpSolverResponse {
     /// Returns an error if the bridge call fails.
     #[doc(alias("response_stats", "CpSolverResponseStats"))]
     pub fn stats(&self) -> Result<String> {
-        call_helper(cpsat_sys::cpsat_response_stats, &self.encode_to_vec())
+        ffi::response_stats(&self.encode_to_vec())
     }
 }
 
@@ -73,12 +61,8 @@ impl CpSolverResponse {
 /// broken build of the bridge can cause.
 #[must_use]
 pub fn default_parameters() -> SatParameters {
-    let mut parameters = Buffer::new();
-    // SAFETY: both buffers are empty bridge buffers.
-    ffi::call(|error| unsafe {
-        cpsat_sys::cpsat_parameters_default(parameters.as_mut_ptr(), error)
-    })
-    .expect("the bridge reads the SatParameters defaults");
+    let parameters =
+        ffi::default_parameters().expect("the bridge reads the SatParameters defaults");
     SatParameters::decode_from_slice(parameters.bytes())
         .expect("the bridge encodes valid SatParameters")
 }

@@ -66,6 +66,42 @@ pub fn call(function: impl FnOnce(*mut CpsatBuffer) -> i32) -> Result<()> {
     Err(Error::OrTools(message))
 }
 
+/// Runs a bridge helper that reads `bytes` and writes text.
+fn call_helper(
+    helper: unsafe extern "C" fn(*const u8, usize, *mut CpsatBuffer, *mut CpsatBuffer) -> i32,
+    bytes: &[u8],
+) -> Result<String> {
+    let mut output = Buffer::new();
+    // SAFETY: bytes is valid for its length, and both buffers are empty
+    // bridge buffers.
+    call(|error| unsafe { helper(bytes.as_ptr(), bytes.len(), output.as_mut_ptr(), error) })?;
+    Ok(output.text().into_owned())
+}
+
+/// OR-Tools' validation message for an encoded `CpModelProto`, which is
+/// empty for a valid model.
+pub fn validate(model: &[u8]) -> Result<String> {
+    call_helper(cpsat_sys::cpsat_model_validate, model)
+}
+
+/// OR-Tools' statistics for an encoded `CpModelProto`.
+pub fn model_stats(model: &[u8]) -> Result<String> {
+    call_helper(cpsat_sys::cpsat_model_stats, model)
+}
+
+/// OR-Tools' statistics for an encoded `CpSolverResponse`.
+pub fn response_stats(response: &[u8]) -> Result<String> {
+    call_helper(cpsat_sys::cpsat_response_stats, response)
+}
+
+/// The encoded `SatParameters` with every singular field set to its default.
+pub fn default_parameters() -> Result<Buffer> {
+    let mut parameters = Buffer::new();
+    // SAFETY: both buffers are empty bridge buffers.
+    call(|error| unsafe { cpsat_sys::cpsat_parameters_default(parameters.as_mut_ptr(), error) })?;
+    Ok(parameters)
+}
+
 /// Owns one bridge session, which serves one solve.
 pub struct Session(*mut CpsatSession);
 
