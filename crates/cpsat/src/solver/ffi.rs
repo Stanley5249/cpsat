@@ -1,4 +1,8 @@
-//! Owners of bridge resources, the safe side of the `cpsat-sys` FFI.
+//! The only caller of `cpsat-sys`, with owners of bridge resources and a
+//! safe wrapper per bridge function.
+//!
+//! The file reads in three parts: the buffer and call primitives, the
+//! stateless helpers, and the session that serves one solve.
 
 use core::ffi::c_void;
 use std::borrow::Cow;
@@ -14,19 +18,23 @@ use crate::error::{Error, Result};
 pub struct Buffer(CpsatBuffer);
 
 impl Buffer {
+    /// An empty buffer for the bridge to fill.
     pub fn new() -> Self {
         Self(CpsatBuffer::EMPTY)
     }
 
+    /// The pointer that a bridge function writes through.
     pub fn as_mut_ptr(&mut self) -> *mut CpsatBuffer {
         &raw mut self.0
     }
 
+    /// The bytes the bridge wrote.
     pub fn bytes(&self) -> &[u8] {
         // SAFETY: the bridge filled data with len bytes it owns until drop.
         unsafe { slice(self.0.data, self.0.len) }
     }
 
+    /// The bytes as text, replacing invalid UTF-8.
     pub fn text(&self) -> Cow<'_, str> {
         String::from_utf8_lossy(self.bytes())
     }
@@ -106,6 +114,7 @@ pub fn default_parameters() -> Result<Buffer> {
 pub struct Session(*mut CpsatSession);
 
 impl Session {
+    /// Allocates a session.
     pub fn new() -> Result<Self> {
         // SAFETY: no preconditions.
         let session = unsafe { cpsat_sys::cpsat_session_new() };
@@ -115,6 +124,8 @@ impl Session {
         Ok(Self(session))
     }
 
+    /// The address that a [`StopHandle`](crate::prelude::StopHandle) keeps
+    /// while the session solves.
     pub fn as_ptr(&self) -> SessionPtr {
         SessionPtr(self.0)
     }
@@ -205,6 +216,14 @@ impl Session {
     }
 }
 
+impl Drop for Session {
+    fn drop(&mut self) {
+        // SAFETY: the session came from cpsat_session_new, and every
+        // StopHandle detaches before the session drops.
+        unsafe { cpsat_sys::cpsat_session_free(self.0) };
+    }
+}
+
 /// The address of a [`Session`], which owns nothing and lets another thread
 /// stop the session while it solves.
 #[derive(Debug, PartialEq, Eq)]
@@ -226,13 +245,5 @@ impl SessionPtr {
         // SAFETY: the caller keeps the session alive, and the bridge's stop is
         // thread-safe.
         unsafe { cpsat_sys::cpsat_session_stop(self.0) };
-    }
-}
-
-impl Drop for Session {
-    fn drop(&mut self) {
-        // SAFETY: the session came from cpsat_session_new, and every
-        // StopHandle detaches before the session drops.
-        unsafe { cpsat_sys::cpsat_session_free(self.0) };
     }
 }
