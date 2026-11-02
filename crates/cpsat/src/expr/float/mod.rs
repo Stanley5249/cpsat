@@ -150,8 +150,20 @@ impl From<LinearExpr> for FloatExpr {
 }
 
 impl From<&LinearExpr> for FloatExpr {
+    /// Converts like the owned form, without cloning `expr`.
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "the schema stores float objectives as doubles, like Python"
+    )]
     fn from(expr: &LinearExpr) -> Self {
-        expr.clone().into()
+        let (terms, offset) = expr.raw_parts();
+        Self {
+            terms: terms
+                .iter()
+                .map(|&(var, coeff)| (var, coeff as f64))
+                .collect(),
+            offset: offset as f64,
+        }
     }
 }
 

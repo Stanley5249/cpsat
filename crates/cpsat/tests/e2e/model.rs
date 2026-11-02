@@ -159,6 +159,16 @@ fn float_conversion_merges_in_doubles() {
 }
 
 #[test]
+fn borrowed_float_conversion_matches_the_owned_one() {
+    let mut model = CpModel::new();
+    let [x, y] = std::array::from_fn(|_| model.new_var(0..=5));
+    let big = 1 << 53;
+    // Repeated terms stay unmerged and the offset rounds, in both forms.
+    let expr = x * (big + 1) + 3 * y - x + (big + 1);
+    assert_eq!(FloatExpr::from(&expr), FloatExpr::from(expr.clone()));
+}
+
+#[test]
 fn constants_and_true_literals_solve_to_their_values() {
     let mut model = CpModel::new();
     let seven = model.new_var(7..=7);
