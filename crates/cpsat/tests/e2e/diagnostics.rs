@@ -38,7 +38,7 @@ fn describes_model_and_response() {
 
 #[test]
 fn reads_parameter_defaults_from_or_tools() {
-    let parameters = default_parameters().unwrap();
+    let parameters = default_parameters();
     // Values from the [default = X] annotations in sat_parameters.proto.
     assert_eq!(parameters.num_workers, Some(0));
     assert_eq!(parameters.cp_model_presolve, Some(true));

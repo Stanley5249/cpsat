@@ -90,9 +90,9 @@ impl Domain {
     }
 
     /// Reads a schema `domain` field, or `None` if it has an odd length.
-    #[doc(alias("FromFlatIntervals", "FromFlatSpanOfIntervals"))]
+    #[doc(alias("from_flat_intervals", "FromFlatIntervals", "FromFlatSpanOfIntervals"))]
     #[must_use]
-    pub fn from_flat_intervals(flat: &[i64]) -> Option<Self> {
+    pub fn from_flattened_intervals(flat: &[i64]) -> Option<Self> {
         let (pairs, rest) = flat.as_chunks::<2>();
         if !rest.is_empty() {
             return None;
@@ -164,9 +164,9 @@ impl Domain {
     /// Whether every value of this domain is in `other`. Each interval must
     /// fit in one interval of `other`, because `other` has gaps between its
     /// intervals.
-    #[doc(alias("IsIncludedIn"))]
+    #[doc(alias("is_included_in", "IsIncludedIn"))]
     #[must_use]
-    pub fn is_included_in(&self, other: &Self) -> bool {
+    pub fn is_subset(&self, other: &Self) -> bool {
         let mut rest = other.0.as_slice();
         self.0.iter().all(|&[lower, upper]| {
             while rest
@@ -181,22 +181,23 @@ impl Domain {
         })
     }
 
-    /// Whether this domain and `other` share a value.
-    #[doc(alias("OverlapsWith"))]
+    /// Whether this domain and `other` share no value, the negation of
+    /// Python's `overlaps_with`.
+    #[doc(alias("overlaps_with", "OverlapsWith"))]
     #[must_use]
-    pub fn overlaps_with(&self, other: &Self) -> bool {
+    pub fn is_disjoint(&self, other: &Self) -> bool {
         Overlaps {
             left: &self.0,
             right: &other.0,
         }
         .next()
-        .is_some()
+        .is_none()
     }
 
     /// The values in either domain.
-    #[doc(alias("UnionWith"))]
+    #[doc(alias("union_with", "UnionWith"))]
     #[must_use]
-    pub fn union_with(&self, other: &Self) -> Self {
+    pub fn union(&self, other: &Self) -> Self {
         let mut merged = Vec::with_capacity(self.0.len() + other.0.len());
         let (mut left, mut right) = (self.0.iter().peekable(), other.0.iter().peekable());
         // Both sides are sorted, so taking the smaller start keeps the output
@@ -212,9 +213,9 @@ impl Domain {
     }
 
     /// The values in both domains.
-    #[doc(alias("IntersectionWith"))]
+    #[doc(alias("intersection_with", "IntersectionWith"))]
     #[must_use]
-    pub fn intersection_with(&self, other: &Self) -> Self {
+    pub fn intersection(&self, other: &Self) -> Self {
         Self(
             Overlaps {
                 left: &self.0,
@@ -237,9 +238,9 @@ impl Domain {
 
     /// `x + y` for every `x` in this domain and `y` in `other`. Sums outside
     /// `i64` drop out.
-    #[doc(alias("AdditionWith"))]
+    #[doc(alias("addition_with", "AdditionWith"))]
     #[must_use]
-    pub fn addition_with(&self, other: &Self) -> Self {
+    pub fn addition(&self, other: &Self) -> Self {
         Self::from_exact(self.0.iter().flat_map(|&[lower, upper]| {
             other.0.iter().map(move |&[other_lower, other_upper]| {
                 (
