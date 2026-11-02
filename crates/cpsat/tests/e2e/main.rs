@@ -7,6 +7,7 @@ mod constraints;
 mod diagnostics;
 mod domain;
 mod equivalence;
+mod expr;
 #[cfg(any(feature = "text", feature = "json"))]
 mod formats;
 mod model;

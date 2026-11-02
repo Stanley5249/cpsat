@@ -141,22 +141,22 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
   - Test: `samples.rs::nqueens` demonstrates a variable collection; pandas validation has no direct equivalent
 - `LinearExpr` arithmetic, `sum`, `weighted_sum`
   - Rust: `+`, `-`, `*`, unary `-`, assignment operators, and `Sum` on `LinearExpr`; weighted sums use `zip`, multiplication, then `sum`, with caller-checked lengths
-  - Test: `equivalence.rs::linear`, `model.rs::expressions_merge_terms_like_python`, `solve.rs::evaluates_collections_in_order`; `zip` truncates mismatched lengths, so the caller checks them
+  - Test: `equivalence.rs::linear`, `expr.rs::expressions_merge_terms_like_python`, `solve.rs::evaluates_collections_in_order`; `zip` truncates mismatched lengths, so the caller checks them
 - Floating-point `LinearExpr` arithmetic
   - Rust: `FloatExpr`, mixed variable/scalar arithmetic, assignment operators, and `Sum`
-  - Test: `model.rs::float_operators_mix_constants_and_expressions`, `solve.rs::solves_a_float_objective_like_python`; float `Sum` has no direct test
+  - Test: `expr.rs::float_operators_mix_constants_and_expressions`, `solve.rs::solves_a_float_objective_like_python`; float `Sum` has no direct test
 - `LinearExpr.constant`, `term`, `affine`
   - Rust: `LinearExpr::constant`, `FloatExpr::constant`, `coeff * expr`, `coeff * expr + offset`
-  - Test: `model.rs::expressions_merge_terms_like_python`, `float_operators_mix_constants_and_expressions`
+  - Test: `expr.rs::expressions_merge_terms_like_python`, `float_operators_mix_constants_and_expressions`
 - `LinearExpr.is_integer`
   - Rust: The static distinction between `LinearExpr` and `FloatExpr`; a `FloatExpr` remains floating-point even when its coefficients are whole numbers
   - Test: Compile-time type distinction; no direct runtime parity test
 - `FlatIntExpr`, `FlatFloatExpr` and their `vars`, `coeffs`, `offset`, `FlatIntExpr.ok`
   - Rust: `LinearExpr::into_proto`; set a float objective and inspect `floating_point_objective` for normalized float terms. Rust's expression types replace the runtime integer-validity flag
-  - Test: `model.rs::expressions_merge_terms_like_python`, `equivalence.rs::minimize_float`; standalone float-expression inspection has no direct Rust API
+  - Test: `expr.rs::expressions_merge_terms_like_python`, `equivalence.rs::minimize_float`; standalone float-expression inspection has no direct Rust API
 - `BoundedLinearExpression` constructors, `bounds`, `vars`, `coeffs`, `offset`, `ok`
   - Rust: Comparisons or `(lhs - rhs).in_domain(domain)` build a `Constraint`; inspect `Constraint::proto` or `into_proto` for its linear fields, with the offset shifted into the domain
-  - Test: `equivalence.rs::linear`, `model.rs::comparisons_at_the_i64_limits_match_python`
+  - Test: `equivalence.rs::linear`, `expr.rs::comparisons_at_the_i64_limits_match_python`
 - `~b`, `Not()`
   - Rust: `!b`
   - Test: `model.rs::literals_negate_and_name_their_variable`
@@ -324,7 +324,7 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
 - `INT_MIN`, `INT_MAX`, `INT32_MIN`, `INT32_MAX`, solver status and decision-strategy constants
   - Rust: `i64::MIN/MAX`, `i32::MIN/MAX`, `CpSolverStatus` and `decision_strategy_proto` enums
   - OR-Tools: none
-  - Test: `model.rs::comparisons_at_the_i64_limits_match_python`, `protobuf.rs::status_values_match_schema`, `equivalence.rs::search`
+  - Test: `expr.rs::comparisons_at_the_i64_limits_match_python`, `protobuf.rs::status_values_match_schema`, `equivalence.rs::search`
 - Model, variable, interval, expression, constraint, and `Domain` string/repr, copy, and pickle protocols
   - Rust: Rust `Debug`, `Clone` or `Copy`, plus model Protobuf serialization; human-readable Python formatting and pickle bytes are Python-specific
   - OR-Tools: none

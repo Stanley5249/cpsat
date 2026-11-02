@@ -50,7 +50,8 @@ Rules for doc comments, examples, and tests. They adapt the C++ and Python CP-SA
 
 The tests check the binding. OR-Tools tests the solver, so search strategies, optimal values beyond what a sample prints, and statistics beyond range checks are out of scope.
 
-- **`model.rs` and `domain.rs`** cover pure Rust logic, such as `LinearExpr` merging and overflow and `Domain` operations.
+- **`expr.rs` and `domain.rs`** cover pure Rust logic, such as `LinearExpr` merging and overflow and `Domain` operations.
+- **`model.rs`** covers the modeling API around the Protobuf message.
 - **`equivalence.rs`** checks that each constraint family writes the same `CpModelProto` as Python, from fixtures that `just gen-fixtures` regenerates. A new family gets a fixture.
 - **`constraints.rs`** solves each family once and checks feasibility and one property of its meaning.
 - **`samples.rs`** ports official samples and asserts what the Python sample prints, checked by running it with the pinned `ortools`. Each constraint family and solver feature with an official sample has one ported, preferring samples that exist in both C++ and Python. Families without one rely on `equivalence.rs` and `constraints.rs`.
