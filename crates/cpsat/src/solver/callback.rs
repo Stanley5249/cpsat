@@ -7,9 +7,10 @@
 //!
 //! Each `add_*` method wraps its closure in a [`CallbackState`]. Before a
 //! solve, `register` passes a pointer to each state as the bridge's context.
-//! During the solve, the bridge calls the kind's trampoline with that context,
-//! and [`CallbackState::call`] runs the closure and stores the first panic.
-//! After the solve, the solver resumes the earliest stored panic.
+//! During the solve, the bridge calls the kind's trampoline, the `extern "C"`
+//! function that forwards to the closure, with that context.
+//! [`CallbackState::call`] runs the closure and stores the first panic, and
+//! after the solve the solver resumes the earliest stored panic.
 
 use core::ffi::c_void;
 use std::any::Any;
