@@ -117,18 +117,8 @@ mod sealed {
         /// `self` must neither move nor drop until the solve returns.
         unsafe fn register(&mut self, session: &Session) -> Result<()>;
 
-        /// Takes every stored panic and returns the earliest.
-        fn take_panic(&mut self) -> Option<Panic>;
-    }
-
-    /// One callback of a known kind.
-    pub trait Callback {
-        /// # Safety
-        ///
-        /// As for [`Sealed::register`].
-        unsafe fn register(&mut self, session: &Session) -> Result<()>;
-
-        /// Takes the stored panic, so the next solve starts without one.
+        /// Takes every stored panic and returns the earliest, so the next
+        /// solve starts without one.
         fn take_panic(&mut self) -> Option<Panic>;
     }
 }
@@ -149,7 +139,7 @@ impl sealed::Sealed for () {
 
 impl Callbacks for () {}
 
-impl<C: Callbacks, K: sealed::Callback> sealed::Sealed for (C, K) {
+impl<C: Callbacks, K: sealed::Sealed> sealed::Sealed for (C, K) {
     unsafe fn register(&mut self, session: &Session) -> Result<()> {
         // SAFETY: the caller keeps both parts in place.
         unsafe {
@@ -168,9 +158,9 @@ impl<C: Callbacks, K: sealed::Callback> sealed::Sealed for (C, K) {
     }
 }
 
-impl<C: Callbacks, K: sealed::Callback> Callbacks for (C, K) {}
+impl<C: Callbacks, K: sealed::Sealed> Callbacks for (C, K) {}
 
-impl<F> sealed::Callback for SolutionCallback<F>
+impl<F> sealed::Sealed for SolutionCallback<F>
 where
     F: FnMut(&CpSolverResponseView<'_>) -> ControlFlow<()> + Send,
 {
@@ -185,7 +175,7 @@ where
     }
 }
 
-impl<F> sealed::Callback for BestBoundCallback<F>
+impl<F> sealed::Sealed for BestBoundCallback<F>
 where
     F: FnMut(f64) -> ControlFlow<()> + Send,
 {
@@ -199,7 +189,7 @@ where
     }
 }
 
-impl<F> sealed::Callback for LogCallback<F>
+impl<F> sealed::Sealed for LogCallback<F>
 where
     F: FnMut(&str) -> ControlFlow<()> + Send,
 {
