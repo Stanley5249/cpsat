@@ -92,7 +92,8 @@ impl<'a> CpSolver<'a> {
     ///
     /// Every callback runs on a solver thread, one call at a time, and
     /// callbacks of one kind run in the order they were added. Returning
-    /// [`ControlFlow::Break`] stops the search. The first panic stops the
+    /// [`ControlFlow::Break`] stops the search, and later callbacks still
+    /// receive the same event. The first panic stops the
     /// search, skips every later callback call, and resumes after the solve
     /// returns.
     #[doc(alias("AddSolutionCallback", "solution_callback"))]

@@ -167,6 +167,20 @@ fn callback_break_stops_search() {
 }
 
 #[test]
+fn a_break_still_reaches_later_callbacks() {
+    let mut later_calls = 0;
+    CpSolver::default()
+        .add_solution_callback(&mut |_| ControlFlow::Break(()))
+        .add_solution_callback(&mut |_| {
+            later_calls += 1;
+            ControlFlow::Continue(())
+        })
+        .solve(&tiny_model())
+        .unwrap();
+    assert!(later_calls > 0);
+}
+
+#[test]
 fn stop_handle_works_inside_callback() {
     let stop = StopHandle::new();
     let response = CpSolver::new(&long_parameters())
