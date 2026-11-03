@@ -39,6 +39,7 @@
 //! cannot catch. [`CpModel::validate`](prelude::CpModel::validate) reports invalid
 //! models without solving. Solve an untrusted model in a subprocess, so that an
 //! abort cannot end the caller.
+#![deny(unsafe_code)]
 
 /// Compiles the README examples as doctests.
 #[cfg(doctest)]

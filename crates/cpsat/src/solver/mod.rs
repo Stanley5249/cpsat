@@ -2,6 +2,7 @@
 //! cancellation, response accessors, diagnostics, and the bridge owners.
 
 mod diagnostics;
+#[expect(unsafe_code, reason = "the only module that calls cpsat_sys")]
 mod ffi;
 mod response;
 mod stop;
