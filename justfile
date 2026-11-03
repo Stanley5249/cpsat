@@ -49,6 +49,7 @@ gen-proto *args:
 check-proto: gen-proto
     git diff --exit-code -- crates/cpsat/src/proto
 
+# --rust-target matches rust-version in Cargo.toml.
 # Regenerate the raw FFI declarations from the bridge header
 [group("bindings")]
 gen-bindings *args:

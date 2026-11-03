@@ -75,9 +75,10 @@ jobs:
           setup_only: true
       - uses: extractions/setup-just@v4
       - run: just check-proto
+      # Bump with a regeneration of bindings.rs, whose output depends on this version.
       - uses: taiki-e/install-action@v2
         with:
-          tool: bindgen-cli
+          tool: bindgen-cli@0.73.2
       - run: sudo apt-get install -y --no-install-recommends libclang-dev
       - run: just check-bindings
       - name: The Buffa plugin matches the buffa crate
