@@ -34,7 +34,8 @@ typedef struct CpsatBuffer {
 // thread, and it borrows its arguments only during the call. A nonzero return
 // requests the solver to stop.
 // Callbacks must not unwind or throw across the ABI. Only cpsat_session_solve
-// invokes callbacks, and all callback calls finish before it returns.
+// invokes callbacks, and all callback calls finish before it returns. Free
+// never invokes them.
 // response holds a serialized CpSolverResponse.
 typedef int32_t (*CpsatSolutionCallback)(void* context, const uint8_t* response,
                                          size_t response_len);
@@ -64,8 +65,8 @@ int32_t cpsat_session_set_parameters(CpsatSession* session,
                                      size_t parameters_len, CpsatBuffer* error);
 
 // Callbacks of one kind run in the order they were added. context must stay
-// valid until cpsat_session_solve returns, or until free if solve is never
-// called. Callback function pointers must be non-null.
+// valid until cpsat_session_solve returns. Callback function pointers must be
+// non-null.
 int32_t cpsat_session_add_solution_callback(CpsatSession* session,
                                             CpsatSolutionCallback callback,
                                             void* context, CpsatBuffer* error);
