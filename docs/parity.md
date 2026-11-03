@@ -334,8 +334,7 @@ Test names are relative to `crates/cpsat/tests/e2e`. A test citation identifies 
 
 These items have no Python counterpart. Most replace Python's runtime dispatch or mutable solver state with types.
 
-- `CpSolver<'a, C>`: Borrows parameters, holds its callbacks in a nested tuple and a stop handle, and returns each response
-- `SolutionCallback`, `BestBoundCallback`, `LogCallback`: One wrapper per callback kind, so `CpSolver` stays generic over each closure
+- `CpSolver<'a>`: Borrows parameters, callbacks, and a stop handle, and returns each response
 - `StopHandle`: A shareable, sticky cancellation token
 - `Evaluate`, `Objective`, `Hint`: Sealed traits that pick the value type at compile time, such as `bool` for a literal
 - `NewVar`, `AddConstraint`: Sealed traits that pick the returned handle from the input, such as `IntervalVar` for an `Interval`

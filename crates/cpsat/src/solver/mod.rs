@@ -1,24 +1,22 @@
 //! Running a solve and reading its result: the solver, its callbacks and
 //! cancellation, response accessors, diagnostics, and the bridge owners.
 
-mod callback;
 mod diagnostics;
 mod ffi;
 mod response;
 mod stop;
 
-pub use callback::{BestBoundCallback, Callbacks, LogCallback, SolutionCallback};
 pub use diagnostics::default_parameters;
 pub use response::{Evaluate, Solution};
 pub use stop::StopHandle;
 
+use std::fmt;
 use std::ops::ControlFlow;
-use std::panic::resume_unwind;
 use std::sync::LazyLock;
 
 use buffa::Message;
 
-use self::ffi::Session;
+use self::ffi::{Callbacks, Session};
 use crate::error::Result;
 use crate::proto::view::CpSolverResponseView;
 use crate::proto::{CpModelProto, CpSolverResponse, SatParameters};
@@ -33,11 +31,14 @@ impl CpModelProto {
     /// parameters are not an error; the response status is `MODEL_INVALID`.
     #[doc(alias("SolveWithParameters"))]
     pub fn solve(&self, parameters: &SatParameters) -> Result<CpSolverResponse> {
-        run(self, parameters, None, &mut ())
+        run(self, parameters, None, &mut Callbacks::default())
     }
 }
 
 /// Configures a solve with callbacks and cancellation.
+///
+/// The solver borrows each callback mutably, so a closure is readable again,
+/// with everything it captured, after the solver's last use.
 ///
 /// ```no_run
 /// use std::ops::ControlFlow;
@@ -53,18 +54,17 @@ impl CpModelProto {
 ///
 /// let parameters = SatParameters::default().with_num_workers(8);
 /// let response = CpSolver::new(&parameters)
-///     .add_solution_callback(|response| {
+///     .add_solution_callback(&mut |response| {
 ///         println!("objective {}", response.objective_value);
 ///         ControlFlow::Continue(())
 ///     })
 ///     .solve(&model)?;
 /// # Ok::<(), cpsat::Error>(())
 /// ```
-#[derive(Debug)]
-pub struct CpSolver<'a, C = ()> {
+pub struct CpSolver<'a> {
     parameters: &'a SatParameters,
     stop: Option<&'a StopHandle>,
-    callbacks: C,
+    callbacks: Callbacks<'a>,
 }
 
 impl<'a> CpSolver<'a> {
@@ -76,19 +76,10 @@ impl<'a> CpSolver<'a> {
         Self {
             parameters,
             stop: None,
-            callbacks: (),
+            callbacks: Callbacks::default(),
         }
     }
-}
 
-impl Default for CpSolver<'_> {
-    fn default() -> Self {
-        static DEFAULT: LazyLock<SatParameters> = LazyLock::new(SatParameters::default);
-        Self::new(&DEFAULT)
-    }
-}
-
-impl<'a, C> CpSolver<'a, C> {
     /// The parameters.
     #[must_use]
     pub fn parameters(&self) -> &'a SatParameters {
@@ -100,26 +91,29 @@ impl<'a, C> CpSolver<'a, C> {
     ///
     /// Every callback runs on a solver thread, one call at a time, and
     /// callbacks of one kind run in the order they were added. Returning
-    /// [`ControlFlow::Break`] stops the search. A panic stops the search and
-    /// resumes after the solve returns.
+    /// [`ControlFlow::Break`] stops the search. The first panic stops the
+    /// search, skips every later callback call, and resumes after the solve
+    /// returns.
     #[doc(alias("AddSolutionCallback", "solution_callback"))]
     #[must_use]
-    pub fn add_solution_callback<F>(self, callback: F) -> CpSolver<'a, (C, SolutionCallback<F>)>
+    pub fn add_solution_callback<F>(mut self, callback: &'a mut F) -> Self
     where
         F: FnMut(&CpSolverResponseView<'_>) -> ControlFlow<()> + Send,
     {
-        self.add(SolutionCallback::new(callback))
+        self.callbacks.solution.push(callback);
+        self
     }
 
     /// Adds a callback for each improved objective bound. See
     /// [`CpSolver::add_solution_callback`].
     #[doc(alias("AddBestBoundCallback", "best_bound_callback"))]
     #[must_use]
-    pub fn add_best_bound_callback<F>(self, callback: F) -> CpSolver<'a, (C, BestBoundCallback<F>)>
+    pub fn add_best_bound_callback<F>(mut self, callback: &'a mut F) -> Self
     where
         F: FnMut(f64) -> ControlFlow<()> + Send,
     {
-        self.add(BestBoundCallback::new(callback))
+        self.callbacks.best_bound.push(callback);
+        self
     }
 
     /// Adds a callback for each log message, decoded lossily as UTF-8. See
@@ -129,20 +123,12 @@ impl<'a, C> CpSolver<'a, C> {
     /// `log_to_stdout` to false to avoid printing them twice.
     #[doc(alias("AddLogCallback", "log_callback"))]
     #[must_use]
-    pub fn add_log_callback<F>(self, callback: F) -> CpSolver<'a, (C, LogCallback<F>)>
+    pub fn add_log_callback<F>(mut self, callback: &'a mut F) -> Self
     where
         F: FnMut(&str) -> ControlFlow<()> + Send,
     {
-        self.add(LogCallback::new(callback))
-    }
-
-    /// The solver with `callback` appended to its callbacks.
-    fn add<K>(self, callback: K) -> CpSolver<'a, (C, K)> {
-        CpSolver {
-            parameters: self.parameters,
-            stop: self.stop,
-            callbacks: (self.callbacks, callback),
-        }
+        self.callbacks.log.push(callback);
+        self
     }
 
     /// Lets [`StopHandle::stop`] on `stop` stop the solve from any thread.
@@ -161,10 +147,10 @@ impl<'a, C> CpSolver<'a, C> {
     ///
     /// Returns an error if the bridge fails. An invalid model or invalid
     /// parameters are not an error; the response status is `MODEL_INVALID`.
-    pub fn solve<M: AsRef<CpModelProto> + ?Sized>(&mut self, model: &M) -> Result<CpSolverResponse>
-    where
-        C: Callbacks,
-    {
+    pub fn solve<M: AsRef<CpModelProto> + ?Sized>(
+        &mut self,
+        model: &M,
+    ) -> Result<CpSolverResponse> {
         run(
             model.as_ref(),
             self.parameters,
@@ -174,26 +160,35 @@ impl<'a, C> CpSolver<'a, C> {
     }
 }
 
-/// Solves `model` once with a fresh session, then resumes the first callback
-/// panic, if any.
-fn run<C: Callbacks>(
+impl Default for CpSolver<'_> {
+    fn default() -> Self {
+        static DEFAULT: LazyLock<SatParameters> = LazyLock::new(SatParameters::default);
+        Self::new(&DEFAULT)
+    }
+}
+
+impl fmt::Debug for CpSolver<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CpSolver")
+            .field("parameters", self.parameters)
+            .field("stop", &self.stop)
+            .finish_non_exhaustive()
+    }
+}
+
+/// Solves `model` once with a fresh session.
+fn run(
     model: &CpModelProto,
     parameters: &SatParameters,
     stop: Option<&StopHandle>,
-    callbacks: &mut C,
+    callbacks: &mut Callbacks<'_>,
 ) -> Result<CpSolverResponse> {
     let model = model.encode_to_vec();
     let mut session = Session::new()?;
     session.set_parameters(&parameters.encode_to_vec())?;
-    // SAFETY: `callbacks` stays borrowed in place until this function returns,
-    // after the solve.
-    unsafe { callbacks.register(&mut session)? };
     if let Some(stop) = stop {
         stop::attach(stop, session.stopper());
     }
-    let response = session.solve(&model);
-    if let Some((_, payload)) = callbacks.take_panic() {
-        resume_unwind(payload);
-    }
-    Ok(CpSolverResponse::decode_from_slice(response?.bytes())?)
+    let response = session.solve(&model, callbacks)?;
+    Ok(CpSolverResponse::decode_from_slice(response.bytes())?)
 }

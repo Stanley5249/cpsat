@@ -1,19 +1,22 @@
 //! The only caller of `cpsat-sys`, with owners of bridge resources and a
 //! safe wrapper per bridge function.
 //!
-//! The file reads in three parts: the buffer and call primitives, the
-//! stateless helpers, and the session that serves one solve.
+//! The file reads in four parts: the buffer and call primitives, the
+//! stateless helpers, the session that serves one solve, and the callback
+//! trampolines that the bridge calls during that solve.
 
 use core::ffi::c_void;
+use std::any::Any;
 use std::borrow::Cow;
-use std::sync::{Arc, Weak};
+use std::ops::ControlFlow;
+use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+use std::sync::{Arc, Mutex, PoisonError, Weak};
 
-use cpsat_sys::{
-    CPSAT_OK, CpsatBestBoundCallback, CpsatBuffer, CpsatLogCallback, CpsatSession,
-    CpsatSolutionCallback,
-};
+use buffa::MessageView;
+use cpsat_sys::{CPSAT_OK, CpsatBuffer, CpsatSession};
 
 use crate::error::{Error, Result};
+use crate::proto::view::CpSolverResponseView;
 
 /// Owns a bridge-allocated buffer and frees it on drop.
 pub struct Buffer(CpsatBuffer);
@@ -53,7 +56,7 @@ impl Drop for Buffer {
 /// # Safety
 ///
 /// `data` must be null or point to `len` values valid for `'a`.
-pub unsafe fn slice<'a, T>(data: *const T, len: usize) -> &'a [T] {
+unsafe fn slice<'a, T>(data: *const T, len: usize) -> &'a [T] {
     if data.is_null() {
         return &[];
     }
@@ -144,61 +147,40 @@ impl Session {
         })
     }
 
-    /// Adds a solution callback with its context.
+    /// Solves `model` with `callbacks` and returns the encoded response. A
+    /// session serves one solve, so this consumes it.
     ///
-    /// # Safety
-    ///
-    /// `context` must suit `callback` and stay valid until [`Session::solve`]
-    /// returns.
-    pub unsafe fn add_solution_callback(
-        &mut self,
-        callback: CpsatSolutionCallback,
-        context: *mut c_void,
-    ) -> Result<()> {
-        // SAFETY: the session is alive, and the caller upholds the rest.
-        call(|error| unsafe {
-            cpsat_sys::cpsat_session_add_solution_callback(self.0.0, callback, context, error)
-        })
-    }
-
-    /// Adds a best-bound callback with its context.
-    ///
-    /// # Safety
-    ///
-    /// As for [`Session::add_solution_callback`].
-    pub unsafe fn add_best_bound_callback(
-        &mut self,
-        callback: CpsatBestBoundCallback,
-        context: *mut c_void,
-    ) -> Result<()> {
-        // SAFETY: the session is alive, and the caller upholds the rest.
-        call(|error| unsafe {
-            cpsat_sys::cpsat_session_add_best_bound_callback(self.0.0, callback, context, error)
-        })
-    }
-
-    /// Adds a log callback with its context.
-    ///
-    /// # Safety
-    ///
-    /// As for [`Session::add_solution_callback`].
-    pub unsafe fn add_log_callback(
-        &mut self,
-        callback: CpsatLogCallback,
-        context: *mut c_void,
-    ) -> Result<()> {
-        // SAFETY: the session is alive, and the caller upholds the rest.
-        call(|error| unsafe {
-            cpsat_sys::cpsat_session_add_log_callback(self.0.0, callback, context, error)
-        })
-    }
-
-    /// Solves `model` and returns the encoded response.
-    pub fn solve(&mut self, model: &[u8]) -> Result<Buffer> {
+    /// The first callback panic stops the search, skips every later callback
+    /// call, and resumes once the solve returns.
+    pub fn solve(self, model: &[u8], callbacks: &mut Callbacks<'_>) -> Result<Buffer> {
+        let panic = Mutex::new(None);
+        let mut solution = contexts(&mut callbacks.solution, &panic);
+        let mut best_bound = contexts(&mut callbacks.best_bound, &panic);
+        let mut log = contexts(&mut callbacks.log, &panic);
+        // SAFETY: each trampoline reads the context type it is paired with,
+        // and the contexts stay in place until this function returns, after
+        // the solve, the only bridge call that runs callbacks.
+        unsafe {
+            self.register(
+                cpsat_sys::cpsat_session_add_solution_callback,
+                Some(solution_trampoline),
+                &mut solution,
+            )?;
+            self.register(
+                cpsat_sys::cpsat_session_add_best_bound_callback,
+                Some(best_bound_trampoline),
+                &mut best_bound,
+            )?;
+            self.register(
+                cpsat_sys::cpsat_session_add_log_callback,
+                Some(log_trampoline),
+                &mut log,
+            )?;
+        }
         let mut response = Buffer::new();
         // SAFETY: the session is alive, the bytes outlive the call, and the
         // buffers are empty bridge buffers.
-        call(|error| unsafe {
+        let solved = call(|error| unsafe {
             cpsat_sys::cpsat_session_solve(
                 self.0.0,
                 model.as_ptr(),
@@ -206,8 +188,30 @@ impl Session {
                 response.as_mut_ptr(),
                 error,
             )
-        })?;
-        Ok(response)
+        });
+        if let Some(payload) = panic.into_inner().unwrap_or_else(PoisonError::into_inner) {
+            resume_unwind(payload);
+        }
+        solved.map(|()| response)
+    }
+
+    /// Adds one bridge callback per context, in order.
+    ///
+    /// # Safety
+    ///
+    /// `trampoline` must read its context as a `Context<C>`, and `contexts`
+    /// must stay in place until the solve returns.
+    unsafe fn register<C: ?Sized, T: Copy>(
+        &self,
+        add: unsafe extern "C" fn(*mut CpsatSession, T, *mut c_void, *mut CpsatBuffer) -> i32,
+        trampoline: T,
+        contexts: &mut [Context<'_, C>],
+    ) -> Result<()> {
+        for context in contexts {
+            // SAFETY: the session is alive, and the caller upholds the rest.
+            call(|error| unsafe { add(self.0.0, trampoline, (&raw mut *context).cast(), error) })?;
+        }
+        Ok(())
     }
 }
 
@@ -249,4 +253,117 @@ impl Drop for Raw {
         // reference is dropping, so no other call can run.
         unsafe { cpsat_sys::cpsat_session_free(self.0) };
     }
+}
+
+/// A solution callback, which reads a zero-copy view of each solution.
+pub type SolutionCallback<'a> = dyn FnMut(&CpSolverResponseView<'_>) -> ControlFlow<()> + Send + 'a;
+
+/// A best-bound callback, which reads each improved objective bound.
+pub type BestBoundCallback<'a> = dyn FnMut(f64) -> ControlFlow<()> + Send + 'a;
+
+/// A log callback, which reads each log message as text.
+pub type LogCallback<'a> = dyn FnMut(&str) -> ControlFlow<()> + Send + 'a;
+
+/// The borrowed callbacks of a solve, one list per bridge callback kind, each
+/// in the order the bridge calls them. A plain reference has no drop glue, so
+/// each borrow ends at its last use.
+#[derive(Default)]
+pub struct Callbacks<'a> {
+    pub solution: Vec<&'a mut SolutionCallback<'a>>,
+    pub best_bound: Vec<&'a mut BestBoundCallback<'a>>,
+    pub log: Vec<&'a mut LogCallback<'a>>,
+}
+
+/// The first callback panic of a solve.
+type Panic = Mutex<Option<Box<dyn Any + Send>>>;
+
+/// What a trampoline's context points to: one callback and the panic record
+/// that every callback of the solve shares.
+struct Context<'a, C: ?Sized> {
+    callback: &'a mut C,
+    panic: &'a Panic,
+}
+
+/// One context per callback, all sharing `panic`.
+fn contexts<'a, C: ?Sized>(callbacks: &'a mut [&mut C], panic: &'a Panic) -> Vec<Context<'a, C>> {
+    callbacks
+        .iter_mut()
+        .map(|callback| Context {
+            callback: &mut **callback,
+            panic,
+        })
+        .collect()
+}
+
+impl<C: ?Sized> Context<'_, C> {
+    /// Recovers the context that a trampoline receives.
+    ///
+    /// # Safety
+    ///
+    /// `context` must come from [`Session::register`] with the same `C`, and
+    /// the bridge's callback mutex must make this the only live reference.
+    unsafe fn from_raw<'a>(context: *mut c_void) -> &'a mut Self {
+        // SAFETY: the caller upholds the contract above.
+        unsafe { &mut *context.cast::<Self>() }
+    }
+
+    /// Runs `call` on the callback unless a callback of the solve already
+    /// panicked, and returns nonzero to stop the search.
+    fn run(&mut self, call: impl FnOnce(&mut C) -> ControlFlow<()>) -> i32 {
+        // Nothing panics while holding the lock, so a poisoned record is intact.
+        let lock = || self.panic.lock().unwrap_or_else(PoisonError::into_inner);
+        if lock().is_some() {
+            return 1;
+        }
+        match catch_unwind(AssertUnwindSafe(|| call(&mut *self.callback))) {
+            Ok(ControlFlow::Continue(())) => 0,
+            Ok(ControlFlow::Break(())) => 1,
+            Err(payload) => {
+                lock().get_or_insert(payload);
+                1
+            }
+        }
+    }
+}
+
+unsafe extern "C" fn solution_trampoline(
+    context: *mut c_void,
+    response: *const u8,
+    response_len: usize,
+) -> i32 {
+    // SAFETY: the bridge passes the context it was given and a response valid
+    // for the duration of the call.
+    let (context, response) = unsafe {
+        (
+            Context::<SolutionCallback<'_>>::from_raw(context),
+            slice(response, response_len),
+        )
+    };
+    context.run(|callback| {
+        let view = CpSolverResponseView::decode_view(response)
+            .expect("the bridge sends a serialized CpSolverResponse");
+        callback(&view)
+    })
+}
+
+unsafe extern "C" fn best_bound_trampoline(context: *mut c_void, bound: f64) -> i32 {
+    // SAFETY: the bridge passes the context it was given.
+    let context = unsafe { Context::<BestBoundCallback<'_>>::from_raw(context) };
+    context.run(|callback| callback(bound))
+}
+
+unsafe extern "C" fn log_trampoline(
+    context: *mut c_void,
+    message: *const u8,
+    message_len: usize,
+) -> i32 {
+    // SAFETY: the bridge passes the context it was given and a message valid
+    // for the duration of the call.
+    let (context, message) = unsafe {
+        (
+            Context::<LogCallback<'_>>::from_raw(context),
+            slice(message, message_len),
+        )
+    };
+    context.run(|callback| callback(&String::from_utf8_lossy(message)))
 }

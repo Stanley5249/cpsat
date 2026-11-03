@@ -92,7 +92,7 @@ Every change follows these rules.
 - **`#[must_use]`.** Every public method without side effects carries it, unless its return type is already `#[must_use]`, such as `Result`. Appending model methods such as `new_var` do not.
 - **Docs and tests.** `docs/conventions.md` sets the rules for doc comments, examples, and tests.
 - **Visibility.** Only the items that Paths names are public API. An item that another module uses is `pub` when it is a free item in a private module, and `pub(crate)` when it is a field or method of a public type. Everything else is private. Internal code reads another type's data through a field rather than an accessor that returns it unchanged.
-- **Unsafe.** In `cpsat`, only `solver::ffi` calls `cpsat_sys`. Other modules use `unsafe` only for contracts on the Rust side: the context type and borrowed arguments that a callback receives, and the lifetime of a registered session.
+- **Unsafe.** In `cpsat`, only `solver::ffi` calls `cpsat_sys` or uses `unsafe`. It takes borrowed callbacks and registers them inside the one call that solves, so no raw context leaves the module.
 
 ## Decisions
 
@@ -106,7 +106,7 @@ Each decision names the cost it accepts, so a review can weigh it against the ru
 - **Runtime libraries.** Hard-linked or copied into `OUT_DIR/runtime` with their license notices. A copy across volumes costs about 90 MB per `OUT_DIR`. The `cpsat-sys` build script explains why.
 - **Errors.** A `thiserror` enum in `cpsat`, so callers can match on it, and `anyhow` in the build script, whose errors only a person reads.
 - **README links.** Absolute URLs on `main` for `docs/`, because crates.io resolves relative links against each crate's directory. The license links stay relative, because each crate holds its own copies. A published crate's docs may then describe unreleased behavior.
-- **Solver.** `CpModel::solve` for the plain case, and a `CpSolver` for callbacks and stops. `CpSolver<'a, C>` keeps its callbacks in a nested tuple of `SolutionCallback<F>`, `BestBoundCallback<F>`, and `LogCallback<F>`, because a boxed closure keeps its borrows alive until the solver drops. The cost is that the solver's type names every closure.
+- **Solver.** `CpModel::solve` for the plain case, and a `CpSolver` for callbacks and stops. `CpSolver<'a>` borrows each callback as `&'a mut dyn FnMut`, one list per kind like the bridge's three `add_*` functions. A plain reference has no drop glue, so a closure's borrows end at the solver's last use, which a boxed closure would hold until the solver drops. The cost is that a caller who keeps the solver in a variable binds each closure first.
 - **Stop.** `StopHandle` stops every solve attached to it, and a stop is sticky, like a cancellation token, so a caller replaces a stopped handle instead of resetting it.
 - **Model transfer.** Each solve, `validate`, and `stats` call encodes its message once in Rust and parses it once in C++. Skipping the copy needs a C++ model that lives across calls.
 - **Solution payload.** The bridge serializes each solution, and the callback reads a zero-copy `CpSolverResponseView`, which `to_owned_message` keeps. This costs about 55 us per solution with 20,000 variables, about 0.5% of the solver's own time, as `benches/callbacks.rs` measures. Borrowing the C++ response would skip it, but needs a hand-written mirror of the response fields.

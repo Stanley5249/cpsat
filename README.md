@@ -37,7 +37,7 @@ fn main() -> cpsat::Result<()> {
 
     let stop = StopHandle::new();
     let response = CpSolver::new(&SatParameters::default().with_num_workers(8))
-        .add_solution_callback(|response| {
+        .add_solution_callback(&mut |response| {
             println!("objective {}", response.objective_value);
             ControlFlow::Continue(())
         })

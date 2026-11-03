@@ -25,7 +25,7 @@ fn all_solutions<const N: usize>(
 ) -> Vec<[i64; N]> {
     let mut solutions = Vec::new();
     let response = CpSolver::new(&parameters.with_enumerate_all_solutions(true))
-        .add_solution_callback(|response| {
+        .add_solution_callback(&mut |response| {
             solutions.push(
                 exprs
                     .each_ref()
@@ -79,7 +79,7 @@ fn solve_and_print_intermediate_solutions() {
 
     let mut objectives = Vec::new();
     let response = CpSolver::default()
-        .add_solution_callback(|response| {
+        .add_solution_callback(&mut |response| {
             objectives.push(response.objective_value);
             ControlFlow::Continue(())
         })
@@ -100,7 +100,7 @@ fn search_for_all_solutions() {
 
     let mut solutions = Vec::new();
     let response = CpSolver::new(&parameters)
-        .add_solution_callback(|response| {
+        .add_solution_callback(&mut |response| {
             solutions.push(response.solution.to_vec());
             ControlFlow::Continue(())
         })
@@ -122,7 +122,7 @@ fn stop_after_n_solutions() {
 
     let mut count = 0;
     let response = CpSolver::new(&parameters)
-        .add_solution_callback(|_| {
+        .add_solution_callback(&mut |_| {
             count += 1;
             if count >= 5 {
                 ControlFlow::Break(())
@@ -300,7 +300,7 @@ fn nqueens() {
 
     let mut count = 0;
     CpSolver::new(&SatParameters::default().with_enumerate_all_solutions(true))
-        .add_solution_callback(|_| {
+        .add_solution_callback(&mut |_| {
             count += 1;
             ControlFlow::Continue(())
         })
@@ -328,7 +328,7 @@ fn cp_is_fun() {
 
     let mut count = 0;
     CpSolver::new(&SatParameters::default().with_enumerate_all_solutions(true))
-        .add_solution_callback(|_| {
+        .add_solution_callback(&mut |_| {
             count += 1;
             ControlFlow::Continue(())
         })

@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 
 use buffa::MessageView;
 use cpsat::prelude::*;
+use cpsat::proto::view::CpSolverResponseView;
 use cpsat::proto::{CpModelProto, CpSolverStatus, SatParameters};
 
 use crate::common::{hard_model, long_parameters};
@@ -31,11 +32,11 @@ fn callbacks_of_one_kind_run_in_order() {
     let calls = Mutex::new(Vec::new());
     let calls_ref = &calls;
     CpSolver::new(&SatParameters::default().with_enumerate_all_solutions(true))
-        .add_solution_callback(|_| {
+        .add_solution_callback(&mut |_| {
             calls_ref.lock().unwrap().push(1);
             ControlFlow::Continue(())
         })
-        .add_solution_callback(|_| {
+        .add_solution_callback(&mut |_| {
             calls_ref.lock().unwrap().push(2);
             ControlFlow::Continue(())
         })
@@ -53,11 +54,11 @@ fn log_callbacks_see_the_same_messages() {
         .with_log_to_stdout(false);
     let (mut first, mut second) = (String::new(), String::new());
     CpSolver::new(&parameters)
-        .add_log_callback(|line| {
+        .add_log_callback(&mut |line| {
             first.push_str(line);
             ControlFlow::Continue(())
         })
-        .add_log_callback(|line| {
+        .add_log_callback(&mut |line| {
             second.push_str(line);
             ControlFlow::Continue(())
         })
@@ -67,7 +68,7 @@ fn log_callbacks_see_the_same_messages() {
     assert_eq!(first, second);
 }
 
-/// The log callback comes first in the tuple but panics last, after the
+/// The log callback comes first in the solver but panics last, after the
 /// search, so registration order would resume the wrong panic.
 #[test]
 fn the_earliest_panic_among_callbacks_resumes() {
@@ -78,11 +79,11 @@ fn the_earliest_panic_among_callbacks_resumes() {
     let solved = &solved;
     let panic = catch_unwind(AssertUnwindSafe(|| {
         CpSolver::new(&parameters)
-            .add_log_callback(|_| {
+            .add_log_callback(&mut |_| {
                 assert!(!solved.load(Ordering::Relaxed), "later");
                 ControlFlow::Continue(())
             })
-            .add_solution_callback(|_| {
+            .add_solution_callback(&mut |_| {
                 solved.store(true, Ordering::Relaxed);
                 panic!("earlier");
             })
@@ -100,7 +101,7 @@ fn solution_view_reads_values_and_converts_to_owned() {
     let mut owned = None;
     let mut seen = None;
     CpSolver::default()
-        .add_solution_callback(|response| {
+        .add_solution_callback(&mut |response| {
             seen = response.solution().map(|solution| solution.value(x));
             owned = Some(response.to_owned_message().unwrap());
             ControlFlow::Continue(())
@@ -121,7 +122,7 @@ fn reports_best_bounds() {
         .with_max_time_in_seconds(30.0)
         .with_num_workers(8);
     CpSolver::new(&parameters)
-        .add_best_bound_callback(|bound| {
+        .add_best_bound_callback(&mut |bound| {
             bounds.push(bound);
             if bounds.is_empty() {
                 ControlFlow::Continue(())
@@ -141,11 +142,12 @@ fn forwards_logs_and_parameters() {
         .with_log_to_stdout(false)
         .with_num_workers(3);
     let mut log = String::new();
-    let mut solver = CpSolver::new(&parameters).add_log_callback(|line| {
+    let mut on_log = |line: &str| {
         log.push_str(line);
         log.push('\n');
         ControlFlow::Continue(())
-    });
+    };
+    let mut solver = CpSolver::new(&parameters).add_log_callback(&mut on_log);
     assert_eq!(solver.parameters().num_workers, Some(3));
     solver.solve(&tiny_model()).unwrap();
     // OR-Tools 9.15 echoes non-default parameters, which proves they reached
@@ -157,7 +159,7 @@ fn forwards_logs_and_parameters() {
 fn callback_break_stops_search() {
     let start = Instant::now();
     let response = CpSolver::new(&long_parameters())
-        .add_solution_callback(|_| ControlFlow::Break(()))
+        .add_solution_callback(&mut |_| ControlFlow::Break(()))
         .solve(&hard_model())
         .unwrap();
     assert_eq!(response.status(), CpSolverStatus::FEASIBLE);
@@ -168,7 +170,7 @@ fn callback_break_stops_search() {
 fn stop_handle_works_inside_callback() {
     let stop = StopHandle::new();
     let response = CpSolver::new(&long_parameters())
-        .add_solution_callback(|_| {
+        .add_solution_callback(&mut |_| {
             stop.stop();
             ControlFlow::Continue(())
         })
@@ -192,7 +194,7 @@ fn stops_from_another_thread() {
             stop.stop();
         });
         CpSolver::new(&long_parameters())
-            .add_solution_callback(|_| {
+            .add_solution_callback(&mut |_| {
                 // The receiver leaves after the first solution.
                 let _ = found.send(());
                 ControlFlow::Continue(())
@@ -217,7 +219,7 @@ fn one_handle_stops_concurrent_solves() {
                 let found = found.clone();
                 scope.spawn(move || {
                     CpSolver::new(&long_parameters())
-                        .add_solution_callback(move |_| {
+                        .add_solution_callback(&mut move |_| {
                             // The receiver leaves after both first solutions.
                             let _ = found.send(());
                             ControlFlow::Continue(())
@@ -250,7 +252,7 @@ fn stopped_handle_stops_every_later_solve() {
         let mut solutions = 0;
         let start = Instant::now();
         CpSolver::new(&long_parameters())
-            .add_solution_callback(|_| {
+            .add_solution_callback(&mut |_| {
                 solutions += 1;
                 ControlFlow::Continue(())
             })
@@ -277,7 +279,7 @@ fn callback_panic_stops_and_resumes_after_solve() {
     let mut calls = 0;
     let panic = catch_unwind(AssertUnwindSafe(|| {
         CpSolver::new(&long_parameters())
-            .add_solution_callback(|_| {
+            .add_solution_callback(&mut |_| {
                 calls += 1;
                 panic!("user callback failed");
             })
@@ -290,15 +292,46 @@ fn callback_panic_stops_and_resumes_after_solve() {
 }
 
 #[test]
+fn a_panic_skips_later_callbacks_and_the_solver_solves_again() {
+    let (mut first_calls, mut later_calls) = (0, 0);
+    let mut first = |_: &CpSolverResponseView<'_>| {
+        first_calls += 1;
+        assert_ne!(first_calls, 1, "first call");
+        ControlFlow::Continue(())
+    };
+    let mut later = |_: &CpSolverResponseView<'_>| {
+        later_calls += 1;
+        ControlFlow::Continue(())
+    };
+    let mut solver = CpSolver::default()
+        .add_solution_callback(&mut first)
+        .add_solution_callback(&mut later);
+    let panic = catch_unwind(AssertUnwindSafe(|| solver.solve(&tiny_model()))).unwrap_err();
+    assert!(
+        panic
+            .downcast_ref::<String>()
+            .unwrap()
+            .contains("first call")
+    );
+    let response = solver.solve(&tiny_model()).unwrap();
+    assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
+    assert!(first_calls >= 2);
+    assert_eq!(later_calls, first_calls - 1);
+}
+
+#[test]
 fn solver_solves_again() {
     let mut solutions = 0;
+    let mut on_solution = |_: &CpSolverResponseView<'_>| {
+        solutions += 1;
+        ControlFlow::Continue(())
+    };
+    let mut on_bound = |_| ControlFlow::Continue(());
+    let mut on_log = |_: &str| ControlFlow::Continue(());
     let mut solver = CpSolver::default()
-        .add_solution_callback(|_| {
-            solutions += 1;
-            ControlFlow::Continue(())
-        })
-        .add_best_bound_callback(|_| ControlFlow::Continue(()))
-        .add_log_callback(|_| ControlFlow::Continue(()));
+        .add_solution_callback(&mut on_solution)
+        .add_best_bound_callback(&mut on_bound)
+        .add_log_callback(&mut on_log);
     for _ in 0..20 {
         let response = solver.solve(&tiny_model()).unwrap();
         assert_eq!(response.status(), CpSolverStatus::OPTIMAL);
@@ -331,7 +364,7 @@ fn solution_view_accessors_match_the_owned_response() {
     };
     let mut seen = None;
     let response = CpSolver::new(&SatParameters::default().with_num_workers(1))
-        .add_solution_callback(|response| {
+        .add_solution_callback(&mut |response| {
             seen = response.solution().map(read);
             ControlFlow::Continue(())
         })
@@ -348,7 +381,7 @@ fn solution_view_carries_search_statistics() {
     let x = model.int_var_from_index(0).unwrap();
     let mut checked = false;
     CpSolver::new(&SatParameters::default().with_num_workers(1))
-        .add_solution_callback(|response| {
+        .add_solution_callback(&mut |response| {
             // The objective is x, maximized.
             let value = response.solution().unwrap().value(x);
             let objective = f64::from(i32::try_from(value).unwrap());

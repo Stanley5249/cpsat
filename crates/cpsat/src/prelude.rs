@@ -7,7 +7,4 @@ pub use crate::expr::{BoolVar, Domain, FloatExpr, IntVar, IntervalVar, LinearExp
 pub use crate::model::{
     AddConstraint, Bool, CpModel, Hint, Interval, Named, NewVar, Objective, VarMut, WithName,
 };
-pub use crate::solver::{
-    BestBoundCallback, Callbacks, CpSolver, Evaluate, LogCallback, Solution, SolutionCallback,
-    StopHandle, default_parameters,
-};
+pub use crate::solver::{CpSolver, Evaluate, Solution, StopHandle, default_parameters};

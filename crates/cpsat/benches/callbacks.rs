@@ -67,7 +67,7 @@ fn time_callback(
     let mut inside = Duration::ZERO;
     let mut checksum = 0;
     CpSolver::new(parameters)
-        .add_solution_callback(|response| {
+        .add_solution_callback(&mut |response| {
             let start = Instant::now();
             checksum += work(response);
             inside += start.elapsed();
